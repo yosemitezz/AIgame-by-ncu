@@ -8,7 +8,7 @@ Fresh Godot 4.7 2D pixel side-scroller. Baseline main: 8f676ac555596dd5c43f1eef0
 - Boss/music agent: combat/boss.gd, audio/music_director.gd, data/music_timeline.json only.
 - Level agent: levels/bellkeep.gd, docs/level-design.md only.
 - Reviewer: read only, report defects; no edits or Git mutations.
-- Cursor: proposed separate directory and cursor/art-ui branch. Own final assets/art/, assets/vfx/, ui/. Coordinate before changing existing placeholder files. Cursor has not been connected or messaged by this team.
+- Cursor (`cursor/art-ui`): owns `assets/art/`, `assets/vfx/`, `assets/ui/`, `assets/previews/`, `ui/`, `scenes/showcase_*.tscn`, `scripts/art/`, `tools/art/`, `docs/art/`. Bootstrapped art-preview `project.godot` + main showcase scene until Integration lands gameplay main; coordinate before rewriting project settings. Does not edit combat/level/music owners' files. Handoff: `docs/art/HANDOFF.md`.
 
 Do not reset user changes, force push, modify LICENSE, or edit another owner's file. Lead handles commits and pushes.
 
