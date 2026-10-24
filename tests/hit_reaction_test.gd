@@ -108,6 +108,60 @@ func run() -> void:
 				has_angular = true
 		kinds["both" if has_round and has_angular else "one"] = true
 	check(kinds.has("both"), "hits show a round shock together with angular shapes")
+	# Attack reach: each combo stage now covers the distance its swing effect actually draws.
+	var Hero = load("res://actors/player.gd")
+	check(Hero.HIT_REACH.size() == 3 and Hero.HIT_REACH[0] < Hero.HIT_REACH[1] and Hero.HIT_REACH[1] < Hero.HIT_REACH[2], "reach grows with each combo stage %s" % str(Hero.HIT_REACH))
+	check(Hero.HIT_REACH[0] >= 60.0 and Hero.HIT_REACH[2] >= 78.0, "reach is wide enough to match the swing effects")
+	var probes: Array = [[1, 70.0, true], [1, 90.0, false], [2, 78.0, true], [2, 95.0, false], [3, 88.0, true], [3, 108.0, false]]
+	for probe: Array in probes:
+		var target: CharacterBody2D = Enemy.new()
+		target.configure(game, "sentry", Vector2(float(probe[1]), 300.0))
+		target.set_physics_process(false)
+		game.add_child(target)
+		await physics_frame
+		hero.attack_serial += 1
+		game.hero_attack(hero, 1, Hero.HIT_REACH[int(probe[0]) - 1], int(probe[0]))
+		check((target.health < target.max_health) == bool(probe[2]), "combo %d at %d px: %s" % [probe[0], int(probe[1]), "hit" if probe[2] else "out of range"])
+		target.queue_free()
+	# Vertical tolerance covers a foe standing on a ledge one body height up.
+	var high: CharacterBody2D = Enemy.new()
+	high.configure(game, "sentry", Vector2(40.0, 300.0 - 36.0))
+	high.set_physics_process(false)
+	game.add_child(high)
+	await physics_frame
+	hero.attack_serial += 1
+	game.hero_attack(hero, 1, Hero.HIT_REACH[0], 1)
+	check(high.health < high.max_health, "a foe 36 px higher is still hit")
+	high.queue_free()
+	# Impact sounds: every kind is synthesized, audible, not clipped flat, and heavier hits are bigger and longer.
+	var sfx: Node = fb.sounds
+	var all_ok: bool = true
+	var stats: Dictionary = {}
+	for kind: String in sfx.KINDS:
+		var stream: AudioStreamWAV = sfx._streams.get(kind)
+		if stream == null:
+			all_ok = false
+			continue
+		var peak: int = 0
+		var energy: float = 0.0
+		var n: int = stream.data.size() / 2
+		for i: int in range(0, n, 3):
+			var v: int = absi(stream.data.decode_s16(i * 2))
+			peak = maxi(peak, v)
+			energy += float(v) * float(v)
+		stats[kind] = {"peak": peak, "rms": sqrt(energy / float(maxi(1, n / 3))), "length": float(n) / float(stream.mix_rate)}
+		all_ok = all_ok and peak > 6000 and peak < 32000 and stream.mix_rate >= 32000
+	check(all_ok and stats.size() == 11, "all 11 impact sounds exist, are audible and do not hard clip")
+	check(stats["heavy"]["rms"] > stats["light"]["rms"] * 1.2 and stats["heavy"]["length"] > stats["light"]["length"] * 1.5, "heavy hit is louder and longer than a light hit")
+	check(stats["break"]["length"] >= 0.45 and stats["stun"]["length"] >= 0.4 and stats["launch"]["length"] >= 0.35, "break, stun and launch sounds have a long tail")
+	check(stats["light"]["rms"] > 2500.0, "light hit has real body (rms %.0f)" % stats["light"]["rms"])
+	var sounded: Array[String] = []
+	for kind: String in ["stun", "launch", "air_jump", "hurt", "swing"]:
+		sfx._last_played.erase(kind)
+		sfx.play_impact(kind)
+		if sfx._last_played.has(kind):
+			sounded.append(kind)
+	check(sounded.size() == 5, "stun, launch, air jump, hurt and swing sounds all trigger")
 	print("Hit reaction: %d passed, %d failed" % [passed, failed])
 	game.queue_free()
 	quit(1 if failed > 0 else 0)

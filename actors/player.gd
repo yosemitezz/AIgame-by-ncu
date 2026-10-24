@@ -31,6 +31,9 @@ const PARRY_RECOIL: float = 0.06
 const PARRY_RECOVER: float = 0.10
 const PARRY_COUNTER_DELAY: float = 0.035
 const PARRY_RECOIL_SPEED: float = 55.0
+## Strike reach per combo stage, measured from the hero's chest. The enemy body radius (10) is added on top, so the
+## effective ranges are about 72 / 80 / 90 px, which is where the swing effects (arc radius 34 to 54, thrust 70+) actually reach.
+const HIT_REACH: Array[float] = [62.0, 70.0, 80.0]
 const ATTACK_STARTUP: float = 0.065
 const COMBO_WINDUP: Array[float] = [0.065, 0.080, 0.110]
 const COMBO_ACTIVE: Array[float] = [0.105, 0.120, 0.150]
@@ -352,7 +355,7 @@ func _advance_attack(delta: float) -> void:
 			_strike_done = true
 			_set_animation("attack", 0.0)
 			if is_instance_valid(game) and not bool(game.story_safe):
-				game.hero_attack(self, 2 if combo == 3 else 1, 55.0 if combo == 3 else (47.0 if combo == 2 else 42.0), combo)
+				game.hero_attack(self, 2 if combo == 3 else 1, HIT_REACH[clampi(combo, 1, 3) - 1], combo)
 			# Impact holds this pose immediately; music/projectiles are untouched.
 			if combat_freeze > 0.0 or attack_phase == "none":
 				return

@@ -226,6 +226,9 @@ func _process(delta: float) -> void:
         _refresh_hud()
     queue_redraw()
 
+## Vertical tolerance of a strike (was 28). Matches the taller swing effects and the longer hero.
+const HERO_HIT_HALF_HEIGHT: int = 40
+
 func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) -> void:
     if story_safe or outcome != "":
         return
@@ -241,7 +244,7 @@ func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) ->
         var target: Vector2 = enemy.global_position + Vector2(0, -28 if enemy == boss else -16)
         var difference: Vector2 = target - origin
         var radius: float = 19 if enemy == boss else 10
-        if absf(difference.x) <= reach + radius and difference.x * float(source.facing) >= -9 and absf(difference.y) <= (42 if enemy == boss else 28):
+        if absf(difference.x) <= reach + radius and difference.x * float(source.facing) >= -9 and absf(difference.y) <= (HERO_HIT_HALF_HEIGHT + 14 if enemy == boss else HERO_HIT_HALF_HEIGHT):
             var before: int = int(enemy.health)
             enemy.receive_hit(damage, source.global_position)
             if int(enemy.health) < before:
@@ -362,6 +365,8 @@ func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power
             impact.play_action("swing")
         elif kind in ["dash_start", "enemy_dash"]:
             impact.play_action("dash")
+        elif kind in ["stun", "launch", "air_jump", "hurt"]:
+            impact.play_action(kind)
 
 func on_parry_contact(defender: Node, source: Node, contact: Vector2, kind: String) -> void:
     if story_safe or _paused or get_tree().paused or outcome != "" or not is_instance_valid(defender) or not is_instance_valid(source):
