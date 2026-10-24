@@ -11,7 +11,9 @@ if not exist "%XDG_CACHE_HOME%" mkdir "%XDG_CACHE_HOME%"
 for /d %%G in (D:\Godot*) do (
   for %%E in ("%%G\*console.exe") do (
     if exist "%%~E" (
-      "%%~E" --path "%~dp0." --log-file "%~dp0.local\game.log"
+      "%%~E" --headless --path "%~dp0." --editor --import --quit --log-file "%~dp0.local\import.log"
+      if errorlevel 1 exit /b 1
+      "%%~E" --path "%~dp0." --log-file "%~dp0.local\game.log" %*
       exit /b
     )
   )

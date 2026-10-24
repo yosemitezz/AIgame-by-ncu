@@ -1,4 +1,4 @@
-param([string]$Godot = '', [switch]$Editor)
+param([string]$Godot = '', [switch]$Editor, [switch]$Smoke)
 $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $localRoot = Join-Path $projectRoot '.local'
@@ -17,7 +17,12 @@ if (-not $Godot) {
     }
 }
 if (-not $Godot) { throw 'Godot 4.7 not found. Run .\run.ps1 -Godot <path-to-godot.exe>' }
+if (-not $Editor) {
+    & $Godot --headless --path $projectRoot --editor --import --quit --log-file (Join-Path $localRoot 'import.log')
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
 $arguments = @('--path', $projectRoot, '--log-file', (Join-Path $localRoot 'game.log'))
+if ($Smoke) { $arguments += @('--headless', '--quit-after', '60') }
 if ($Editor) { $arguments += '--editor' }
 & $Godot @arguments
 exit $LASTEXITCODE
