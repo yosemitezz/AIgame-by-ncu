@@ -14,6 +14,7 @@ const Score = preload("res://audio/music_director.gd")
 const Level = preload("res://levels/bellkeep.gd")
 const HUD = preload("res://ui/hud.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
+const FxLayer = preload("res://vfx/fx_layer.gd")
 
 var player: CharacterBody2D
 var boss: CharacterBody2D
@@ -59,6 +60,12 @@ func _ready() -> void:
     level.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(level)
     level.setup(self)
+    # Presentation-only combat VFX: reads vfx_requested / warning_issued, never touches gameplay.
+    var fx := FxLayer.new()
+    fx.name = "FxLayer"
+    fx.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(fx)
+    fx.setup(self)
     player = Player.new()
     player.process_mode = Node.PROCESS_MODE_PAUSABLE
     player.configure(self)
@@ -297,19 +304,7 @@ func _record_warning(kind: String, at: Vector2, duration: float) -> void:
 
 func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power: float = 1.0) -> void:
     vfx_requested.emit(kind, at, direction, power)
-    var cyan: bool = kind in ["parry", "dash", "air_jump", "pickup", "checkpoint", "parry_ready"]
-    var ink := Color("72ece2") if cyan else Color("e9bb68")
-    if kind == "hurt":
-        ink = Color("ef7678")
-    var count: int = clampi(int(5 * power), 2, 24)
-    if kind in ["slash", "enemy_slash", "telegraph", "warning", "parry_ready"]:
-        _strokes.append({"kind": kind, "at": at, "direction": direction, "life": 0.17, "max": 0.17, "power": power, "color": ink})
-        count = 2
-    for _i: int in count:
-        var angle: float = _rng.randf_range(-PI, PI)
-        var speed: float = _rng.randf_range(18, 75) * minf(power, 2)
-        var life: float = _rng.randf_range(0.16, 0.5)
-        _particles.append({"at": at, "velocity": Vector2.from_angle(angle) * speed + direction * 24, "life": life, "max": life, "color": ink, "size": 2 if power < 1.5 else 3})
+    # Visuals moved to vfx/fx_layer.gd (listens to vfx_requested above); only camera shake stays here.
     if kind in ["hit", "hurt", "parry", "death", "burst"]:
         _trauma = minf(1, _trauma + (0.35 if kind == "parry" else 0.2))
 
@@ -355,29 +350,6 @@ func _draw() -> void:
             var at: Vector2 = gate.position
             for y: int in range(-115, 120, 12):
                 draw_rect(Rect2(at + Vector2(-3, y), Vector2(6, 7)), Color("e9bb68"))
-    for warning: Dictionary in _warnings:
-        var at: Vector2 = warning["at"]
-        var ratio: float = float(warning["life"]) / float(warning["max"])
-        draw_line(at + Vector2(-17, 0), at + Vector2(17, 0), Color("e9bb68"), 2, false)
-        draw_rect(Rect2(at + Vector2(-16, 4), Vector2(32 * (1 - ratio), 2)), Color("fff1bd"))
-    for stroke: Dictionary in _strokes:
-        var at: Vector2 = stroke["at"]
-        var ink: Color = stroke["color"]
-        ink.a = clampf(float(stroke["life"]) / float(stroke["max"]), 0, 1)
-        var dir: float = 1 if stroke["direction"].x >= 0 else -1
-        if stroke["kind"] in ["slash", "enemy_slash"]:
-            var points := PackedVector2Array()
-            for j: int in 9:
-                var angle: float = -1.35 + float(j) / 8 * 2.7
-                points.append(at + Vector2(cos(angle) * 26 * dir, sin(angle) * 25).round())
-            draw_polyline(points, ink, 3 if stroke["power"] < 2 else 5, false)
-        else:
-            draw_line(at - Vector2(5, 0), at + Vector2(5, 0), ink, 2)
-            draw_line(at - Vector2(0, 5), at + Vector2(0, 5), ink, 2)
-    for particle: Dictionary in _particles:
-        var ink: Color = particle["color"]
-        ink.a = minf(1, float(particle["life"]) / float(particle["max"]) * 1.8)
-        draw_rect(Rect2(Vector2(particle["at"]).round(), Vector2.ONE * int(particle["size"])), ink)
     if outcome == "victory" and _ending_clock > 1.8:
         # An unidentified shadow and an interrupted memory; no identity is asserted.
         var at: Vector2 = player.position + Vector2(-player.facing * 28, 0)

@@ -1,0 +1,62 @@
+extends SceneTree
+## VFX safety checks: every effect kind spawns and expires, caps hold, rest sections draw no telegraph,
+## and effects never change gameplay state. It does not judge how the effects look.
+
+const KINDS: Array[String] = ["slash", "enemy_slash", "parry", "parry_ready", "hit", "hurt", "dash", "jump", "air_jump", "land",
+	"pickup", "checkpoint", "death", "burst", "boss_defeat", "spark", "warning", "telegraph", "unknown_kind"]
+var passed: int = 0
+var failed: int = 0
+
+func check(value: bool, label: String) -> void:
+	if value:
+		passed += 1
+	else:
+		failed += 1
+		push_error("FAIL " + label)
+
+func _initialize() -> void:
+	call_deferred("run")
+
+func run() -> void:
+	var game: Node = load("res://main.tscn").instantiate()
+	root.add_child(game)
+	current_scene = game
+	await process_frame
+	game.set_physics_process(false)
+	game.player.set_physics_process(false)
+	game.music.stop_score()
+	game.music.set_process(false)
+	for enemy: Node in get_nodes_in_group("enemies"):
+		enemy.set_physics_process(false)
+	var fx: Node = game.get_node_or_null("FxLayer")
+	check(fx != null, "FxLayer is attached to the game")
+	var health: int = game.player.health
+	var pos: Vector2 = game.player.position
+	var score: int = game.score
+	for kind: String in KINDS:
+		var before: int = fx.particle_count() + fx.shape_count()
+		game.emit_fx(kind, Vector2(300, 250), Vector2.RIGHT, 1.5)
+		var after: int = fx.particle_count() + fx.shape_count()
+		check(after >= before, "%s does not crash and keeps state consistent" % kind)
+	check(fx.particle_count() > 0 and fx.shape_count() > 0, "effects produced particles and shapes")
+	# Hammer the caps.
+	for _i: int in 300:
+		game.emit_fx("burst", Vector2(300, 250), Vector2.ZERO, 3.0)
+	check(fx.particle_count() <= 420 and fx.shape_count() <= 64, "particle and shape caps hold (%d / %d)" % [fx.particle_count(), fx.shape_count()])
+	for _i: int in 4:
+		await process_frame
+	# Everything expires.
+	for _i: int in 100:
+		fx._process(0.05)
+	check(fx.particle_count() == 0 and fx.shape_count() == 0, "all effects expire")
+	# Warning lanes: shown while awake, never in a story-safe section.
+	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
+	check(fx.warning_count() == 1, "warning lane recorded")
+	game.set_story_safe(true)
+	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
+	fx._process(0.01)
+	check(fx.warning_count() == 0, "no warning lane while story-safe")
+	game.set_story_safe(false)
+	check(game.player.health == health and game.player.position == pos and game.score == score, "effects do not change gameplay state")
+	print("FX layer: %d passed, %d failed" % [passed, failed])
+	quit(1 if failed else 0)
