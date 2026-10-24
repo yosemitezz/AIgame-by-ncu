@@ -8,6 +8,7 @@ signal animation_event(actor: Node, state: String, frame: int, facing: int)
 signal parry_contacted(defender: Node, source: Node, contact: Vector2, kind: String)
 
 const MeleeQuery = preload("res://combat/melee_query.gd")
+const SwordWave = preload("res://combat/sword_wave.gd")
 const Player = preload("res://actors/player.gd")
 const Enemy = preload("res://actors/enemy.gd")
 const Projectile = preload("res://combat/projectile.gd")
@@ -46,6 +47,7 @@ var effects: Node2D
 var _motion_fx: Node
 var speed_effects_level: int = 1
 var _attack_hits: Dictionary = {}
+var _sword_wave_serials: Dictionary = {}
 var parry_feedback_count: int = 0
 var last_parry_kind: String = ""
 var last_parry_contact: Vector2 = Vector2.ZERO
@@ -115,6 +117,7 @@ func _ready() -> void:
     player.position = checkpoint
     player.z_index = 3
     player.died.connect(_on_player_died)
+    player.weapon_changed.connect(_on_weapon_changed)
     add_child(player)
     _camera = Camera2D.new()
     _camera.position = camera_target(player.position, player.facing)
@@ -167,6 +170,14 @@ func _ready() -> void:
         _room_prepare = 0.25
         set_story_safe(true)
         player.set_physics_process(false)
+
+func _on_weapon_changed(id: String) -> void:
+    var hints: Dictionary = {
+        "light": "轻剑：穿刺 / 突刺 / 第三段螺旋钻进",
+        "heavy": "重剑：三段劈砍 / 第三段释放剑气",
+        "great": "双手剑：扭身圆斩 / 剑路扫过前后"
+    }
+    if outcome == "" and not room_flow.active: announce(str(hints.get(id,"")),3.0)
 
 func _setup_input() -> void:
     _bind("move_left", [KEY_A, KEY_LEFT])
@@ -315,7 +326,7 @@ func enemy_out_of_bounds(at: Vector2) -> bool:
 
 
 func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) -> void:
-    if story_safe or outcome != "" or source.get("attack_phase") != "active":
+    if story_safe or _paused or get_tree().paused or outcome != "" or source.get("attack_phase") != "active":
         return
     var source_id: int = source.get_instance_id()
     var serial: int = int(source.attack_serial)
@@ -333,7 +344,7 @@ func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) ->
             hits[enemy.get_instance_id()] = true
             if source.has_method("confirm_attack_hit"):
                 source.confirm_attack_hit()
-            request_impact(source,enemy,combo_index==3)
+            request_impact(source,enemy,combo_index==3,false,"weapon_" + str(source.get("weapon")))
             if enemy != boss and enemy.has_method("react") and not bool(enemy.dead):
                 enemy.react("launch" if combo_index == 3 else ("stun" if combo_index == 2 else "knockback"), source.global_position)
         elif enemy == boss:
@@ -354,6 +365,41 @@ func spawn_projectile(at: Vector2, velocity: Vector2, friendly: bool = false, st
     projectile.configure(self, at, velocity, friendly, style)
     add_child(projectile)
     return projectile
+
+func spawn_sword_wave(source: Node2D, serial: int) -> Node2D:
+    # A separate owner/ledger: a released wave survives a later weapon swap,
+    # but cannot be emitted again by the same contact or consume hostile budget.
+    if source != player or not is_instance_valid(source) or source.dead or story_safe or outcome != "" or _paused or get_tree().paused or room_flow.active:
+        return null
+    if source.weapon != "heavy" or source.combo != 3 or source.attack_phase != "active" or source.attack_serial != serial:
+        return null
+    var owner_id: int = source.get_instance_id()
+    if int(_sword_wave_serials.get(owner_id, -1)) >= serial:
+        return null
+    _sword_wave_serials[owner_id] = serial
+    if get_tree().get_nodes_in_group("hero_waves").size() >= SwordWave.live_limit():
+        return null
+    var wave: Node2D = SwordWave.new()
+    wave.configure(self, source, serial)
+    wave.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(wave)
+    return wave
+
+func sword_wave_hit(wave: Node2D, target: Node2D, origin: Vector2) -> bool:
+    if story_safe or _paused or get_tree().paused or room_flow.active or outcome != "" or not is_instance_valid(wave) or not wave.is_in_group("hero_waves") or not is_instance_valid(target) or target.get("dead") == true:
+        return false
+    var before: int = int(target.health)
+    target.receive_hit(int(wave.damage), origin)
+    if int(target.health) >= before:
+        return false
+    if is_instance_valid(impact): impact.request(wave, target, true, false, "weapon_wave")
+    if target != boss and not bool(target.dead) and target.has_method("react"):
+        target.react("knockback", origin)
+    return true
+
+func clear_sword_waves() -> void:
+    for wave: Node in get_tree().get_nodes_in_group("hero_waves"):
+        if is_ancestor_of(wave): wave.clear()
 
 func spawn_boss_hazard(hazard: Node2D) -> bool:
     if not is_instance_valid(hazard):
@@ -378,6 +424,7 @@ func clear_boss_hazards() -> void:
 func set_story_safe(value: bool) -> void:
     story_safe = value
     if value:
+        clear_sword_waves()
         clear_boss_hazards()
         var gradient: Node = get_node_or_null("FxLayer")
         if is_instance_valid(gradient) and gradient.has_method("clear_hostile"):
@@ -480,7 +527,7 @@ func _retire_room_node(node: Node) -> void:
 func _mount_room(next_room: String) -> void:
     music.stop_score()
     set_story_safe(true)
-    for group: String in ["projectiles", "boss_hazards", "enemies"]:
+    for group: String in ["projectiles", "hero_waves", "boss_hazards", "enemies"]:
         for node: Node in get_tree().get_nodes_in_group(group):
             if is_ancestor_of(node): _retire_room_node(node)
     _retire_room_node(_elite_gate)
@@ -493,6 +540,7 @@ func _mount_room(next_room: String) -> void:
     _strokes.clear()
     _warnings.clear()
     _attack_hits.clear()
+    _sword_wave_serials.clear()
     _parry_event_sources.clear()
     var gradient: Node = get_node_or_null("FxLayer")
     if is_instance_valid(gradient): gradient.clear_motion_decor()
@@ -613,9 +661,9 @@ func on_parry_contact(defender: Node, source: Node, contact: Vector2, kind: Stri
         impact.request(defender, source, kind == "guard_break", true, "break" if kind == "guard_break" else ("reflect" if kind == "projectile" else ""))
     parry_contacted.emit(defender, source, contact, kind)
 
-func request_impact(source: Node, target: Node, heavy: bool = false, parry: bool = false) -> void:
+func request_impact(source: Node, target: Node, heavy: bool = false, parry: bool = false, variant: String = "") -> void:
     if is_instance_valid(impact):
-        impact.request(source, target, heavy, parry)
+        impact.request(source, target, heavy, parry, variant)
 
 func _refresh_hud() -> void:
     if not is_instance_valid(player):

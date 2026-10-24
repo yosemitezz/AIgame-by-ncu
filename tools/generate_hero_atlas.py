@@ -39,24 +39,27 @@ def build_weapon(wid):
     total = sum(n for _, n, _ in states)
     rows = -(-total // COLS)
     atlas = Image.new('RGBA', (COLS * R.W, rows * R.H))
-    mapping, tips, index = {}, {}, 0
+    mapping, tips, poses, index = {}, {}, {}, 0
     for name, n, build in states:
         mapping[name] = {'start': index, 'count': n}
-        pts = []
+        pts, joints = [], []
         for f in range(n):
-            im, _, tip = R.render(build(f))
+            pose = build(f)
+            im, skeleton, tip = R.render(pose)
+            joints.append({key: [round(value[0]*R.SC,2),round(value[1]*R.SC,2)] for key,value in skeleton.items() if key in ("hip","shoulder","hand","foot_f","foot_b")})
             atlas.alpha_composite(im, ((index % COLS) * R.W, (index // COLS) * R.H))
             pts.append([round(tip[0] * R.SC), round(tip[1] * R.SC)])
             index += 1
         if name.startswith(('cut_', 'air_cut_')):
             tips[name] = pts
+            poses[name] = joints
     ps = R.PARRY_STATES
     sheet = Image.new('RGBA', (4 * R.W, len(ps) * R.H))
     for row, state in enumerate(ps):
         for f in range(4):
             im, _, _ = R.render(R.parry(state, f))
             sheet.alpha_composite(im, (f * R.W, row * R.H))
-    return atlas, mapping, total, tips, sheet
+    return atlas, mapping, total, tips, sheet, poses
 
 
 def main():
@@ -64,20 +67,20 @@ def main():
     R.use_weapon('light')
 
     feel_weapons, parry_weapons = {}, {}
-    for wid, (atlas, _, _, tips, sheet) in results.items():
+    for wid, (atlas, _, _, tips, sheet, poses) in results.items():
         s = suffix(wid)
         atlas.save(FEEL / f'hero_atlas{s}.png')
         tint(atlas, '#63c5d2').save(FEEL / f'hero_silhouette{s}.png')
         tint(atlas, '#e8fff0').save(FEEL / f'hero_flash{s}.png')
-        feel_weapons[wid] = {'atlas': f'hero_atlas{s}.png', 'flash': f'hero_flash{s}.png',
-                             'silhouette': f'hero_silhouette{s}.png', 'weapon_tips': tips}
+        feel_weapons[wid] = {'motion': {'light':'point thrust / drill advance', 'heavy':'descending / rising / overhead cleaves', 'great':'two-handed pivot / reverse / full orbit'}[wid], 'active_frames':8, 'atlas': f'hero_atlas{s}.png', 'flash': f'hero_flash{s}.png',
+                             'silhouette': f'hero_silhouette{s}.png', 'weapon_tips': tips, 'pose_joints':poses}
         sheet.save(PARRY / f'hero_parry{s}.png')
         tint(sheet, '#e8fff0').save(PARRY / f'hero_flash{s}.png')
         parry_weapons[wid] = {'parry': f'hero_parry{s}.png', 'flash': f'hero_flash{s}.png'}
 
-    _, mapping, total, tips, sheet = results['light']
+    _, mapping, total, tips, sheet, _ = results['light']
     source = ('Dark-fantasy knight joint rig in tools/hero_rig.py (bascinet, pauldron, crimson cape and tabard, '
-              'three swords: light, heavy, great), re-rasterised per frame at 4x then reduced with NEAREST.')
+              'three independently posed swords: light thrust/drill, heavy cleaves, great orbit), eight active frames per attack, re-rasterised per frame at 4x then reduced with NEAREST.')
     manifest_path = FEEL / 'manifest.json'
     info = json.loads(manifest_path.read_text(encoding='utf-8'))
     info['hero'].update({'canvas': [R.W, R.H], 'anchor': list(R.ANCHOR), 'columns': COLS, 'states': mapping,

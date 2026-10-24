@@ -29,9 +29,23 @@ static func collect(source: Node2D, targets: Array, from_progress: float = -1.0,
 	var polygon: PackedVector2Array = AttackProfile.world_polygon(source, from_progress, to_progress)
 	if polygon.size() < 3:
 		return hits
+	var value: Variant = source.get("combo")
+	var combo: int = int(value) if value != null else 1
+	var wid_value: Variant = source.get("weapon")
+	var wid: String = str(wid_value) if wid_value != null else ""
+	var mode: String = AttackProfile.kind(combo,wid)
+	var previous: Vector2 = source.global_position
+	var saved: Variant = source.get("attack_previous_position")
+	if mode == "thrust" and saved is Vector2 and saved.is_finite():
+		previous = saved
+		var translated: PackedVector2Array = polygon.duplicate()
+		for point: Vector2 in translated: polygon.append(point + previous - source.global_position)
+		polygon = Geometry2D.convex_hull(polygon)
 	var direction: Variant = source.get("facing")
 	var facing: float = -1.0 if direction != null and float(direction) < 0.0 else 1.0
-	var cast_origin: Vector2 = source.global_position + Vector2(AttackProfile.origin().x * facing, AttackProfile.origin().y)
+	var local_origin: Vector2 = Vector2(AttackProfile.origin().x*facing,AttackProfile.origin().y)
+	var cast_origin: Vector2 = source.global_position + local_origin
+	var cast_previous: Vector2 = previous + local_origin
 	var unique: Dictionary = {}
 	for candidate: Variant in targets:
 		if typeof(candidate) != TYPE_OBJECT or not is_instance_valid(candidate):
@@ -49,7 +63,7 @@ static func collect(source: Node2D, targets: Array, from_progress: float = -1.0,
 		center /= hurt.size()
 		# A behind-center target is never hit just because a large hurtbox overlaps
 		# the caster. Actual forward overlap is still required by the swept polygon.
-		if (center.x - source.global_position.x) * facing < 0.0:
+		if mode != "spin" and (center.x-source.global_position.x)*facing < 0.0 and (mode != "thrust" or (center.x-previous.x)*facing < 0.0):
 			continue
 		var intersections: Array[PackedVector2Array] = Geometry2D.intersect_polygons(polygon, hurt)
 		if intersections.is_empty():
@@ -68,13 +82,14 @@ static func collect(source: Node2D, targets: Array, from_progress: float = -1.0,
 		if not visible and source.is_inside_tree() and source.get_world_2d() != null:
 			var state: PhysicsDirectSpaceState2D = source.get_world_2d().direct_space_state
 			for contact: Vector2 in contacts:
-				var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(cast_origin, contact, world_mask)
-				query.hit_from_inside = true
-				if source is CollisionObject2D:
-					query.exclude = [source.get_rid()]
-				if state.intersect_ray(query).is_empty():
-					visible = true
-					break
+				for start: Vector2 in [cast_origin,cast_previous]:
+					var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start,contact,world_mask)
+					query.hit_from_inside = true
+					if source is CollisionObject2D: query.exclude = [source.get_rid()]
+					if state.intersect_ray(query).is_empty():
+						visible = true
+						break
+				if visible: break
 		if visible:
 			hits.append(target)
 	return hits

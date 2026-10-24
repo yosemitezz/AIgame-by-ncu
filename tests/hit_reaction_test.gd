@@ -131,7 +131,7 @@ func run() -> void:
 		game.hero_attack(hero, 1, Hero.HIT_REACH[int(probe[0]) - 1], int(probe[0]))
 		check((target.health < target.max_health) == bool(probe[2]), "combo %d at %d px: %s" % [probe[0], int(probe[1]), "hit" if probe[2] else "out of range"])
 		target.queue_free()
-	# Vertical tolerance covers a foe standing on a ledge one body height up.
+	# The light point stays in its visible corridor; a heavy overhead cleave reaches a raised ledge.
 	var high: CharacterBody2D = Enemy.new()
 	high.configure(game, "sentry", Vector2(40.0, 300.0 - 36.0))
 	high.set_physics_process(false)
@@ -143,7 +143,16 @@ func run() -> void:
 	hero.attack_sweep_from = 0.0
 	hero.attack_sweep_to = 1.0
 	game.hero_attack(hero, 1, Hero.HIT_REACH[0], 1)
-	check(high.health < high.max_health, "a foe 36 px higher is still hit")
+	check(high.health == high.max_health, "light thrust misses a foe 36 px above its narrow visible corridor")
+	hero._cancel_attack()
+	hero.set_weapon("heavy")
+	hero.attack_serial += 1
+	hero.attack_phase = "active"
+	hero.combo = 1
+	hero.attack_sweep_from = 0.0
+	hero.attack_sweep_to = 1.0
+	game.hero_attack(hero, 1, 168.0, 1)
+	check(high.health < high.max_health, "heavy overhead cleave still hits a foe on a ledge 36 px higher")
 	high.queue_free()
 	# Impact sounds: every kind is synthesized, audible, not clipped flat, and heavier hits are bigger and longer.
 	var sfx: Node = fb.sounds

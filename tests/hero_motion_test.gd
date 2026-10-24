@@ -102,16 +102,25 @@ func run() -> void:
 	check(Renderer.hero_region("attack", 2, 1) != Renderer.hero_region("attack", 2, 3), "finisher keeps a distinct pose")
 	var reach: float = 0.0
 	for combo: int in [1, 2, 3]:
-		for f: int in range(4):
+		for f: int in range(8):
 			reach = maxf(reach, absf(Renderer.weapon_tip_local(combo, f).x))
 	check(reach >= 55.0, "blade tip sweeps at least 55 px from the feet axis (%.0f)" % reach)
 	var low: float = 0.0
 	var high: float = 0.0
-	for f: int in range(4):
-		var tip: Vector2 = Renderer.weapon_tip_local(1, f)
+	for f: int in range(8):
+		var tip: Vector2 = Renderer.weapon_tip_local(1, f, false, "heavy")
 		low = minf(low, tip.y)
 		high = maxf(high, tip.y)
-	check(low < -60.0 and high > -10.0, "first cut sweeps from overhead to ground level (%.0f to %.0f)" % [low, high])
+	check(low < -60.0 and high > -10.0, "heavy first cleave sweeps from overhead to ground level (%.0f to %.0f)" % [low, high])
+	var light_low: float = INF
+	var light_high: float = -INF
+	var point_forward: bool = true
+	for f: int in range(8):
+		var tip: Vector2 = Renderer.weapon_tip_local(1, f, false, "light")
+		light_low = minf(light_low, tip.y)
+		light_high = maxf(light_high, tip.y)
+		point_forward = point_forward and tip.x > 0.0
+	check(point_forward and light_high - light_low <= 12.0, "light first thrust keeps the point in a narrow forward corridor (%.0f to %.0f)" % [light_low, light_high])
 
 	# Crouch: held input, slower walk, no collider change, blocked in the air and during attacks.
 	reset_actor()

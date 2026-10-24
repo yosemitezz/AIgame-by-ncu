@@ -3,8 +3,6 @@ extends SceneTree
 const Visual = preload("res://presentation/enemy_visual.gd")
 const Renderer = preload("res://presentation/actor_renderer.gd")
 const Enemy = preload("res://actors/enemy.gd")
-const HERO_SHA: String = "a544f3443546e66ccddcd19ed566ed2af3fa000f189fd2eef9861a81158a4ea8"
-const IMPACT_SHA: String = "4bff7680dc43e6615561771b3d688b2d4fc3663e646fa70ce26a612c44ed9a48"
 class Probe extends Node2D:
 	var cast_phase: String = "none"
 	var cast_progress: float = 0.0
@@ -19,8 +17,8 @@ func check(value: bool,label: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
-	check(FileAccess.get_sha256("res://presentation/feel_frames/hero_atlas.png")==HERO_SHA,"long-limb Hero source atlas remains byte-identical")
-	check(FileAccess.get_sha256("res://combat/impact_feedback.gd")==IMPACT_SHA,"primary heavy-impact source remains byte-identical")
+	var hero_atlas: Texture2D=load("res://presentation/feel_frames/hero_atlas.png")
+	check(hero_atlas!=null and hero_atlas.get_width()==8*144 and hero_atlas.get_height()%128==0,"revised Hero atlas keeps native whole cells in the eight-column grid")
 	check(Renderer.HERO_SIZE==Vector2(144,128) and Renderer.HERO_ANCHOR==Vector2(66,108),"Hero native drawing contract is unchanged")
 	check(Visual.CELL==Vector2(80,80) and Visual.ANCHOR==Vector2(40,76),"six-kind native cell and feet anchor are stable")
 	check(Visual.data().get("kinds",{}).size()==6 and not Visual.supports("unknown_kind"),"six distinct kind dispatches never silently fall back to a sentry")
@@ -65,6 +63,7 @@ func run() -> void:
 	game.player.set_physics_process(false)
 	game.music.stop_score()
 	game.music.set_process(false)
+	check(is_instance_valid(game.impact) and game.impact.has_method("request") and game.impact.has_method("sample_camera") and game.impact.has_method("sample_zoom"),"weapon-specific feedback retains the shared impact and camera service API")
 	for actor: Node in get_nodes_in_group("enemies"):actor.set_physics_process(false)
 	var hp: int=game.player.health
 	var at: Vector2=game.player.position

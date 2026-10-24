@@ -19,10 +19,10 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	# ---- data: the light sword keeps the original numbers, the others are slower, longer or harder hitting.
+	# ---- data: light retains reach/damage and first two cadences, with a narrow thrust corridor and long drill finisher.
 	AttackProfile.set_weapon("light")
 	check(AttackProfile.weapon_ids().size() == 3 and AttackProfile.weapon_ids().has("heavy") and AttackProfile.weapon_ids().has("great"), "three swords are defined")
-	check(AttackProfile.radii(1) == Vector2(180, 72) and AttackProfile.radii(3) == Vector2(228, 96), "light sword keeps the original reach")
+	check(AttackProfile.radii(1) == Vector2(180, 12) and AttackProfile.radii(3) == Vector2(228, 20), "light sword retains forward reach with a narrow thrust corridor")
 	check(is_equal_approx(AttackProfile.duration(1, "windup"), 0.065) and is_equal_approx(AttackProfile.total_duration(1), 0.065 + 0.105 + 0.14), "light sword keeps the original timing")
 	check(AttackProfile.damage(1) == 1 and AttackProfile.damage(2) == 1 and AttackProfile.damage(3) == 2, "light sword keeps the original damage 1 / 1 / 2")
 	var light_total: float = AttackProfile.total_duration(1)
@@ -142,6 +142,7 @@ func run() -> void:
 	# Hit stop and recoil are heavier with heavier steel.
 	var stops: Dictionary = {}
 	for id: String in ["light", "heavy", "great"]:
+		player._cancel_attack() # Isolate equipment fixtures; live mid-swing switching is tested above.
 		player.set_weapon(id)
 		player.combat_freeze = 0.0
 		player.attack_phase = "active"
@@ -151,6 +152,7 @@ func run() -> void:
 	check(float(stops["great"]) <= 0.12 * 1.6 + 0.0001, "hit stop stays bounded")
 	var recoils: Dictionary = {}
 	for id: String in ["light", "heavy", "great"]:
+		player._cancel_attack() # Isolate equipment fixtures; live mid-swing switching is tested above.
 		player.set_weapon(id)
 		player.attack_phase = "active"
 		player.combo = 2
@@ -172,6 +174,7 @@ func run() -> void:
 	player.facing = 1
 	var reached: Dictionary = {}
 	for id: String in ["light", "great"]:
+		player._cancel_attack()
 		player.set_weapon(id)
 		player.combo = 1
 		player.attack_phase = "active"
@@ -206,10 +209,14 @@ func run() -> void:
 			check(ResourceLoader.exists("res://presentation/feel_frames/" + str(entry.get("atlas", "missing"))), "%s atlas exists" % id)
 		var reach_light: float = 0.0
 		var reach_great: float = 0.0
-		for f: int in 4:
+		var rear_great: float = 0.0
+		var rear_light: float = INF
+		for f: int in 8:
 			reach_light = maxf(reach_light, absf(Renderer.weapon_tip_local(2, f, false, "light").x))
 			reach_great = maxf(reach_great, absf(Renderer.weapon_tip_local(2, f, false, "great").x))
-		check(reach_great > reach_light, "the greatsword tip sweeps further than the light sword tip (%.0f vs %.0f)" % [reach_great, reach_light])
+			rear_great = minf(rear_great, Renderer.weapon_tip_local(2, f, false, "great").x)
+			rear_light = minf(rear_light, Renderer.weapon_tip_local(2, f, false, "light").x)
+		check(reach_great >= 60.0 and rear_great < -40.0 and rear_light > 0.0, "greatsword turns around the body while the light point stays in front (rear %.0f / %.0f, front reach %.0f / %.0f)" % [rear_great, rear_light, reach_great, reach_light])
 		for id: String in ["heavy", "great"]:
 			var atlas: Texture2D = load("res://presentation/feel_frames/" + str(weapons[id]["atlas"]))
 			check(atlas != null and atlas.get_width() == 8 * 144 and atlas.get_height() == load("res://presentation/feel_frames/hero_atlas.png").get_height(), "%s atlas has the same grid as the light atlas" % id)
@@ -220,6 +227,7 @@ func run() -> void:
 	var fx: Node = game.get_node("FxLayer")
 	fx.set_process(false)
 	for id: String in ["light", "heavy", "great"]:
+		player._cancel_attack() # Isolate equipment fixtures; live mid-swing switching is tested above.
 		player.set_weapon(id)
 		player.attack_phase = "active"
 		for combo: int in [1, 2, 3]:

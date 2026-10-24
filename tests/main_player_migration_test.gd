@@ -107,9 +107,9 @@ func run() -> void:
 	check(Player.INFINITE_AIR_JUMPS and is_instance_valid(player.wings), "main infinite air jumps and LightWings survive migration")
 	check(player.get_child(0).shape.size == Vector2(14.0, 26.0), "existing hero collider retained")
 	for combo: int in [1, 2, 3]:
-		var expected: float = [0.31, 0.36, 0.49][combo - 1]
-		check(absf(Profile.total_duration(combo) - expected) < 0.00001 and absf(Player.COMBO_LENGTHS[combo - 1] - expected) < 0.00001, "combo %d retains main cadence" % combo)
-		check(Player.LUNGE_SPEED[combo - 1] == [130.0, 170.0, 210.0][combo - 1] and is_equal_approx(Player.LUNGE_TIME, 0.085), "combo %d retains main forward step" % combo)
+		var expected: float = [0.31, 0.36, 0.66][combo - 1]
+		check(absf(Profile.total_duration(combo) - expected) < 0.00001 and absf(Player.COMBO_LENGTHS[combo - 1] - expected) < 0.00001, "combo %d matches the light thrust/drill cadence" % combo)
+		check(Player.LUNGE_SPEED[combo - 1] == [180.0, 280.0, 560.0][combo - 1] and is_equal_approx(Profile.lunge_seconds(combo), [0.075, 0.11, 0.32][combo - 1]), "combo %d uses its distinct point-led step/drill duration" % combo)
 		check(Player.HIT_REACH[combo - 1] == [180.0, 204.0, 228.0][combo - 1], "combo %d shares wide reach" % combo)
 	reset(Vector2(0.0, 150.0))
 	# Let the preserved coyote window expire before asserting every press is airborne.
@@ -246,9 +246,17 @@ func run() -> void:
 	var behind: Node2D = marker(Vector2(-1.0, -24.0))
 	var outside_ellipse: Node2D = marker(Vector2(170.0, 40.0))
 	var hits: Array[Node2D] = Query.collect(player, [near, far, behind, outside_ellipse, near], -1.0, -1.0, 0)
-	check(hits.size() == 1 and hits.has(near), "wide geometry honors ellipse/boundary/behind and deduplicates candidate list")
+	check(hits.size() == 1 and hits.has(near), "narrow thrust honors front boundary/behind/height and deduplicates candidate list")
 	var elevated: Node2D = marker(Vector2(40.0, -48.0))
-	check(Query.collect(player, [elevated], 0.25, 1.0, 0).has(elevated), "shared first-cut upper arc preserves near target 36 px above feet")
+	check(Query.collect(player, [elevated], 0.25, 1.0, 0).is_empty(), "light thrust cannot damage an elevated target outside the visible corridor")
+	# The heavy cleave retains an elevated arc and a swept intermediate angle.
+	player._cancel_attack()
+	player.set_weapon("heavy")
+	player.attack_phase = "active"
+	player.combo = 1
+	player.attack_sweep_from = 0.25
+	player.attack_sweep_to = 1.0
+	check(Query.collect(player, [elevated], 0.25, 1.0, 0).has(elevated), "heavy cleave reaches the elevated target the narrow thrust cannot")
 	var sweep: PackedVector2Array = Profile.sweep_polygon(1, 0.25, 1.0)
 	var between: Vector2 = Profile.origin() + Vector2(cos(deg_to_rad(20.0)) * 160.0, sin(deg_to_rad(20.0)) * 64.0)
 	check(Geometry2D.is_point_in_polygon(between, sweep) and not Geometry2D.is_point_in_polygon(between, Profile.sweep_polygon(1, 0.25, 0.25)) and not Geometry2D.is_point_in_polygon(between, Profile.sweep_polygon(1, 1.0, 1.0)), "sweep covers an intermediate angle missed by both endpoints")
@@ -261,10 +269,11 @@ func run() -> void:
 	wall.add_child(wall_shape)
 	arena.add_child(wall)
 	await physics_frame
-	check(Query.collect(player, [near]).is_empty(), "world-mask one blocks otherwise valid wide hit through wall")
+	near.position.x = 164.0
+	check(Query.collect(player, [near]).is_empty(), "world-mask one blocks otherwise valid heavy hit through wall")
 	wall.free()
 	await physics_frame
-	check(Query.collect(player, [near]).has(near), "removing occluder restores geometry candidate")
+	check(Query.collect(player, [near]).has(near), "removing occluder restores the heavy geometry candidate")
 	player.attack_phase = "recover"
 	check(Query.collect(player, [near], 0.25, 1.0, 0).is_empty(), "recover cannot create a second damage query")
 	check(is_equal_approx(Engine.time_scale, 1.0), "migration never changes global time scale")

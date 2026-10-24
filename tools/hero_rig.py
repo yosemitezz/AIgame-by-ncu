@@ -11,6 +11,8 @@ contact point on the ground. Frames are drawn at 4x and reduced with NEAREST so 
 No external sheet, no 3D, no model output.
 """
 import math
+import json
+from pathlib import Path
 from PIL import Image, ImageDraw
 
 W, H = 144, 128
@@ -48,6 +50,8 @@ WEAPONS = {
                   colors=dict(bl='#b9c6d4', bl_dark='#6f7f93', bl_hi='#f0f6fb', cyan='#ffe9a0',
                               sm1='#b79a4e', sm2='#ffe9a0', smw='#fffbe8')),
 }
+ATTACK_DATA = json.loads((Path(__file__).resolve().parents[1] / 'data/hero_attack_profiles.json').read_text(encoding='utf-8'))
+
 SPEC = WEAPONS['light']
 WEAPON_ID = 'light'
 
@@ -368,7 +372,7 @@ def draw_torso(pen, S, p):
     pen.poly(side(waist, sh, 4.0 + 0.0, wide + 1.2), 'shade', 0.9)
     # Breastplate faces forward more as the twist opens it.
     mid = lerp2(waist, sh, 0.55)
-    face = 0.4 + 0.6 * max(0.0, math.sin(phi) * 1.4)
+    face = (0.4 + 0.6 * max(0.0, math.sin(phi) * 1.4)) * (.72 + .28 * p.get('roll', 1.0))
     pen.poly(side(lerp2(waist, sh, 0.15), lerp2(waist, sh, 0.92), 2.0 + 1.5 * face, 2.6 + 1.8 * face), 'plate', 0.7)
     pen.line(lerp2(waist, sh, 0.2), lerp2(waist, sh, 0.85), 'gold', 0.5)
     pen.line(add(lerp2(waist, sh, 0.7), (-1.6, 0.0)), add(lerp2(waist, sh, 0.7), (1.6, 0.0)), 'metal', 0.5)
@@ -425,6 +429,9 @@ def _render_once(p):
     if p['smear']:
         draw_smear(pen, S, p)
     draw_cape(pen, S, p, rot)
+    rear_sword = bool(p.get('back_sword', False))
+    if rear_sword:
+        tip = draw_sword(pen, S['hand'], ang, p['glow'])
     draw_leg(pen, S['hip'], S['knee_b'], S['ank_b'], S['foot_b'], p['fba'] + rot, True)
     draw_arm(pen, S['sh_f'], S['elbow_b'], S['hand_b'], True)
     draw_torso(pen, S, p)
@@ -433,7 +440,8 @@ def _render_once(p):
     draw_tabard(pen, S, p)
     draw_shoulder(pen, S, rot)
     draw_arm(pen, S['sh_n'], S['elbow'], S['hand'], False)
-    tip = draw_sword(pen, S['hand'], ang, p['glow'])
+    if not rear_sword:
+        tip = draw_sword(pen, S['hand'], ang, p['glow'])
     draw_gauntlet(pen, S['hand'])
     if p['two_hand'] or sp['two']:
         draw_gauntlet(pen, S['hand_b'])
@@ -444,13 +452,16 @@ def render(p):
     """Render one pose. If the active sword would leave the cell (under 1 px margin), shorten only the blade."""
     global SPEC
     full = SPEC
+    if p.get('sword_scale'):
+        SPEC = dict(full, blade=full['blade'] * p['sword_scale'])
+    active_spec = SPEC
     try:
         for k in range(12):
             im, S, tip = _render_once(p)
             bb = im.getchannel('A').getbbox()
             if bb is None or min(bb[0], bb[1], W - bb[2], H - bb[3]) >= 1 or k == 11:
                 return im, S, tip
-            SPEC = dict(full, blade=full['blade'] - 2.0 * (k + 1))
+            SPEC = dict(active_spec, blade=active_spec['blade'] - 2.0 * (k + 1))
     finally:
         SPEC = full
 
@@ -625,15 +636,134 @@ CUTS = {
 }
 
 
-def cut(combo, phase, f, air=False):
-    a, e, b, lean, curve, tw, hx, cr, ffx, fbx, hb, smear = CUTS[combo][phase][f]
-    kw = dict(lean=lean, curve=curve, twist=tw, arm=a, ext=e, blade=b, hb=hb, smear=smear, glow=(phase == 'attack'),
-              two_hand=(combo == 3 and phase != 'recover'), phase=f * 1.2 + combo, wind=(-1, -0.2 if phase == 'attack' else 0.1),
-              scarf=1.5 if phase == 'attack' else 1.1, head=-lean * 0.35, elbow_up=(a < -60 and phase == 'windup'), sash=1.0)
+def attack_profile(combo):
+    """The visible steel direction samples the same authored keys as its energy sweep."""
+    result = dict(ATTACK_DATA['combos'][str(combo)])
+    result.update(ATTACK_DATA['weapons'][WEAPON_ID].get('combos', {}).get(str(combo), {}))
+    return result
+
+
+def key_value(keys, t):
+    for i in range(1, len(keys)):
+        a, b = keys[i - 1], keys[i]
+        if t <= b[0]:
+            return lerp(a[1], b[1], max(0, min(1, (t - a[0]) / max(.000001, b[0] - a[0]))))
+    return keys[-1][1]
+
+
+def _cut_ground_air(kw, air, hx, crouch, front, back, f):
     if air:
-        return airborne(front_up=-18 + (f % 2), back_up=-12, hip=(hx * 0.5, -33 + cr * 0.25), **kw)
-    return stance(ffx - fbx, (ffx + fbx) * 0.5 - 0.0, crouch=cr, **{**kw, 'hip': (hx, STAND_HIP + cr)}) if False else \
-        base_pose(hip=(hx, STAND_HIP + cr), ff=(ffx, 0.0), fb=(fbx, 0.0), **kw)
+        # Free legs tuck and counterbalance the sword; feet are never pasted onto a floor.
+        return airborne(front_up=-18 + 3 * math.sin(f * .8), back_up=-9 - 6 * math.cos(f * .9),
+                        hip=(hx * .55, -34 + crouch * .23), **kw)
+    return base_pose(hip=(hx, STAND_HIP + crouch), ff=(front, 0.0), fb=(back, 0.0), **kw)
+
+
+def light_cut(combo, phase, f, air=False):
+    t = f / (7 if phase == 'attack' else 3)
+    drill = combo == 3
+    low = combo == 2
+    if phase == 'windup':
+        q = smooth(t)
+        kw = dict(lean=lerp(6, -12 if drill else -6, q), curve=lerp(3, -5, q),
+                  twist=lerp(.2, -.95 if drill else -.65, q), arm=lerp(5, -164 if drill else -145, q),
+                  ext=lerp(.7, .25, q), blade=lerp(0, -6 if low else 6, q), hb=(-7, 8),
+                  wind=(-1, -.1), scarf=1.1, head=4 * q, phase=f * .7)
+        return _cut_ground_air(kw, air, -6*q, 4+5*q, 12+3*q, -11-5*q, f)
+    if phase == 'attack':
+        profile = attack_profile(combo)
+        extension = key_value(profile.get('thrust_keys', [[0,.1],[.25,.58],[.5,1],[1,.78]]), t)
+        # Hips leave the heel before the shoulder and point fully extend.
+        drive = smooth(min(1, t * 2.6))
+        rotation = (t * math.tau * 1.8) if drill else (t * 2.3)
+        kw = dict(lean=lerp(5, 48 if drill else 32, drive), curve=lerp(2, 9, drive),
+                  twist=math.sin(rotation) * (.95 if drill else .4), arm=-4 + (-10 if low else 4) * (1-drive),
+                  ext=lerp(.2, 1, extension), blade=-4 if low else 1,
+                  hb=(-10, 2 + (math.cos(rotation) * 12 if drill else 7)),
+                  wind=(-1, -.12 + .3*math.sin(rotation)), scarf=1.6 if drill else 1.25,
+                  phase=f * 1.2, head=-18 if drill else -9, glow=True,
+                  roll=math.cos(rotation) if drill else 1.0)
+        p = _cut_ground_air(kw, air, 2+9*drive, 5+4*drive, 24+5*drive, -15-3*drive, f)
+        if drill and .24 < t < .84:
+            # The launched drill tucks both knees and alternates the near/far shin.
+            # Joints are re-authored; no whole-sheet transform or invulnerability is involved.
+            roll = math.sin((t-.24)/.60*math.tau*1.6)
+            p['ff'] = (-4+9*roll, -5-9*max(0,roll))
+            p['fb'] = (-19-6*roll, -5-9*max(0,-roll))
+            p['ffa'] = 25+35*roll
+            p['fba'] = 25-35*roll
+            p['twist'] = roll
+            p['roll'] = roll
+            p['curve'] = 8+5*roll
+        return p
+    q = smooth(t)
+    kw = dict(lean=lerp(43 if drill else 30, 9, q), curve=lerp(10, 4, q), twist=lerp(.8,.1,q),
+              arm=lerp(-4, 48, q), ext=lerp(1,.6,q), blade=lerp(0,42,q), hb=(3,11),
+              wind=(-1, -.6+.7*q), scarf=lerp(1.5,1.0,q), head=lerp(-17,-2,q), phase=5+f)
+    return _cut_ground_air(kw, air, lerp(12,3,q), lerp(9,2,q), lerp(30,17,q), -12, f)
+
+
+def heavy_cut(combo, phase, f, air=False):
+    # Existing knight silhouette, newly articulated into three deliberately different sword paths.
+    table = CUTS[combo][phase]
+    v = f * (len(table)-1) / (7 if phase == 'attack' else 3)
+    i, j = int(v), min(len(table)-1, int(v)+1)
+    q = v - int(v)
+    row=[]
+    for a,b in zip(table[i],table[j]):
+        if isinstance(a,(int,float)): row.append(lerp(a,b,q))
+        elif isinstance(a,tuple) and isinstance(b,tuple): row.append(lerp2(a,b,q))
+        else: row.append(a)
+    a,e,b,lean,curve,tw,hx,cr,ffx,fbx,hb,smear=row
+    if phase == 'attack':
+        b = key_value(attack_profile(combo)['angle_keys'], f/7)
+        a = b - (8 if combo == 3 else 3)
+        cr += 3 if combo == 3 else 1
+        lean += 5 if combo == 3 else 2
+        smear = (b - (28 if combo != 2 else -28), b)
+    kw = dict(lean=lean,curve=curve,twist=tw,arm=a,ext=e,blade=b,hb=hb,
+              smear=smear if phase=='attack' else None,glow=phase=='attack',two_hand=combo==3,
+              phase=f*1.2+combo,wind=(-1,-.25 if phase=='attack' else .1),scarf=1.5 if phase=='attack' else 1.1,
+              head=-lean*.35,elbow_up=a < -60 and phase=='windup',sash=1.0)
+    return _cut_ground_air(kw,air,hx,cr,ffx,fbx,f)
+
+
+def great_cut(combo, phase, f, air=False):
+    t=f/(7 if phase=='attack' else 3)
+    reverse=-1 if combo==2 else 1
+    if phase=='windup':
+        q=smooth(t)
+        kw=dict(lean=lerp(7,-10,q),curve=-4,twist=-reverse*(.25+.7*q),arm=lerp(40,165*reverse,q),
+                ext=lerp(.65,.52,q),blade=lerp(48,175*reverse,q),two_hand=True,
+                wind=(-1,.3),scarf=1.25,head=4,phase=f*.9)
+        return _cut_ground_air(kw,air,-5*q,5+5*q,13+q,-13-2*q,f)
+    if phase=='attack':
+        deg=key_value(attack_profile(combo)['angle_keys'],t)
+        theta=rad(deg)
+        # Horizontal orbit: foreshorten the sword as it passes in front of/behind the chest,
+        # keeping steel above the floor instead of rotating a whole bitmap through the ground.
+        projected=math.degrees(math.atan2(math.sin(theta)*.46,math.cos(theta)))
+        drive=math.sin(theta)
+        kw=dict(lean=12+11*math.cos(theta),curve=5+3*drive,twist=math.cos(theta)*reverse,
+                arm=projected,ext=.78+.2*abs(math.cos(theta)),blade=projected,
+                two_hand=True,wind=(-math.cos(theta),-.15-.65*math.sin(theta)),scarf=1.45,
+                phase=f*1.4,head=-5-6*math.cos(theta),glow=True,
+                sword_scale=.62+.38*abs(math.cos(theta)),back_sword=math.sin(theta)>0,
+                smear=(projected-25*reverse,projected))
+        p=_cut_ground_air(kw,air,4*math.cos(theta),6+3*abs(drive),14+7*math.cos(theta),-13-5*math.cos(theta),f)
+        if not air:
+            p['ffa']=18*max(0,drive)
+            p['fba']=-18*max(0,-drive)
+        return p
+    q=smooth(t)
+    kw=dict(lean=lerp(21,7,q),curve=lerp(9,3,q),twist=lerp(reverse*.95,.1,q),arm=lerp(15,48,q),
+            ext=lerp(.9,.65,q),blade=lerp(8,48,q),two_hand=True,wind=(-1,-.6+.7*q),
+            scarf=lerp(1.5,1,q),head=lerp(-10,-1,q),phase=f*1.1)
+    return _cut_ground_air(kw,air,lerp(7,1,q),lerp(9,2,q),lerp(24,17,q),-12,f)
+
+
+def cut(combo, phase, f, air=False):
+    return {'light':light_cut,'heavy':heavy_cut,'great':great_cut}[WEAPON_ID](combo,phase,f,air)
 
 
 def atlas_states():
@@ -645,10 +775,10 @@ def atlas_states():
            ('dash', 4, dash), ('hurt', 4, hurt), ('dead', 4, dead)]
     for combo in (1, 2, 3):
         for phase in ('windup', 'attack', 'recover'):
-            out.append((f'cut_{combo}_{phase}', 4, lambda f, c=combo, ph=phase: cut(c, ph, f)))
+            out.append((f'cut_{combo}_{phase}', 8 if phase == 'attack' else 4, lambda f, c=combo, ph=phase: cut(c, ph, f)))
     for combo in (1, 2, 3):
         for phase in ('windup', 'attack', 'recover'):
-            out.append((f'air_cut_{combo}_{phase}', 4, lambda f, c=combo, ph=phase: cut(c, ph, f, air=True)))
+            out.append((f'air_cut_{combo}_{phase}', 8 if phase == 'attack' else 4, lambda f, c=combo, ph=phase: cut(c, ph, f, air=True)))
     return out
 
 

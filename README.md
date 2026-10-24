@@ -2,6 +2,12 @@
 
 Godot 4.7 纯 2D 像素横版动作游戏：西方奇幻地牢、灵活跑跳、三剑连斩、接触弹刀与谱面 Boss 战。
 
+## 本地三武器动作版
+
+当前本地分支 `feat/weapon-identities-local-20261024`：轻剑穿刺、第三段螺旋钻进；重剑三段劈砍、第三段释放真实剑气；双手剑前后圆斩。J 连按衔接，Q/K 或 1/2/3 切武器，左 Shift 格挡与方向双击闪避保持不变。此次只在本地保存，未推送 main。
+
+[动作、范围与验证说明](docs/weapon-identities.md)
+
 ## 运行
 
 双击**项目根目录 `play.cmd`**。本机主目录为 `D:\code\aigame-ncu-integrate`；也可用 Godot 4.7 打开根目录 `project.godot` 后运行主场景。`boss_attack/` 是保留的朋友原始子工程，不是当前完整游戏入口。

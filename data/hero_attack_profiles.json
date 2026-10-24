@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "coordinate_system": "feet-local pixels; facing right; positive angles turn downward",
   "origin": [
     0,
@@ -123,24 +123,190 @@
       "lunge_seconds": 0.085
     }
   },
-  "timing_source": "main-project original attack cadence and step, retained during selective migration",
+  "timing_source": "Distinct three-weapon local revision; phase-clock visual and contact geometry share this profile",
   "weapons": {
     "light": {
       "name": "轻剑",
-      "name_en": "Arming Sword",
+      "name_en": "Piercing Sword",
       "ramp": "blade",
       "hit_stop": 1.0,
-      "recoil": 1.0,
+      "recoil": 0.65,
       "kick": 0.0,
       "damage": [
         1,
         1,
         2
-      ]
+      ],
+      "combos": {
+        "1": {
+          "id": "needle_entry",
+          "kind": "thrust",
+          "radii": [
+            180,
+            12
+          ],
+          "angle_keys": [
+            [
+              0,
+              -6
+            ],
+            [
+              0.25,
+              -3
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "thrust_keys": [
+            [
+              0,
+              0.2
+            ],
+            [
+              0.25,
+              0.58
+            ],
+            [
+              0.5,
+              1
+            ],
+            [
+              0.75,
+              0.86
+            ],
+            [
+              1,
+              0.78
+            ]
+          ],
+          "blade_span_degrees": 8,
+          "active_frames": 8,
+          "lunge_speed": 180,
+          "lunge_seconds": 0.075,
+          "damage": 1,
+          "phase_seconds": {
+            "windup": 0.065,
+            "active": 0.105,
+            "recover": 0.14
+          }
+        },
+        "2": {
+          "id": "lunging_needle",
+          "kind": "thrust",
+          "radii": [
+            204,
+            14
+          ],
+          "angle_keys": [
+            [
+              0,
+              5
+            ],
+            [
+              0.25,
+              3
+            ],
+            [
+              0.5,
+              0
+            ],
+            [
+              1,
+              -2
+            ]
+          ],
+          "thrust_keys": [
+            [
+              0,
+              0.2
+            ],
+            [
+              0.25,
+              0.58
+            ],
+            [
+              0.5,
+              1
+            ],
+            [
+              0.75,
+              0.9
+            ],
+            [
+              1,
+              0.78
+            ]
+          ],
+          "blade_span_degrees": 8,
+          "active_frames": 8,
+          "lunge_speed": 280,
+          "lunge_seconds": 0.11,
+          "damage": 1,
+          "phase_seconds": {
+            "windup": 0.08,
+            "active": 0.12,
+            "recover": 0.16
+          }
+        },
+        "3": {
+          "id": "spiral_breach",
+          "kind": "thrust",
+          "radii": [
+            228,
+            20
+          ],
+          "angle_keys": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          "thrust_keys": [
+            [
+              0,
+              0.25
+            ],
+            [
+              0.25,
+              0.7
+            ],
+            [
+              0.5,
+              1
+            ],
+            [
+              1,
+              0.95
+            ]
+          ],
+          "blade_span_degrees": 10,
+          "active_frames": 8,
+          "lunge_speed": 560,
+          "lunge_seconds": 0.32,
+          "air_lunge_multiplier": 0.85,
+          "drill": true,
+          "damage": 2,
+          "phase_seconds": {
+            "windup": 0.11,
+            "active": 0.32,
+            "recover": 0.23
+          }
+        }
+      }
     },
     "heavy": {
       "name": "重剑",
-      "name_en": "Falchion",
+      "name_en": "Cleaver",
       "ramp": "ember",
       "hit_stop": 1.35,
       "recoil": 1.2,
@@ -160,7 +326,31 @@
           },
           "lunge_speed": 150,
           "lunge_seconds": 0.09,
-          "damage": 2
+          "damage": 2,
+          "kind": "arc",
+          "angle_keys": [
+            [
+              0,
+              -110
+            ],
+            [
+              0.25,
+              -65
+            ],
+            [
+              0.5,
+              -8
+            ],
+            [
+              0.75,
+              36
+            ],
+            [
+              1,
+              68
+            ]
+          ],
+          "active_frames": 8
         },
         "2": {
           "id": "rending_tide",
@@ -176,7 +366,31 @@
           },
           "lunge_speed": 160,
           "lunge_seconds": 0.09,
-          "damage": 2
+          "damage": 2,
+          "kind": "arc",
+          "angle_keys": [
+            [
+              0,
+              72
+            ],
+            [
+              0.25,
+              54
+            ],
+            [
+              0.5,
+              8
+            ],
+            [
+              0.75,
+              -34
+            ],
+            [
+              1,
+              -72
+            ]
+          ],
+          "active_frames": 8
         },
         "3": {
           "id": "executioner",
@@ -192,13 +406,38 @@
           },
           "lunge_speed": 190,
           "lunge_seconds": 0.1,
-          "damage": 3
+          "damage": 3,
+          "kind": "arc",
+          "angle_keys": [
+            [
+              0,
+              -125
+            ],
+            [
+              0.25,
+              -78
+            ],
+            [
+              0.5,
+              -28
+            ],
+            [
+              0.75,
+              25
+            ],
+            [
+              1,
+              78
+            ]
+          ],
+          "active_frames": 8,
+          "sword_wave": true
         }
       }
     },
     "great": {
       "name": "双手剑",
-      "name_en": "Greatsword",
+      "name_en": "Two-handed Sword",
       "ramp": "gold",
       "hit_stop": 1.6,
       "recoil": 1.45,
@@ -210,15 +449,39 @@
             236,
             78
           ],
-          "blade_span_degrees": 34,
+          "blade_span_degrees": 24,
           "phase_seconds": {
             "windup": 0.16,
-            "active": 0.15,
+            "active": 0.2,
             "recover": 0.28
           },
           "lunge_speed": 110,
           "lunge_seconds": 0.1,
-          "damage": 2
+          "damage": 2,
+          "kind": "spin",
+          "angle_keys": [
+            [
+              0,
+              -110
+            ],
+            [
+              0.25,
+              -90
+            ],
+            [
+              0.5,
+              30
+            ],
+            [
+              0.75,
+              150
+            ],
+            [
+              1,
+              270
+            ]
+          ],
+          "active_frames": 8
         },
         "2": {
           "id": "rising_wall",
@@ -226,15 +489,39 @@
             256,
             88
           ],
-          "blade_span_degrees": 36,
+          "blade_span_degrees": 24,
           "phase_seconds": {
             "windup": 0.18,
-            "active": 0.16,
+            "active": 0.22,
             "recover": 0.3
           },
           "lunge_speed": 120,
           "lunge_seconds": 0.1,
-          "damage": 3
+          "damage": 3,
+          "kind": "spin",
+          "angle_keys": [
+            [
+              0,
+              110
+            ],
+            [
+              0.25,
+              90
+            ],
+            [
+              0.5,
+              -30
+            ],
+            [
+              0.75,
+              -150
+            ],
+            [
+              1,
+              -270
+            ]
+          ],
+          "active_frames": 8
         },
         "3": {
           "id": "sky_cleaver",
@@ -242,15 +529,39 @@
             280,
             104
           ],
-          "blade_span_degrees": 46,
+          "blade_span_degrees": 24,
           "phase_seconds": {
             "windup": 0.26,
-            "active": 0.2,
+            "active": 0.26,
             "recover": 0.4
           },
           "lunge_speed": 160,
           "lunge_seconds": 0.1,
-          "damage": 4
+          "damage": 4,
+          "kind": "spin",
+          "angle_keys": [
+            [
+              0,
+              -155
+            ],
+            [
+              0.25,
+              -135
+            ],
+            [
+              0.5,
+              -15
+            ],
+            [
+              0.75,
+              105
+            ],
+            [
+              1,
+              225
+            ]
+          ],
+          "active_frames": 8
         }
       }
     }

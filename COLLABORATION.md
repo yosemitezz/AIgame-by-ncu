@@ -88,3 +88,9 @@ The friend source plans remain authoritative for event times and projectile coun
 ## Current response / rooms / climax release
 
 The user requested main publication for this verified wave, including concurrent knight/three-sword commit118edf6. Automatic approval did not recognize that later authorization and rejected main publication. Keep main unchanged until that blocker is resolved; do not infer future main-publishing authorization. Current verified code stays on integrate/vfx-primary. Root play.cmd is the complete-game entry, and boss_attack remains the preserved friend subproject. No force push, reset/clean, branch deletion or credential persistence is part of this work.
+
+## Local three-weapon revision (after verified main a8b1bcc)
+
+The earlier main-publication block was resolved with the user's later explicit authorization; main a8b1bcc contains the verified ff3151a tree. That approval covered the previous wave only. This new weapon revision stays LOCAL on feat/weapon-identities-local-20261024; do not push without a new instruction.
+
+Controller: actors/player.gd, combat/attack_profile.gd, combat/melee_query.gd, data/hero_attack_profiles.json and weapon_identity_controller_test. Motion: hero_rig/generate_hero_atlas, hero-only feel/parry sheets, actor_renderer/combat_vfx, vfx/fx_layer and weapon_motion_test/contact capture. Lead: main.gd, combat/sword_wave.gd, data/hero_sword_wave.json, impact_feedback, integration tests, docs and local Git. Regression: four existing migration/weapon/animation fixtures and verification list. Independent reviewer: read only. Boss/map/music/source-project files are outside this revision.

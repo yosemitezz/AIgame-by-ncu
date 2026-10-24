@@ -745,25 +745,19 @@ func _profile_call(method: String, arguments: Array = []) -> Variant:
 	return _attack_profile.callv(method, arguments)
 
 func _profile_slash(actor: Node2D, combo: int) -> void:
-	var info: Dictionary = _profile_call("weapon_info")
-	var ramp: String = String(info.get("ramp", "blade"))
-	_shape("profile", actor.global_position, 0.12, "flow", {"combo": combo, "style": style_kind, "profile": true, "sample_step": -1, "ramp": ramp})
+	var weapon: String = str(actor.get("weapon")) if actor.get("weapon") != null else "light"
+	var info: Dictionary = _profile_call("weapon_info", [weapon])
+	var mode: String = str(_profile_call("kind", [combo, weapon]))
+	var ramp: String = str(info.get("ramp", "blade"))
+	_shape("profile", actor.global_position, 0.12, ramp, {"combo": combo, "style": style_kind, "profile": true, "sample_step": -1, "ramp": ramp, "weapon": weapon, "mode": mode})
 	_profile_geometry(_shapes.back(), actor)
-	var weapon: String = String(actor.get("weapon")) if actor.get("weapon") != null else "light"
 	var d: float = -1.0 if int(actor.get("facing")) < 0 else 1.0
-	var foot: Vector2 = actor.global_position + Vector2(d * 14.0, -1.0)
-	# Weight: heavy blades kick dust off the floor, the greatsword also throws a ground shockwave on the finisher.
-	if weapon == "heavy":
-		_sparks(foot, Vector2(d, -0.2), 6 + combo * 2, "dust", 110.0, 0.4, "dot", 1.2)
-		_sparks(actor.global_position + Vector2(d * 30.0, -22.0), Vector2(d, 0.0), 8 + combo * 3, "ember", 240.0, 0.5, "streak", 0.8)
-		if combo == 3:
-			_shape("ring", foot, 0.34, "ember", {"r0": 4.0, "r1": 34.0, "w": 3.0, "ry": 0.28})
-	elif weapon == "great":
-		_sparks(foot, Vector2(d, -0.1), 8 + combo * 3, "dust", 140.0, 0.5, "dot", 1.3)
-		_sparks(actor.global_position + Vector2(d * 48.0, -22.0), Vector2(d, 0.0), 10 + combo * 4, "gold", 280.0, 0.55, "streak", 0.7)
-		_shape("ring", foot, 0.3 + 0.05 * float(combo), "gold", {"r0": 4.0, "r1": 26.0 + 10.0 * float(combo), "w": 3.0, "ry": 0.26})
-		if combo == 3:
-			_shape("rays", actor.global_position + Vector2(d * 60.0, -22.0), 0.34, "gold", {"n": 10, "r1": 44.0, "rot": 0.0})
+	# Action dust belongs to the planted step, not to hit confirmation. Never shake on a miss.
+	if actor is CharacterBody2D and actor.is_on_floor():
+		var foot: Vector2 = actor.global_position + Vector2(d * 14.0, -1.0)
+		if weapon == "heavy": _sparks(foot, Vector2(-d, -0.2), 3 + combo, "dust", 65.0, 0.20, "dot", 0.6)
+		elif weapon == "great": _sparks(foot, Vector2(-d, -0.1), 3, "dust", 55.0, 0.18, "dot", 0.7)
+		elif combo == 3: _sparks(foot, Vector2(-d, -0.1), 3, "blade", 70.0, 0.16, "streak", 0.25)
 
 func _profile_geometry(shape: Dictionary, actor: Node2D) -> void:
 	var progress: float = float(actor.call("get_attack_progress"))
@@ -775,53 +769,73 @@ func _profile_geometry(shape: Dictionary, actor: Node2D) -> void:
 	var first: float = float(from_value) if from_value != null else progress
 	var last: float = float(to_value) if to_value != null else progress
 	shape["polygon"] = _profile_call("world_polygon", [actor, first, last])
+	shape["progress"] = progress
+	shape["facing"] = int(actor.get("facing"))
 	var facing: float = -1.0 if int(actor.get("facing")) < 0 else 1.0
-	var edge: Vector2 = _profile_call("leading_edge", [int(shape["combo"]), last])
+	var edge: Vector2 = _profile_call("leading_edge", [int(shape["combo"]), last, str(shape.get("weapon", "light"))])
 	shape["leading"] = actor.global_position + Vector2(edge.x * facing, edge.y)
 	shape["origin"] = actor.global_position + Vector2(Vector2(_profile_call("origin")).x * facing, Vector2(_profile_call("origin")).y)
+	var previous_position: Variant = actor.get("attack_previous_position")
+	shape["travel_from"] = Vector2(shape["origin"])
+	if previous_position is Vector2 and previous_position.is_finite():
+		shape["travel_from"] = previous_position + Vector2(Vector2(_profile_call("origin")).x * facing, Vector2(_profile_call("origin")).y)
 	# Angular/time progress is the sampling clock. Holding hit-stop emits no repeated fragments.
 	var sample: int = clampi(int(progress * 8.0), 0, 8)
 	var previous: int = maxi(int(float(_profile_call("contact_start")) * 8.0) - 1, int(shape.get("sample_step", -1)))
 	for step: int in range(previous + 1, sample + 1):
-		var sample_edge: Vector2 = _profile_call("leading_edge", [int(shape["combo"]), float(step) / 8.0])
+		var sample_edge: Vector2 = _profile_call("leading_edge", [int(shape["combo"]), float(step) / 8.0, str(shape.get("weapon", "light"))])
 		var at: Vector2 = actor.global_position + Vector2(sample_edge.x * facing, sample_edge.y)
-		for _i: int in 2:
-			_part(at, Vector2(_rng.randf_range(-30, 30), _rng.randf_range(-24, 24)), 0.10, "flow", 2, "streak", 0.0, 1.0)
+		for _i: int in 1:
+			_part(at, Vector2(_rng.randf_range(-24, 24), _rng.randf_range(-18, 18)), 0.08, str(shape.get("ramp", "blade")), 2, "streak", 0.0, 1.0)
 			if not _parts.is_empty():
 				_parts.back()["fade_scale"] = 0.25
 	shape["sample_step"] = maxi(previous, sample)
 
 func _draw_profile(c: CanvasItem, shape: Dictionary, glow: bool) -> void:
 	var polygon: PackedVector2Array = shape.get("polygon", PackedVector2Array())
-	if polygon.size() < 3:
-		return
+	if polygon.size() < 3: return
 	var active: bool = bool(shape.get("phase_bound", false))
 	var fade: float = 1.0 if active else 0.18 * (1.0 - clampf(float(shape.get("tail_age", 0.0)) / SLASH_TAIL_LIFE, 0.0, 1.0))
-	var alpha: float = fade * (0.12 if glow else 1.0)
+	var alpha: float = fade * (0.11 if glow else 1.0)
+	var mode: String = str(shape.get("mode", "arc"))
+	var ramp: String = str(shape.get("ramp", "blade"))
+	var origin: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
+	var leading: Vector2 = Vector2(shape.get("leading", polygon[polygon.size()-1])).round()
+	if mode == "thrust":
+		var travel_from: Vector2 = Vector2(shape.get("travel_from", origin)).round()
+		if travel_from.distance_squared_to(origin) > 1.0:
+			c.draw_line(travel_from, origin, _col(ramp, 0.7, alpha*0.24), 6.0 if glow else 3.0, false)
+		# The pointed hull is the real narrow hurt boundary. The helix stays inside it.
+		if not glow: c.draw_colored_polygon(polygon, _col(ramp, 0.5, fade * 0.045))
+		var outline: PackedVector2Array = polygon.duplicate()
+		outline.append(polygon[0])
+		c.draw_polyline(outline, _col(ramp, 0.55, alpha * 0.65), 4.0 if glow else 1.0, false)
+		c.draw_line(origin, leading, _col(ramp, 0.25, alpha), 5.0 if glow else 2.0, false)
+		if int(shape.get("combo", 1)) == 3:
+			var direction: Vector2 = (leading-origin).normalized()
+			var normal: Vector2 = direction.orthogonal()
+			var distance: float = origin.distance_to(leading)
+			var phase: float = float(shape.get("progress", 0.0)) * TAU * 2.0
+			for side: float in [-1.0, 1.0]:
+				var points := PackedVector2Array()
+				for i: int in range(25):
+					var t: float = float(i) / 24.0
+					var width: float = 3.0 + 9.0 * sin(t * PI)
+					var point: Vector2 = (origin + direction * distance * t + normal * sin(t * TAU * 2.5 - phase) * width * side).round()
+					if Geometry2D.is_point_in_polygon(point, polygon): points.append(point)
+				if points.size() > 1: c.draw_polyline(points, _col(ramp, 0.4 if side < 0 else 0.72, alpha * 0.7), 4.0 if glow else 1.0, false)
+		if not glow: c.draw_line(leading-Vector2(float(shape.get("facing", 1))*8.0,0), leading, Color(1,1,1,fade), 2.0, false)
+		return
+	# Arc / spin contours show only this actual swept interval. No complete ring on frame one.
 	var edge := PackedVector2Array()
 	var colors := PackedColorArray()
 	for index: int in range(1, polygon.size()):
 		edge.append(polygon[index].round())
-		colors.append(_col(String(shape.get("ramp", "flow")), float(index) / polygon.size(), alpha, float(shape.get("style", 0)) * 0.11))
-	# The query supplies the exact outer limit; inset triangles keep the primary branch's cut-crystal style.
-	if not glow:
-		var center: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
-		var stride: int = maxi(1, int((polygon.size()-1)/5))
-		for index: int in range(1, polygon.size()-1, stride):
-			var last: int = mini(polygon.size()-1, index+stride)
-			var a: Vector2 = polygon[index].round()
-			var b: Vector2 = polygon[last].round()
-			var inset: Vector2 = center.lerp((a+b)*0.5, 0.62).round()
-			c.draw_colored_polygon(PackedVector2Array([a,b,inset]), _col(String(shape.get("ramp", "flow")), float(index)/polygon.size(), fade*0.25, float(shape.get("style",0))*0.11))
-	# The very same queried polygon is the energy's limit; no old circle or long needle outside it.
-	if not glow:
-		c.draw_colored_polygon(polygon, _col(String(shape.get("ramp", "flow")), 0.5, 0.06 * fade))
-	c.draw_polyline_colors(edge, colors, 7.0 if glow else 4.0, false)
-	var origin: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
-	var leading: Vector2 = Vector2(shape.get("leading", polygon[polygon.size()-1])).round()
-	c.draw_line(origin, leading, _col(String(shape.get("ramp", "flow")), 0.35, alpha * 0.75), 8.0 if glow else 5.0, false)
-	if not glow:
-		c.draw_line(origin, leading, Color(1, 1, 0.94, fade * 0.88), 2.0, false)
+		colors.append(_col(ramp, float(index) / polygon.size(), alpha, float(shape.get("style",0)) * 0.06))
+	if not glow: c.draw_colored_polygon(polygon, _col(ramp, 0.5, fade * (0.025 if mode == "spin" else 0.045)))
+	if edge.size()>1: c.draw_polyline_colors(edge, colors, 6.0 if glow else (3.0 if mode == "spin" else 4.0), false)
+	c.draw_line(origin, leading, _col(ramp, 0.35, alpha * 0.65), 6.0 if glow else 3.0, false)
+	if not glow: c.draw_line(origin.lerp(leading, 0.5), leading, Color(1,1,0.94,fade*0.8), 1.0, false)
 
 func _sync_slash(s: Dictionary) -> bool:
 	var actor_ref: WeakRef = s["actor_ref"]

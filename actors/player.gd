@@ -90,6 +90,11 @@ var attack_serial: int = 0
 var attack_sweep_from: float = 0.25
 var attack_sweep_to: float = 0.25
 var _attack_query_progress: float = 0.25
+## Last accepted query position lets the drill sweep every crossed hurtbox at any physics rate.
+var attack_previous_position: Vector2 = Vector2.INF
+var _attack_query_position: Vector2 = Vector2.INF
+var _attack_grounded_start: bool = false
+var _wave_released: bool = false
 var queued_attack: bool = false
 var combat_freeze: float = 0.0
 var impact_flash: float = 0.0
@@ -233,11 +238,18 @@ func _cycled_weapon(step: int) -> String:
 
 ## Equip a sword. Returns false when the id is unknown or already in hand.
 func set_weapon(id: String) -> bool:
+	if attack_phase != "none" and id != weapon and AttackProfile.weapon_ids().has(id):
+		_weapon_request = id
+		return false
 	if id == weapon or not AttackProfile.set_weapon(id):
 		AttackProfile.set_weapon(weapon)
 		return false
 	weapon = id
 	_weapon_request = ""
+	# A new stance starts its own sequence; a queued attack is retained but cannot
+	# borrow another sword's combo index to skip straight to a finisher.
+	combo = 0
+	_combo_grace = 0.0
 	if is_inside_tree():
 		get_tree().set_meta("bellkeep_weapon", id)
 	weapon_changed.emit(id)
@@ -422,9 +434,15 @@ func _physics_process(delta: float) -> void:
 				desired *= SHALLOW_WATER_SPEED
 			if is_on_floor() and attack_phase != "none":
 				desired *= 0.32 if attack_phase == "windup" else 0.70
-				if _lunge_timer > 0.0 and attack_phase == "active" and _can_ground_lunge(delta):
+			if _lunge_timer > 0.0 and attack_phase == "active":
+				if _is_drill_attack():
+					# A ground-start drill will stop at a ledge; an air-start drill retains
+					# gravity and ground collision, with reduced horizontal travel.
+					var allowed: bool = _can_ground_lunge(delta) if _attack_grounded_start or is_on_floor() else true
+					desired = facing * AttackProfile.lunge_speed(combo) * (1.0 if _attack_grounded_start else float(AttackProfile.profile(combo).get("air_lunge_multiplier",0.85))) if allowed else 0.0
+					velocity.x = desired
+				elif is_on_floor() and _can_ground_lunge(delta):
 					desired = facing * AttackProfile.lunge_speed(combo)
-					# Hold the speed through the whole lunge instead of easing in, so the step reads as a lunge.
 					velocity.x = desired
 			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, _horizontal_acceleration(desired) * delta)
 			if _recoil_time > 0.0:
@@ -616,19 +634,19 @@ func set_impact_freeze(seconds: float) -> void:
 		weight = float(AttackProfile.weapon_info().get("hit_stop", 1.0))
 	combat_freeze = maxf(combat_freeze, clampf(seconds * weight, 0.0, 0.12 * weight))
 
+func _is_drill_attack() -> bool:
+	return weapon == "light" and combo == 3 and bool(AttackProfile.profile(combo).get("drill",false))
+
 func confirm_attack_hit() -> void:
 	if attack_phase == "active" or attack_phase == "recover":
+		if _hit_confirmed: return
 		_hit_confirmed = true
-		# The blade bites and the hero is pushed back a few pixels; the forward lunge ends here.
+		# Root is the only camera/sound authority. The first drill contact does
+		# not reverse the body or cancel the remaining thrust into other targets.
+		if _is_drill_attack(): return
 		_lunge_timer = 0.0
 		_recoil_time = HIT_RECOIL_TIME
-		var info: Dictionary = AttackProfile.weapon_info()
-		_recoil_speed = HIT_RECOIL_SPEED[clampi(combo - 1, 0, 2)] * float(info.get("recoil", 1.0))
-		var kick: float = float(info.get("kick", 0.0))
-		if kick > 0.0 and is_instance_valid(game):
-			var impact: Variant = game.get("impact")
-			if impact != null and is_instance_valid(impact):
-				impact.add_kick(Vector2(float(facing), 0.0), kick)
+		_recoil_speed = HIT_RECOIL_SPEED[clampi(combo-1,0,2)] * float(AttackProfile.weapon_info().get("recoil",1.0))
 
 func can_cancel_attack() -> bool:
 	if attack_phase == "none":
@@ -712,6 +730,10 @@ func _start_attack() -> void:
 	_combo_grace = 0.0
 	_hit_confirmed = false
 	_strike_done = false
+	_wave_released = false
+	_attack_grounded_start = is_on_floor()
+	_attack_query_position = global_position
+	attack_previous_position = global_position
 	_enter_attack_phase("windup")
 
 func get_attack_progress() -> float:
@@ -730,8 +752,15 @@ func _enter_attack_phase(stage: String) -> void:
 	_state_clock = 0.0
 	if stage == "active":
 		_lunge_timer = AttackProfile.lunge_seconds(combo)
+		_attack_query_position = global_position
+		attack_previous_position = global_position
 		_fx("lunge", global_position + Vector2(0.0, -2.0), Vector2(facing, 0.0), float(combo))
 		_fx("slash", global_position + Vector2(facing * 22.0, -18.0), Vector2(facing, 0.0), float(combo))
+	elif stage == "recover" and _is_drill_attack():
+		_lunge_timer = 0.0
+		# Plant or tuck the trailing leg as the point withdraws. Ending the thrust
+		# must not leave a half-second 560px/s glide after its actual contact ends.
+		velocity.x = clampf(velocity.x,-RUN_SPEED*0.35,RUN_SPEED*0.35)
 	_set_animation("attack" if stage == "active" else stage, 0.0)
 
 func _can_ground_lunge(delta: float) -> bool:
@@ -750,9 +779,14 @@ func _query_active_sweep(progress: float) -> bool:
 	attack_sweep_from = _attack_query_progress
 	attack_sweep_to = clampf(progress, AttackProfile.contact_start(), 1.0)
 	_attack_query_progress = attack_sweep_to
+	attack_previous_position = _attack_query_position if _strike_done and _attack_query_position.is_finite() else global_position
+	_attack_query_position = global_position
 	_strike_done = true
 	_set_animation("attack", 0.0)
 	if is_instance_valid(game) and not bool(game.story_safe):
+		if weapon == "heavy" and combo == 3 and not _wave_released:
+			_wave_released = true
+			if game.has_method("spawn_sword_wave"): game.spawn_sword_wave(self,attack_serial)
 		game.hero_attack(self, AttackProfile.damage(combo), AttackProfile.radii(combo).x, combo)
 	return combat_freeze > 0.0 or attack_phase == "none"
 
@@ -790,6 +824,10 @@ func _advance_attack(delta: float) -> void:
 
 func _cancel_attack() -> void:
 	_recoil_time = 0.0
+	_wave_released = false
+	attack_previous_position = Vector2.INF
+	_attack_query_position = Vector2.INF
+	_attack_grounded_start = false
 	attack_phase = "none"
 	attack_timer = 0.0
 	queued_attack = false
@@ -1017,7 +1055,8 @@ func _set_animation(state: String, delta: float) -> void:
 	else:
 		_state_clock += delta
 	if state in ["windup", "attack", "recover"] and attack_phase != "none":
-		frame = clampi(int(4.0 * get_attack_progress() + 0.000001), 0, 3)
+		var count: int = int(AttackProfile.profile(combo).get("active_frames",8)) if state == "attack" else 4
+		frame = clampi(int(float(count) * get_attack_progress() + 0.000001),0,count-1)
 	elif state in ["parry", "parry_recoil", "parry_recover"] and parry_phase != "none":
 		frame = clampi(int(4.0 * get_parry_progress() + 0.000001), 0, 3)
 	elif state in ["climb", "climb_idle"]:

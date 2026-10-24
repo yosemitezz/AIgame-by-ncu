@@ -27,6 +27,14 @@ func request(source: Node, target: Node, heavy: bool = false, parry: bool = fals
     if is_instance_valid(game) and bool(game.story_safe):
         return
     var duration: float = 0.1 if variant == "break" else (0.06 if variant == "reflect" else (0.08 if parry else (0.115 if heavy else 0.058)))
+    var weapon_bundle: Dictionary = {
+        "weapon_light": [0.040, 3.0, 0.018, 0.28, "light"],
+        "weapon_heavy": [0.060, 6.0 if heavy else 4.8, 0.042, 0.48, "heavy"],
+        "weapon_great": [0.070, 7.2 if heavy else 6.0, 0.050, 0.55, "heavy"],
+        "weapon_wave": [0.045, 4.8, 0.030, 0.38, "heavy"]
+    }
+    var bundle: Array = weapon_bundle.get(variant, [])
+    if not bundle.is_empty(): duration = float(bundle[0])
     if is_instance_valid(source) and source.has_method("set_impact_freeze"):
         source.set_impact_freeze(duration)
     if is_instance_valid(target) and target != source and target.has_method("set_impact_freeze"):
@@ -36,12 +44,12 @@ func request(source: Node, target: Node, heavy: bool = false, parry: bool = fals
         direction = (target.global_position - source.global_position).normalized()
     elif is_instance_valid(source) and source.get("facing") != null:
         direction = Vector2(float(source.get("facing")), 0)
-    add_kick(direction, 10.0 if variant == "break" else (4.4 if variant == "reflect" else (7.0 if parry else (7.5 if heavy else 3.6))))
-    _punch = minf(MAX_PUNCH, _punch + (0.06 if variant == "break" else (0.03 if variant == "reflect" else (0.045 if parry else (0.07 if heavy else 0.026)))))
-    _trauma = clampf(_trauma + (1.0 if variant == "break" else (0.75 if parry else (0.6 if heavy else 0.4))), 0, 1.0)
+    add_kick(direction, float(bundle[1]) if not bundle.is_empty() else (10.0 if variant == "break" else (4.4 if variant == "reflect" else (7.0 if parry else (7.5 if heavy else 3.6)))))
+    _punch = minf(MAX_PUNCH, _punch + (float(bundle[2]) if not bundle.is_empty() else (0.06 if variant == "break" else (0.03 if variant == "reflect" else (0.045 if parry else (0.07 if heavy else 0.026))))))
+    _trauma = clampf(_trauma + (float(bundle[3]) if not bundle.is_empty() else (1.0 if variant == "break" else (0.75 if parry else (0.6 if heavy else 0.4)))), 0, 1.0)
     impact_count += 1
     if is_instance_valid(sounds):
-        sounds.play_impact("break" if variant == "break" else ("reflect" if variant == "reflect" else ("parry" if parry else ("heavy" if heavy else "light"))))
+        sounds.play_impact(str(bundle[4]) if not bundle.is_empty() else ("break" if variant == "break" else ("reflect" if variant == "reflect" else ("parry" if parry else ("heavy" if heavy else "light")))))
 
 func add_kick(direction: Vector2, amount: float) -> void:
     if direction.length() > 0.001:

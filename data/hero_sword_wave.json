@@ -1,0 +1,9 @@
+{
+  "speed": 640.0,
+  "lifetime": 0.65,
+  "damage": 2,
+  "width": 12.0,
+  "height": 58.0,
+  "max_live": 3,
+  "center_y": -31
+}
