@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "status": "awaiting-user-move-designs",
+  "notes": "All slots are intentionally disabled. Fill pattern_id, phase_indices, beat bounds, and parameters from the user's final move handoff.",
+  "slots": [
+    {
+      "move_slot": "move_1",
+      "display_name": "招式1",
+      "segment_type": "normal",
+      "enabled": false,
+      "pattern_id": "",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {}
+    },
+    {
+      "move_slot": "move_2",
+      "display_name": "招式2",
+      "segment_type": "normal",
+      "enabled": false,
+      "pattern_id": "",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {}
+    },
+    {
+      "move_slot": "move_3",
+      "display_name": "招式3",
+      "segment_type": "normal",
+      "enabled": false,
+      "pattern_id": "",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {}
+    },
+    {
+      "move_slot": "move_4",
+      "display_name": "招式4",
+      "segment_type": "normal",
+      "enabled": false,
+      "pattern_id": "",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {}
+    },
+    {
+      "move_slot": "fixed_1",
+      "display_name": "固定段招式1",
+      "segment_type": "fixed",
+      "enabled": false,
+      "pattern_id": "",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {}
+    },
+    {
+      "move_slot": "fixed_2",
+      "display_name": "固定段招式2",
+      "segment_type": "fixed",
+      "enabled": false,
+      "pattern_id": "",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {}
+    }
+  ]
+}
+
