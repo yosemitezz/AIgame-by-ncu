@@ -1,0 +1,109 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/menus/settings_menu.gd" id="1_settings"]
+
+[node name="SettingsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.04, 0.08, 0.75)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="MasterRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="MasterName" type="Label" parent="Center/Panel/VBox/MasterRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Master"
+
+[node name="MasterSlider" type="HSlider" parent="Center/Panel/VBox/MasterRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 16)
+layout_mode = 2
+max_value = 100.0
+value = 80.0
+
+[node name="MasterValue" type="Label" parent="Center/Panel/VBox/MasterRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "80%"
+
+[node name="MusicRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="MusicName" type="Label" parent="Center/Panel/VBox/MusicRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Music"
+
+[node name="MusicSlider" type="HSlider" parent="Center/Panel/VBox/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 16)
+layout_mode = 2
+max_value = 100.0
+value = 70.0
+
+[node name="SfxRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="SfxName" type="Label" parent="Center/Panel/VBox/SfxRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "SFX"
+
+[node name="SfxSlider" type="HSlider" parent="Center/Panel/VBox/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 16)
+layout_mode = 2
+max_value = 100.0
+value = 80.0
+
+[node name="WindowRow" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+
+[node name="WindowName" type="Label" parent="Center/Panel/VBox/WindowRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Display"
+
+[node name="WindowOption" type="OptionButton" parent="Center/Panel/VBox/WindowRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"

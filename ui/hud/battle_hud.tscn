@@ -1,0 +1,156 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/hud/battle_hud.gd" id="1_hud"]
+
+[node name="BattleHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="SafeMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="RootVBox" type="VBoxContainer" parent="SafeMargin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="SafeMargin/RootVBox"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="PlayerBlock" type="VBoxContainer" parent="SafeMargin/RootVBox/TopRow"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HpLabel" type="Label" parent="SafeMargin/RootVBox/TopRow/PlayerBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "HP 100/100"
+
+[node name="HpTrack" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/PlayerBlock"]
+custom_minimum_size = Vector2(180, 12)
+layout_mode = 2
+color = Color(0.07, 0.06, 0.1, 1)
+
+[node name="HpFill" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/PlayerBlock/HpTrack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 12)
+layout_mode = 0
+offset_right = 180.0
+offset_bottom = 12.0
+color = Color(0.91, 0.38, 0.38, 1)
+
+[node name="MpLabel" type="Label" parent="SafeMargin/RootVBox/TopRow/PlayerBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "MP 50/50"
+
+[node name="MpTrack" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/PlayerBlock"]
+custom_minimum_size = Vector2(140, 10)
+layout_mode = 2
+color = Color(0.07, 0.06, 0.1, 1)
+
+[node name="MpFill" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/PlayerBlock/MpTrack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 10)
+layout_mode = 0
+offset_right = 140.0
+offset_bottom = 10.0
+color = Color(0.28, 0.5, 0.84, 1)
+
+[node name="BossBlock" type="VBoxContainer" parent="SafeMargin/RootVBox/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="BossHeader" type="HBoxContainer" parent="SafeMargin/RootVBox/TopRow/BossBlock"]
+layout_mode = 2
+
+[node name="BossLabel" type="Label" parent="SafeMargin/RootVBox/TopRow/BossBlock/BossHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "BOSS"
+horizontal_alignment = 1
+
+[node name="PhasePips" type="HBoxContainer" parent="SafeMargin/RootVBox/TopRow/BossBlock/BossHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Pip1" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/BossBlock/BossHeader/PhasePips"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+color = Color(0.88, 0.69, 0.28, 1)
+
+[node name="Pip2" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/BossBlock/BossHeader/PhasePips"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+color = Color(0.29, 0.27, 0.34, 1)
+
+[node name="Pip3" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/BossBlock/BossHeader/PhasePips"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+color = Color(0.29, 0.27, 0.34, 1)
+
+[node name="BossTrack" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/BossBlock"]
+custom_minimum_size = Vector2(420, 14)
+layout_mode = 2
+size_flags_horizontal = 3
+color = Color(0.07, 0.06, 0.1, 1)
+
+[node name="BossFill" type="ColorRect" parent="SafeMargin/RootVBox/TopRow/BossBlock/BossTrack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 14)
+layout_mode = 0
+offset_right = 420.0
+offset_bottom = 14.0
+color = Color(0.45, 0.31, 0.66, 1)
+
+[node name="MetaRow" type="HBoxContainer" parent="SafeMargin/RootVBox"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="ZoneLabel" type="Label" parent="SafeMargin/RootVBox/MetaRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Zone"
+
+[node name="SectionLabel" type="Label" parent="SafeMargin/RootVBox/MetaRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "MUSIC FIXED"
+
+[node name="BeatLabel" type="Label" parent="SafeMargin/RootVBox/MetaRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "BEAT 0"
+
+[node name="HintLabel" type="Label" parent="SafeMargin/RootVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+
+[node name="OutcomeLabel" type="Label" parent="SafeMargin/RootVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = ""
+horizontal_alignment = 1
