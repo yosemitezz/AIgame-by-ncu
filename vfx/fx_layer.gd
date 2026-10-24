@@ -5,7 +5,7 @@ extends Node2D
 ## Readability rules (docs/art-ui-contract.md):
 ##   telegraph = thin gold lane line, never a filled area, never drawn in story-safe sections;
 ##   hostile hits and shots = warm ramp (white, gold, coral, magenta), thin trails;
-##   player / parry / reflected = "flow" ramp: a hue that slides along each stroke and over time;
+##   player / parry = "flow" ramp; reflected shots always cyan to match their readable cores;
 ##   big moments (burst, checkpoint, pickups) = rainbow.
 ## Fusion source: committed integrate/vfx-primary 205b8e74f151c845c7279e69a90e0b23c415f839.
 ## Actual combat phases own slash poses; this layer owns only presentation and bounded tails.
@@ -32,6 +32,11 @@ const RAMP_SOURCE: Dictionary = {
 	"hurt": ["ffffff", "ffc0b8", "ef7678", "c0405f", "5a1d4a"],
 	"dust": ["f2f6d6", "b8c4cf", "77839c", "394462"],
 	"gold": ["ffffff", "fff1bd", "e9bb68", "88704e"],
+	"water": ["e1fffa", "95d9e4", "5585aa", "304968"],
+	"reflected": ["e9fff8", "73f6df", "53c8ba", "356b83"],
+	"sentry_shard": ["fff3d2", "f4b95f", "dc8a56", "874655"],
+	"wisp_seed": ["fff0f8", "ed88d9", "b968af", "694676"],
+	"elite_rune": ["f8ffd8", "cce675", "a1b94e", "586735"],
 }
 
 class Ghost extends Node2D:
@@ -288,6 +293,13 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 	var d: float = 1.0 if dir.x >= 0.0 else -1.0
 	# Event names from the combat-feel branch map onto this layer.
 	match kind:
+		"water_splash":
+			var splash: float = clampf(power, 0.4, 1.8)
+			_shape("ring", at, 0.32, "water", {"r0": 2.0, "r1": 9.0 + 6.0 * splash, "w": 1.0, "ry": 0.22})
+			for i: int in int(5.0 + 3.0 * splash):
+				var side: float = -1.0 if i % 2 == 0 else 1.0
+				_part(at + Vector2(side * 3, -1), Vector2(side * _rng.randf_range(20.0, 65.0) * splash, -_rng.randf_range(28.0, 76.0) * splash), _rng.randf_range(0.18, 0.36), "water", 2, "dot", 330.0, 0.6)
+			return
 		"blade_parry", "projectile_parry", "guard_break":
 			# Same clash, scaled: reflected shots small, blade-on-blade full, guard break biggest.
 			var scale_p: float = 0.7 if kind == "projectile_parry" else (1.0 if kind == "blade_parry" else 1.7)
@@ -699,7 +711,9 @@ func _track_projectiles() -> void:
 		trail.append((node as Node2D).global_position)
 		while trail.size() > 12:
 			trail.pop_front()
-		_proj_trails[id] = {"pts": trail, "friendly": bool(node.get("friendly"))}
+		var style_value: Variant = node.get("style")
+		var style: String = String(style_value) if style_value != null else "default"
+		_proj_trails[id] = {"pts": trail, "friendly": bool(node.get("friendly")), "style": style}
 	for id: Variant in _proj_trails.keys():
 		if not seen.has(id):
 			_proj_trails.erase(id)
@@ -755,6 +769,11 @@ func _draw_body_trail(c: CanvasItem, glow: bool) -> void:
 			continue
 		c.draw_line(pa, pb, _col("flow", u, al, float(i) * 0.03), width, false)
 
+func _trail_ramp(style: String, friendly: bool) -> String:
+	if friendly:
+		return "reflected"
+	return style if style in ["sentry_shard", "wisp_seed", "elite_rune"] else "warm"
+
 func _draw_projectile_trails(c: CanvasItem, glow: bool) -> void:
 	for id: Variant in _proj_trails:
 		var info: Dictionary = _proj_trails[id]
@@ -763,18 +782,31 @@ func _draw_projectile_trails(c: CanvasItem, glow: bool) -> void:
 		if n < 2:
 			continue
 		var friendly: bool = info["friendly"]
+		var style: String = String(info.get("style", "default"))
+		var ramp: String = _trail_ramp(style, friendly)
 		var line := PackedVector2Array()
 		var cols := PackedColorArray()
 		for i: int in n:
-			var u: float = float(i) / float(n - 1)   # 1 = head
+			var u: float = float(i) / float(n - 1)
 			line.append(Vector2(pts[i]).round())
-			if friendly:
-				cols.append(_col("flow", 1.0 - u, u * (0.22 if glow else 0.9), float(i) * 0.04))
-			else:
-				# Hostile shots keep a thin, low-alpha warm tail so safe lanes stay readable.
-				cols.append(_col("warm", 0.2 + (1.0 - u) * 0.6, u * (0.1 if glow else 0.42)))
-		var w: float = 3.0 if friendly else 2.0
-		c.draw_polyline_colors(line, cols, w * (2.6 if glow else 1.0), false)
+			cols.append(_col(ramp, 0.2 + (1.0 - u) * 0.6, u * ((0.22 if glow else 0.9) if friendly else (0.08 if glow else 0.48))))
+		var width: float = 3.0 if friendly else (1.0 if style == "wisp_seed" else 2.0)
+		c.draw_polyline_colors(line, cols, width * (2.0 if glow else 1.0), false)
+		if friendly or glow:
+			continue
+		# Tiny discrete silhouettes distinguish enemy ammunition without adding another core/glow.
+		for i: int in range(1, n - 1, 3):
+			var at: Vector2 = line[i]
+			var alpha: float = float(i) / float(n) * 0.65
+			if style == "wisp_seed":
+				c.draw_rect(Rect2(at - Vector2.ONE, Vector2(2, 2)), _col(ramp, 0.4, alpha))
+			elif style == "elite_rune":
+				c.draw_polyline(PackedVector2Array([at + Vector2(0, -2), at + Vector2(2, 0), at + Vector2(0, 2), at + Vector2(-2, 0), at + Vector2(0, -2)]), _col(ramp, 0.4, alpha), 1.0, false)
+			elif style == "sentry_shard":
+				var along: Vector2 = (line[i + 1] - line[i - 1]).normalized()
+				var side: Vector2 = along.orthogonal() * 2
+				c.draw_line(at - along * 2, at + side, _col(ramp, 0.3, alpha), 1.0, false)
+
 
 func _arc(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	var at: Vector2 = _arc_at(s)
@@ -1036,6 +1068,23 @@ func _warning(c: CanvasItem, w: Dictionary) -> void:
 				c.draw_rect(Rect2(Vector2(landing.x - 1, y), Vector2(2, 5)), Color(0.91, 0.73, 0.4, 0.6))
 			c.draw_line(landing + Vector2(-9, 0), landing + Vector2(9, 0), Color("e9bb68"), 2.0, false)
 			c.draw_line(landing + Vector2(-8, 3), landing + Vector2(-8 + 16 * prog, 3), Color("fff1bd"), 1.0, false)
+		return
+	if kind in ["mob_sentry", "mob_wisp", "mob_elite"]:
+		var ramp: String = {"mob_sentry": "sentry_shard", "mob_wisp": "wisp_seed", "mob_elite": "elite_rune"}[kind]
+		var ink: Color = _col(ramp, 0.3, 0.85)
+		if kind == "mob_sentry":
+			c.draw_line(at + Vector2(-13, 3), at + Vector2(13, 3), ink, 1.0, false)
+			c.draw_line(at + Vector2(-5, -12), at + Vector2(4, -3), ink, 2.0, false)
+			c.draw_line(at + Vector2(-6, -5), at + Vector2(-1, -10), ink, 1.0, false)
+		elif kind == "mob_wisp":
+			for sign_x: float in [-1.0, 1.0]:
+				c.draw_polyline(PackedVector2Array([at + Vector2(sign_x * 5, -12), at + Vector2(sign_x * 9, -8), at + Vector2(sign_x * 5, -4)]), ink, 1.0, false)
+			c.draw_rect(Rect2(at + Vector2(-1, -10), Vector2(2, 5)), ink)
+		else:
+			c.draw_polyline(PackedVector2Array([at + Vector2(0, -15), at + Vector2(7, -8), at + Vector2(0, -1), at + Vector2(-7, -8), at + Vector2(0, -15)]), ink, 1.0, false)
+			for pip: int in 3:
+				c.draw_rect(Rect2(at + Vector2(-7 + pip * 6, 4), Vector2(2, 2)), ink)
+		c.draw_line(at + Vector2(-12, 8), at + Vector2(-12 + 24 * prog, 8), ink, 1.0, false)
 		return
 	var unblockable: bool = kind == "unblockable_charge"
 	var armored: bool = kind == "armored_slash"

@@ -1,0 +1,295 @@
+{
+  "version": 2,
+  "source": "Original integer-grid broken-crown armor family in tools/generate_dungeon_hero.py. Reuses our previous authored pose/weapon tables; no outside art or 3D.",
+  "license": "MIT",
+  "hero": {
+    "canvas": [
+      64,
+      64
+    ],
+    "anchor": [
+      28,
+      58
+    ],
+    "columns": 8,
+    "states": {
+      "idle": {
+        "start": 0,
+        "count": 4
+      },
+      "run": {
+        "start": 4,
+        "count": 6
+      },
+      "jump": {
+        "start": 10,
+        "count": 4
+      },
+      "fall": {
+        "start": 14,
+        "count": 4
+      },
+      "dash": {
+        "start": 18,
+        "count": 4
+      },
+      "parry": {
+        "start": 22,
+        "count": 4
+      },
+      "hurt": {
+        "start": 26,
+        "count": 4
+      },
+      "dead": {
+        "start": 30,
+        "count": 4
+      },
+      "cut_1_windup": {
+        "start": 34,
+        "count": 4
+      },
+      "cut_1_attack": {
+        "start": 38,
+        "count": 4
+      },
+      "cut_1_recover": {
+        "start": 42,
+        "count": 4
+      },
+      "cut_2_windup": {
+        "start": 46,
+        "count": 4
+      },
+      "cut_2_attack": {
+        "start": 50,
+        "count": 4
+      },
+      "cut_2_recover": {
+        "start": 54,
+        "count": 4
+      },
+      "cut_3_windup": {
+        "start": 58,
+        "count": 4
+      },
+      "cut_3_attack": {
+        "start": 62,
+        "count": 4
+      },
+      "cut_3_recover": {
+        "start": 66,
+        "count": 4
+      },
+      "climb": {
+        "start": 70,
+        "count": 6
+      },
+      "climb_idle": {
+        "start": 76,
+        "count": 6
+      }
+    },
+    "total_frames": 82,
+    "palette_rgb": [
+      "#111323",
+      "#273146",
+      "#493c72",
+      "#775c9c",
+      "#c58ea8",
+      "#b8c5c4",
+      "#e0eadb",
+      "#fff3d2",
+      "#cb9861",
+      "#9fa9b6",
+      "#72f0eb",
+      "#e5797b",
+      "#725049"
+    ],
+    "weapon_tips": {
+      "cut_1_windup": [
+        [
+          11,
+          -54
+        ],
+        [
+          -5,
+          -56
+        ],
+        [
+          -18,
+          -53
+        ],
+        [
+          -23,
+          -50
+        ]
+      ],
+      "cut_1_attack": [
+        [
+          14,
+          -55
+        ],
+        [
+          31,
+          -38
+        ],
+        [
+          31,
+          -17
+        ],
+        [
+          16,
+          -2
+        ]
+      ],
+      "cut_1_recover": [
+        [
+          14,
+          -3
+        ],
+        [
+          20,
+          -8
+        ],
+        [
+          25,
+          -17
+        ],
+        [
+          28,
+          -23
+        ]
+      ],
+      "cut_2_windup": [
+        [
+          24,
+          -12
+        ],
+        [
+          15,
+          -4
+        ],
+        [
+          8,
+          -2
+        ],
+        [
+          1,
+          -1
+        ]
+      ],
+      "cut_2_attack": [
+        [
+          25,
+          -9
+        ],
+        [
+          33,
+          -31
+        ],
+        [
+          19,
+          -52
+        ],
+        [
+          -7,
+          -57
+        ]
+      ],
+      "cut_2_recover": [
+        [
+          0,
+          -57
+        ],
+        [
+          12,
+          -53
+        ],
+        [
+          24,
+          -41
+        ],
+        [
+          28,
+          -23
+        ]
+      ],
+      "cut_3_windup": [
+        [
+          -2,
+          -57
+        ],
+        [
+          -15,
+          -54
+        ],
+        [
+          -22,
+          -50
+        ],
+        [
+          -24,
+          -49
+        ]
+      ],
+      "cut_3_attack": [
+        [
+          15,
+          -54
+        ],
+        [
+          33,
+          -34
+        ],
+        [
+          34,
+          -26
+        ],
+        [
+          34,
+          -22
+        ]
+      ],
+      "cut_3_recover": [
+        [
+          31,
+          -18
+        ],
+        [
+          28,
+          -14
+        ],
+        [
+          27,
+          -16
+        ],
+        [
+          29,
+          -23
+        ]
+      ]
+    }
+  },
+  "parry": {
+    "states": [
+      "parry_ready",
+      "parry_recoil",
+      "parry_recover"
+    ],
+    "count": 4,
+    "canvas": [
+      64,
+      64
+    ],
+    "anchor": [
+      28,
+      58
+    ]
+  },
+  "constraints": {
+    "anti_alias": false,
+    "whole_frame_transforms": false,
+    "3d_sources": false
+  }
+}

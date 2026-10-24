@@ -2,8 +2,15 @@ extends CharacterBody2D
 ## Deliberately readable enemy attack tells; body contact alone does not damage.
 
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
+# Original mob patterns: finite layers with a frozen aim corridor, never frame-rate fire.
+const SCREEN_WARMUP: float = 0.25
+const MAX_LAYERS_PER_TICK: int = 2
+var barrage_pattern: String = ""
+var barrage_aim: Vector2 = Vector2.LEFT
+var barrage_origin: Vector2 = Vector2.ZERO
 var game: Node
 var kind: String = "sentry"
+var patrol_bounds: Rect2 = Rect2()
 var health: int = 3
 var max_health: int = 3
 var dead: bool = false
@@ -28,6 +35,12 @@ var _shot: bool = false
 var _last_state: String = ""
 var _last_frame: int = -1
 var _last_facing: int = 0
+var _attack_ranged: bool = false
+var _visible_time: float = 0.0
+var _barrage_cycle: int = 0
+var _barrage_elapsed: float = 0.0
+var _barrage_queue: Array[Dictionary] = []
+var _owned_shots: Array[WeakRef] = []
 
 func configure(owner_game: Node, enemy_kind: String, at: Vector2) -> void:
 	game = owner_game
@@ -63,10 +76,11 @@ func _physics_process(delta: float) -> void:
 	var story_rest: bool = is_instance_valid(game) and bool(game.story_safe)
 	if story_rest:
 		combat_freeze = 0.0
-		_windup = 0.0
-		_recovery = 0.0
+		_cancel_barrage()
+		_clear_owned_hostiles()
 		_stagger = 0.0
-		_shot = true
+	_update_visibility(delta)
+	_prune_owned_shots()
 	if combat_freeze > 0.0:
 		combat_freeze = maxf(0.0, combat_freeze - delta)
 		queue_redraw()
@@ -94,16 +108,19 @@ func _physics_process(delta: float) -> void:
 	var safe: bool = story_rest or bool(target.dead)
 	if kind != "wisp":
 		velocity.y = minf(velocity.y + 900.0 * delta, 620.0)
+	if not _barrage_queue.is_empty():
+		if safe or _stagger > 0.0 or not _can_emit_barrage():
+			_cancel_barrage()
+		else:
+			_advance_barrage(delta)
 	if safe:
-		_windup = 0.0
-		_recovery = 0.0
+		_cancel_barrage()
 		velocity.x = move_toward(velocity.x, 0.0, 1000.0 * delta)
 		if kind == "wisp":
 			velocity.y = 0.0
 		animation_state = "idle"
 	elif _stagger > 0.0:
-		_windup = 0.0
-		_recovery = 0.0
+		_cancel_barrage()
 		_hurt_elapsed += delta
 		# Preserve the impulse through hurt: steering cannot overwrite it.
 		velocity.x = move_toward(velocity.x, 0.0, (190.0 if kind == "elite" else 280.0) * delta)
@@ -130,8 +147,10 @@ func _physics_process(delta: float) -> void:
 		else:
 			_update_walker(offset, delta)
 	move_and_slide()
+	_keep_in_patrol()
 	frame = mini(3, int(_hurt_elapsed * 14.0)) if animation_state == "hurt" else int(_clock * (12.0 if animation_state == "run" else 7.0)) % 4
-	if global_position.y > 720.0:
+	var out_of_bounds: bool = bool(game.enemy_out_of_bounds(global_position)) if game.has_method("enemy_out_of_bounds") else global_position.y > 720.0
+	if out_of_bounds:
 		_die()
 	_publish_animation()
 	queue_redraw()
@@ -145,9 +164,19 @@ func _publish_animation() -> void:
 	if is_instance_valid(game) and game.has_signal("animation_event"):
 		game.emit_signal("animation_event", self, animation_state, frame, facing)
 func _update_walker(offset: Vector2, delta: float) -> void:
+	if not _target_in_patrol():
+		var home_offset: float = _home.x - global_position.x
+		var direction: int = 1 if home_offset > 0.0 else -1
+		var may_return: bool = absf(home_offset) > 12.0 and (not is_on_floor() or _floor_ahead(direction))
+		velocity.x = move_toward(velocity.x, direction * 40.0 if may_return else 0.0, 650.0 * delta)
+		animation_state = "run" if absf(velocity.x) > 6.0 else "idle"
+		return
 	var attack_range: float = 48.0 if kind == "elite" else 35.0
 	if absf(offset.x) < attack_range and absf(offset.y) < 34.0 and _cooldown <= 0.0:
 		_begin_attack()
+		return
+	if _cooldown <= 0.0 and is_on_floor() and _can_start_barrage():
+		_begin_attack(true)
 		return
 	var speed: float = 88.0 if kind == "elite" else 50.0
 	if absf(offset.x) < 310.0 and absf(offset.x) > attack_range * 0.75:
@@ -161,40 +190,85 @@ func _update_walker(offset: Vector2, delta: float) -> void:
 
 func _update_wisp(offset: Vector2, delta: float) -> void:
 	var target_y: float = _home.y - 12.0 + sin(_clock * 2.3) * 10.0
-	if absf(offset.x) < 350.0:
+	if patrol_bounds.has_area():
+		target_y = clampf(target_y, patrol_bounds.position.y + 12.0, patrol_bounds.end.y - 8.0)
+	if absf(offset.x) < 350.0 and _target_in_patrol():
 		velocity.x = move_toward(velocity.x, facing * 42.0 if absf(offset.x) > 170.0 else -facing * 16.0, 150.0 * delta)
-		if _cooldown <= 0.0 and offset.length() < 300.0:
-			_begin_attack()
+		if _cooldown <= 0.0 and _can_start_barrage():
+			_begin_attack(true)
 	else:
 		velocity.x = move_toward(velocity.x, (_home.x - global_position.x) * 0.5, 120.0 * delta)
 	velocity.y = clampf((target_y - global_position.y) * 3.0, -35.0, 35.0)
 	animation_state = "idle"
+
+func _target_in_patrol() -> bool:
+	return not patrol_bounds.has_area() or patrol_bounds.grow(8.0).has_point(game.player.global_position)
+
+func _keep_in_patrol() -> void:
+	if not patrol_bounds.has_area():
+		return
+	var minimum: float = patrol_bounds.position.x + 8.0
+	var maximum: float = maxf(minimum, patrol_bounds.end.x - 8.0)
+	global_position.x = clampf(global_position.x, minimum, maximum)
+	if (global_position.x <= minimum and velocity.x < 0.0) or (global_position.x >= maximum and velocity.x > 0.0):
+		velocity.x = 0.0
+	if kind == "wisp":
+		var min_y: float = patrol_bounds.position.y + 8.0
+		var max_y: float = maxf(min_y, patrol_bounds.end.y - 8.0)
+		global_position.y = clampf(global_position.y, min_y, max_y)
+		if (global_position.y <= min_y and velocity.y < 0.0) or (global_position.y >= max_y and velocity.y > 0.0):
+			velocity.y = 0.0
 
 func _floor_ahead(direction: int) -> bool:
 	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(global_position + Vector2(direction * 15.0, -4.0), global_position + Vector2(direction * 15.0, 20.0), 1)
 	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
 	return not hit.is_empty()
 
-func _begin_attack() -> void:
+func _begin_attack(ranged: bool = false) -> void:
+	if dead or not is_instance_valid(game) or not is_instance_valid(game.player) or bool(game.story_safe) or bool(game.player.dead):
+		return
+	var will_shoot: bool = kind == "wisp" or ranged
+	if will_shoot and not _can_start_barrage():
+		return
+	_barrage_queue.clear()
+	_attack_ranged = will_shoot
 	attack_serial += 1
-	_windup = 0.66 if kind == "wisp" else (0.48 if kind == "elite" else 0.58)
-	_cooldown = 1.55 if kind == "wisp" else (1.12 if kind == "elite" else 1.45)
 	_attack_facing = facing
 	_attack_target = game.player.global_position + Vector2(0.0, -14.0)
+	barrage_origin = _muzzle()
+	barrage_aim = (_attack_target - barrage_origin).normalized()
+	if barrage_aim.length_squared() < 0.1:
+		barrage_aim = Vector2(_attack_facing, 0)
 	_shot = false
+	if will_shoot:
+		barrage_pattern = "sentry_fork" if kind == "sentry" else ("wisp_crown" if kind == "wisp" else ("elite_fan" if _barrage_cycle % 2 == 0 else "elite_wheel"))
+		_barrage_cycle += 1
+		_windup = 0.75 if kind == "wisp" else (0.85 if kind == "elite" else 0.62)
+		_cooldown = _ranged_reload()
+	else:
+		barrage_pattern = ""
+		_windup = 0.48 if kind == "elite" else 0.58
+		_cooldown = 1.12 if kind == "elite" else 1.45
 	if game.has_signal("warning_issued"):
-		game.emit_signal("warning_issued", "wisp" if kind == "wisp" else "melee", global_position + Vector2(facing * 22.0, -16.0), _windup)
-	game.emit_fx("warning", global_position + Vector2(0.0, -33.0), Vector2(facing, 0.0), 0.5)
+		game.emit_signal("warning_issued", "mob_" + kind if will_shoot else "melee", barrage_origin, _windup)
+	game.emit_fx("warning", global_position + Vector2(0.0, -33.0), Vector2(_attack_facing, 0.0), 0.5)
 
 func _execute_attack() -> void:
 	if _shot or dead or bool(game.story_safe) or bool(game.player.dead):
 		return
 	_shot = true
+	_windup = 0.0
 	_recovery = 0.34
-	if kind == "wisp":
-		var shot_origin: Vector2 = global_position + Vector2(facing * 8.0, -13.0)
-		var direction: Vector2 = (_attack_target - shot_origin).normalized()
-		game.spawn_projectile(shot_origin, direction * 130.0, false)
+	if _attack_ranged:
+		if not _can_emit_barrage():
+			_cancel_barrage()
+			return
+		_barrage_elapsed = 0.0
+		_barrage_queue.append({"at": 0.0, "layer": 0})
+		if kind != "sentry":
+			_barrage_queue.append({"at": 0.24 if kind == "wisp" else 0.28, "layer": 1})
+		_recovery = 0.42 if kind == "elite" else (0.38 if kind == "wisp" else 0.34)
+		_advance_barrage(0.0)
 		return
 	var player: Node2D = game.player
 	var offset: Vector2 = player.global_position - global_position
@@ -213,6 +287,130 @@ func _execute_attack() -> void:
 	else:
 		game.damage_player(1, global_position)
 
+func _muzzle() -> Vector2:
+	return global_position + Vector2(_attack_facing * 10.0, -18.0 if kind != "wisp" else -13.0)
+
+func _emitter_visible() -> bool:
+	# Test the complete actor bounds in viewport coordinates. This follows both
+	# camera axes, its actual viewport size and zoom, including underground rooms.
+	var bounds: Rect2 = get_global_transform_with_canvas() * Rect2(-14, -42, 28, 44)
+	return get_viewport_rect().grow(-24.0).encloses(bounds)
+
+func _update_visibility(delta: float) -> void:
+	if _emitter_visible():
+		_visible_time = minf(SCREEN_WARMUP, _visible_time + maxf(delta, 0.0))
+	else:
+		_visible_time = 0.0
+		if _attack_ranged or not _barrage_queue.is_empty():
+			_cancel_barrage()
+		_cooldown = maxf(_cooldown, 0.45)
+
+func _has_line_of_sight(target_at: Vector2) -> bool:
+	if not is_inside_tree():
+		return false
+	var query := PhysicsRayQueryParameters2D.create(_muzzle(), target_at, 1)
+	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+
+func _ranged_distance_allowed() -> bool:
+	if not is_instance_valid(game) or not is_instance_valid(game.player):
+		return false
+	var distance: float = _muzzle().distance_to(game.player.global_position + Vector2(0, -14))
+	var minimum: float = 144.0 if kind == "elite" else (120.0 if kind == "wisp" else 112.0)
+	var maximum: float = 310.0 if kind == "elite" else (300.0 if kind == "wisp" else 250.0)
+	return distance >= minimum and distance <= maximum
+
+func _can_start_barrage() -> bool:
+	return _visible_time >= SCREEN_WARMUP and _emitter_visible() and _target_in_patrol() and _ranged_distance_allowed() and _has_line_of_sight(game.player.global_position + Vector2(0, -14))
+
+func _can_emit_barrage() -> bool:
+	return _visible_time >= SCREEN_WARMUP and _emitter_visible() and _target_in_patrol() and _ranged_distance_allowed() and _has_line_of_sight(_attack_target)
+
+func _ranged_reload() -> float:
+	return 1.70 if kind == "wisp" else (2.10 if kind == "elite" else 1.75)
+
+func get_pending_barrage_layers() -> int:
+	return _barrage_queue.size()
+
+static func barrage_angles(pattern: String, layer: int = 0) -> Array[float]:
+	var degrees: Array[float] = []
+	match pattern:
+		"sentry_fork": degrees.assign([-24.0, -12.0, 12.0, 24.0])
+		"wisp_crown": degrees.assign([-54.0, -36.0, -18.0, 18.0, 36.0, 54.0] if layer == 0 else [-51.0, -33.0, -15.0, 21.0, 39.0, 57.0])
+		"elite_fan": degrees.assign([-48.0, -34.0, -22.0, -10.0, 10.0, 22.0, 34.0, 48.0])
+		"elite_wheel":
+			for i: int in 12:
+				var angle: float = wrapf(float(i) * 30.0 + float(layer) * 15.0, -180.0, 180.0)
+				if absf(angle) > 30.0:
+					degrees.append(angle)
+	var result: Array[float] = []
+	for angle: float in degrees:
+		result.append(deg_to_rad(angle))
+	return result
+
+func _advance_barrage(delta: float) -> void:
+	if _barrage_queue.is_empty():
+		return
+	if dead or bool(game.story_safe) or bool(game.player.dead) or _stagger > 0.0 or not _can_emit_barrage():
+		_cancel_barrage()
+		return
+	_barrage_elapsed += maxf(0.0, delta)
+	var dispatched: int = 0
+	while not _barrage_queue.is_empty() and dispatched < MAX_LAYERS_PER_TICK and float(_barrage_queue[0]["at"]) <= _barrage_elapsed:
+		var layer: Dictionary = _barrage_queue.pop_front()
+		# Consume the finite layer even when root/global/source caps reject shots.
+		# No rejected projectile is retried on future physics frames.
+		dispatched += 1
+		_emit_barrage_layer(int(layer["layer"]))
+	if _barrage_queue.is_empty():
+		_cooldown = maxf(_cooldown, _ranged_reload())
+
+func _emit_barrage_layer(layer: int) -> void:
+	var speed: float = 118.0 if kind == "elite" else (105.0 if kind == "wisp" else 115.0)
+	var style: String = "elite_rune" if kind == "elite" else ("wisp_seed" if kind == "wisp" else "sentry_shard")
+	var source_cap: int = 28 if kind == "elite" else (18 if kind == "wisp" else 8)
+	for angle: float in barrage_angles(barrage_pattern, layer):
+		if _live_hostiles() >= source_cap:
+			break
+		var projectile: Node2D = game.spawn_projectile(_muzzle(), barrage_aim.rotated(angle) * speed, false, style)
+		if not is_instance_valid(projectile):
+			continue
+		projectile.set_meta("mob_source_id", get_instance_id())
+		projectile.set_meta("mob_attack_serial", attack_serial)
+		_owned_shots.append(weakref(projectile))
+
+func _live_hostiles() -> int:
+	var total: int = 0
+	for ref: WeakRef in _owned_shots:
+		var projectile: Node = ref.get_ref()
+		if is_instance_valid(projectile) and not projectile.is_queued_for_deletion() and not bool(projectile.get("friendly")):
+			total += 1
+	return total
+
+func _prune_owned_shots() -> void:
+	var outer: Rect2 = get_viewport_rect().grow(96.0)
+	for i: int in range(_owned_shots.size() - 1, -1, -1):
+		var projectile: Node2D = _owned_shots[i].get_ref()
+		if not is_instance_valid(projectile) or projectile.is_queued_for_deletion():
+			_owned_shots.remove_at(i)
+		elif not bool(projectile.get("friendly")) and not outer.has_point(projectile.get_global_transform_with_canvas() * Vector2.ZERO):
+			projectile.clear()
+			_owned_shots.remove_at(i)
+
+func _clear_owned_hostiles() -> void:
+	for ref: WeakRef in _owned_shots:
+		var projectile: Node = ref.get_ref()
+		if is_instance_valid(projectile) and not projectile.is_queued_for_deletion() and not bool(projectile.get("friendly")):
+			projectile.clear()
+	_owned_shots.clear()
+
+func _cancel_barrage() -> void:
+	_barrage_queue.clear()
+	_barrage_elapsed = 0.0
+	_attack_ranged = false
+	_windup = 0.0
+	_recovery = 0.0
+	_shot = true
+
 func receive_hit(amount: int, origin: Vector2) -> void:
 	if dead or amount <= 0 or _hurt_flash > 0.06 or (is_instance_valid(game) and bool(game.story_safe)):
 		return
@@ -222,8 +420,7 @@ func receive_hit(amount: int, origin: Vector2) -> void:
 	hurt_flash = _hurt_flash
 	_hurt_elapsed = 0.0
 	_stagger = maxf(_stagger, (0.30 if heavy else 0.18) if kind == "elite" else (0.36 if heavy else 0.23))
-	_windup = 0.0
-	_recovery = 0.0
+	_cancel_barrage()
 	_cooldown = maxf(_cooldown, _stagger + 0.24)
 	var impulse: float = (155.0 if heavy else 90.0) if kind == "elite" else (230.0 if heavy else 145.0)
 	velocity.x = (1.0 if global_position.x >= origin.x else -1.0) * impulse
@@ -241,6 +438,8 @@ func _die() -> void:
 	if dead:
 		return
 	dead = true
+	_cancel_barrage()
+	_clear_owned_hostiles()
 	animation_state = "dead"
 	frame = 0
 	_publish_animation()

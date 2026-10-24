@@ -13,6 +13,10 @@ const GRAVITY: float = 900.0
 const DASH_SPEED: float = 420.0
 const COYOTE_TIME: float = 0.10
 const JUMP_BUFFER: float = 0.12
+const CLIMB_SPEED: float = 90.0
+const CLIMB_ALIGN_SPEED: float = 80.0
+const SHALLOW_WATER_SPEED: float = 0.72
+const WATER_SPLASH_INTERVAL: float = 0.18
 const PARRY_WINDOW: float = 0.16
 const PARRY_RECOIL: float = 0.06
 const PARRY_RECOVER: float = 0.10
@@ -44,6 +48,17 @@ var animation_state: String = "idle"
 var frame: int = 0
 var combo: int = 0
 var dead: bool = false
+var climbing: bool = false
+var climb_kind: String = ""
+var climb_id: String = ""
+var in_shallow_water: bool = false
+var _climb_axis: float = 0.0
+var _climb_rect: Rect2 = Rect2()
+var _climb_distance: float = 0.0
+var _climb_moving: bool = false
+var _climb_release_required: bool = false
+var _climb_regrab_cooldown: float = 0.0
+var _water_splash_cooldown: float = 0.0
 var _coyote: float = 0.0
 var _jump_buffer: float = 0.0
 var _jump_cut_requested: bool = false
@@ -89,6 +104,9 @@ func _capture_input() -> void:
 	# Capture every edge BEFORE a hit-stop early return. One combo intent survives
 	# any windup/active/recovery length and cannot stack into an unattended chain.
 	_move_axis = Input.get_axis("move_left", "move_right")
+	_climb_axis = Input.get_axis("climb_up", "climb_down") if InputMap.has_action("climb_up") and InputMap.has_action("climb_down") else 0.0
+	if is_zero_approx(_climb_axis):
+		_climb_release_required = false
 	if Input.is_action_just_pressed("attack"):
 		queued_attack = true
 	if Input.is_action_just_pressed("jump"):
@@ -118,6 +136,7 @@ func _physics_process(delta: float) -> void:
 	_parry_cooldown = maxf(0.0, _parry_cooldown - delta)
 	var safe: bool = is_instance_valid(game) and bool(game.story_safe)
 	if safe:
+		reset_traversal(true)
 		_clear_parry()
 		_cancel_attack()
 		combat_freeze = 0.0
@@ -127,6 +146,7 @@ func _physics_process(delta: float) -> void:
 		_parry_buffer = 0.0
 		_hurt_lock = 0.0
 	if dead:
+		reset_traversal(true)
 		_clear_parry()
 		_cancel_attack()
 		velocity = Vector2.ZERO
@@ -145,6 +165,9 @@ func _physics_process(delta: float) -> void:
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	_dash_buffer = maxf(0.0, _dash_buffer - delta)
 	_parry_buffer = maxf(0.0, _parry_buffer - delta)
+	if not safe:
+		_update_water(delta)
+	_update_climb_intent(delta, safe)
 	if _move_axis != 0.0 and dash_timer <= 0.0 and attack_phase == "none" and parry_phase == "none":
 		facing = 1 if _move_axis > 0.0 else -1
 	if is_on_floor():
@@ -158,6 +181,10 @@ func _physics_process(delta: float) -> void:
 		_start_parry()
 	if queued_attack and attack_phase == "none" and dash_timer <= 0.0 and not _parry_blocks_attack() and _hurt_lock <= 0.0 and not safe:
 		_start_attack()
+	if climbing:
+		_move_climb(delta)
+		_refresh_animation(delta)
+		return
 	if dash_timer > 0.0:
 		dash_timer = maxf(0.0, dash_timer - delta)
 		velocity = Vector2(facing * DASH_SPEED, 0.0)
@@ -170,6 +197,8 @@ func _physics_process(delta: float) -> void:
 			velocity.y = minf(velocity.y + GRAVITY * delta, 620.0)
 		if _hurt_lock <= 0.0:
 			var desired: float = _move_axis * RUN_SPEED
+			if in_shallow_water and is_on_floor():
+				desired *= SHALLOW_WATER_SPEED
 			if is_on_floor() and attack_phase != "none":
 				desired *= 0.32 if attack_phase == "windup" else 0.70
 				if _lunge_timer > 0.0 and attack_phase == "active":
@@ -193,6 +222,134 @@ func _physics_process(delta: float) -> void:
 	if attack_phase != "none":
 		_advance_attack(delta)
 	_refresh_animation(delta)
+
+func _traversal_level() -> Node:
+	if not is_instance_valid(game):
+		return null
+	var value: Variant = game.get("level")
+	return value if value is Node and is_instance_valid(value) else null
+
+func _query_climb() -> Dictionary:
+	var level: Node = _traversal_level()
+	if not is_instance_valid(level) or not level.has_method("climb_at"):
+		return {}
+	var answer: Variant = level.climb_at(global_position)
+	if not answer is Dictionary:
+		return {}
+	var area: Variant = answer.get("rect")
+	var kind: Variant = answer.get("kind")
+	var identifier: Variant = answer.get("id")
+	if not area is Rect2 or not kind is String or not identifier is String:
+		return {}
+	if area.size.x <= 0.0 or area.size.y <= 0.0 or not area.position.is_finite() or not area.size.is_finite() or kind not in ["ladder", "chain"] or identifier.is_empty():
+		return {}
+	# The level includes both endpoints. Reject remote/malformed provider data.
+	if not area.grow(2.0).has_point(global_position):
+		return {}
+	return answer
+
+func _update_climb_intent(delta: float, safe: bool) -> void:
+	_climb_regrab_cooldown = maxf(0.0, _climb_regrab_cooldown - delta)
+	if safe or dead or _hurt_lock > 0.0:
+		_leave_climb(true)
+		return
+	var target: Dictionary = _query_climb()
+	if climbing:
+		if target.is_empty() or String(target.id) != climb_id:
+			_leave_climb(true)
+			return
+		_climb_rect = target.rect
+		if _jump_buffer > 0.0:
+			_leave_climb(true)
+			# Reuse the existing ground-jump authority and retain an air jump.
+			_coyote = COYOTE_TIME
+			return
+		if queued_attack or _dash_buffer > 0.0 or _parry_buffer > 0.0 or absf(_move_axis) > 0.2:
+			_leave_climb(true)
+			return
+		if (_climb_axis < 0.0 and global_position.y <= _climb_rect.position.y + 0.5) or (_climb_axis > 0.0 and global_position.y >= _climb_rect.end.y - 0.5):
+			_leave_climb(true)
+		return
+	if target.is_empty() or is_zero_approx(_climb_axis) or _climb_release_required or _climb_regrab_cooldown > 0.0:
+		return
+	if attack_phase != "none" or parry_phase != "none" or parry_timer > 0.0 or dash_timer > 0.0 or queued_attack or _jump_buffer > 0.0 or _dash_buffer > 0.0 or _parry_buffer > 0.0:
+		return
+	var area: Rect2 = target.rect
+	if (_climb_axis < 0.0 and global_position.y <= area.position.y + 0.5) or (_climb_axis > 0.0 and global_position.y >= area.end.y - 0.5):
+		return
+	climbing = true
+	climb_kind = target.kind
+	climb_id = target.id
+	_climb_rect = area
+	_climb_moving = false
+	_climb_distance = 0.0
+	velocity = Vector2.ZERO
+	_coyote = 0.0
+	_air_jumps = 1
+
+func _move_climb(delta: float) -> void:
+	var before: Vector2 = global_position
+	var center_x: float = _climb_rect.get_center().x
+	velocity.x = clampf((center_x - global_position.x) * 10.0, -CLIMB_ALIGN_SPEED, CLIMB_ALIGN_SPEED)
+	velocity.y = _climb_axis * CLIMB_SPEED
+	var step: float = maxf(delta, 0.000001)
+	if velocity.y < 0.0:
+		velocity.y = maxf(velocity.y, (_climb_rect.position.y - global_position.y) / step)
+	elif velocity.y > 0.0:
+		velocity.y = minf(velocity.y, (_climb_rect.end.y - global_position.y) / step)
+	move_and_slide()
+	var moved: float = absf(global_position.y - before.y)
+	_climb_distance += moved
+	_climb_moving = moved > 0.02
+	if _climb_axis < 0.0 and is_on_ceiling() and moved < 0.02:
+		_leave_climb(true)
+
+func _leave_climb(require_release: bool = true) -> void:
+	if not climbing:
+		return
+	climbing = false
+	climb_kind = ""
+	climb_id = ""
+	_climb_rect = Rect2()
+	_climb_moving = false
+	velocity.y = 0.0
+	_climb_release_required = require_release and not is_zero_approx(_climb_axis)
+	_climb_regrab_cooldown = 0.12 if require_release else 0.0
+
+func get_climb_progress() -> float:
+	if not climbing or _climb_rect.size.y <= 0.0:
+		return 0.0
+	return clampf(1.0 - (global_position.y - _climb_rect.position.y) / _climb_rect.size.y, 0.0, 1.0)
+
+func reset_traversal(require_release: bool = false) -> void:
+	_leave_climb(require_release)
+	climbing = false
+	climb_kind = ""
+	climb_id = ""
+	_climb_rect = Rect2()
+	_climb_distance = 0.0
+	_climb_moving = false
+	in_shallow_water = false
+	_water_splash_cooldown = 0.0
+	_climb_release_required = require_release and not is_zero_approx(_climb_axis)
+	_climb_regrab_cooldown = 0.12 if require_release else 0.0
+	if not require_release:
+		_climb_axis = 0.0
+
+func _update_water(delta: float) -> void:
+	var level: Node = _traversal_level()
+	var wet: bool = false
+	if is_instance_valid(level) and level.has_method("water_at"):
+		var answer: Variant = level.water_at(global_position)
+		wet = answer is bool and answer
+	_water_splash_cooldown = maxf(0.0, _water_splash_cooldown - delta)
+	if wet and not in_shallow_water:
+		_fx("water_splash", global_position, Vector2(velocity.x, -absf(velocity.y)).normalized(), 0.65)
+		_water_splash_cooldown = WATER_SPLASH_INTERVAL
+	elif wet and is_on_floor() and absf(velocity.x) > 35.0 and _water_splash_cooldown <= 0.0:
+		_fx("water_splash", global_position, Vector2(signf(velocity.x), -0.2), 0.35)
+		_water_splash_cooldown = WATER_SPLASH_INTERVAL
+	in_shallow_water = wet
 
 func set_impact_freeze(seconds: float) -> void:
 	if is_instance_valid(game) and bool(game.story_safe):
@@ -218,6 +375,7 @@ func _start_dash(move_axis: float) -> bool:
 		return false
 	if move_axis != 0.0:
 		facing = 1 if move_axis > 0.0 else -1
+	_leave_climb(true)
 	_cancel_attack()
 	_clear_parry()
 	dash_timer = 0.16
@@ -229,6 +387,7 @@ func _start_dash(move_axis: float) -> bool:
 	return true
 
 func _jump(airborne: bool) -> void:
+	_leave_climb(true)
 	velocity.y = JUMP_SPEED * (0.92 if airborne else 1.0)
 	_jump_buffer = 0.0
 	_coyote = 0.0
@@ -242,6 +401,7 @@ func _start_attack() -> void:
 		return
 	if _hurt_lock > 0.0 or dash_timer > 0.0 or _parry_blocks_attack():
 		return
+	_leave_climb(true)
 	_clear_parry()
 	if _move_axis != 0.0:
 		facing = 1 if _move_axis > 0.0 else -1
@@ -329,6 +489,7 @@ func _cancel_attack() -> void:
 func receive_hit(amount: int, origin: Vector2) -> bool:
 	if dead or invuln > 0.0 or amount <= 0 or (is_instance_valid(game) and bool(game.story_safe)):
 		return false
+	reset_traversal(true)
 	health = maxi(0, health - amount)
 	impact_flash = 0.11
 	invuln = 0.80
@@ -357,6 +518,7 @@ func _parry_paused() -> bool:
 func _start_parry() -> bool:
 	if dead or _parry_paused() or not is_instance_valid(game) or bool(game.story_safe) or _parry_cooldown > 0.0 or dash_timer > 0.0 or _hurt_lock > 0.0 or parry_phase == "recoil" or not can_cancel_attack():
 		return false
+	_leave_climb(true)
 	_cancel_attack()
 	_clear_parry()
 	if _move_axis != 0.0:
@@ -454,6 +616,7 @@ func _clear_parry() -> void:
 	_parry_seen.clear()
 
 func revive(at: Vector2) -> void:
+	reset_traversal()
 	global_position = at
 	velocity = Vector2.ZERO
 	health = max_health
@@ -493,6 +656,8 @@ func _refresh_animation(delta: float) -> void:
 		_set_animation("parry", delta)
 	elif attack_phase != "none":
 		_set_animation("attack" if attack_phase == "active" else attack_phase, delta)
+	elif climbing:
+		_set_animation("climb" if _climb_moving else "climb_idle", delta)
 	elif not is_on_floor():
 		_set_animation("jump" if velocity.y < 0.0 else "fall", delta)
 	elif absf(velocity.x) > 8.0:
@@ -510,6 +675,8 @@ func _set_animation(state: String, delta: float) -> void:
 		frame = clampi(int(4.0 * get_attack_progress() + 0.000001), 0, 3)
 	elif state in ["parry", "parry_recoil", "parry_recover"] and parry_phase != "none":
 		frame = clampi(int(4.0 * get_parry_progress() + 0.000001), 0, 3)
+	elif state in ["climb", "climb_idle"]:
+		frame = int(_climb_distance / 6.0) % 4
 	elif state == "run":
 		frame = int(_state_clock * 12.0) % 6
 	elif state == "idle":

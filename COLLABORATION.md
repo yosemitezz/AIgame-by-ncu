@@ -100,3 +100,22 @@ combat agent `actors/player.gd`, cadence tests; lead wiring/tests/docs/Git;
 independent reviewer reads only. Future dungeon work uses separate level, traversal,
 and mob owners. Boss design remains with the user's collaborator; only required
 compatibility fixes are in scope. Do not edit other working directories or main.
+
+
+## Dungeon depths / full pixel UI milestone
+
+Developed on feat/dungeon-depths-20261024 from the verified fusion 90319f4. Stable
+playable worktree remains untouched during this implementation. Owners: level
+levels/bellkeep.gd + layout docs/tests; traversal actors/player.gd + traversal test;
+mobs actors/enemy.gd + barrage test; presentation actor_renderer, dungeon_frames,
+hero generator, FxLayer; lead main/project/projectile/HUD/integration/tools/docs/Git;
+reviewer read only. No Cursor source working files are imported.
+
+Level APIs: climb_at(feet)->{id,kind,rect}, water_at(feet)->bool,
+try_interact(feet)->bool, interaction_hint(feet)->String, room_at(feet)->Dictionary,
+get_opened_ids/restore_opened_ids/reset_interactions. Foot bounds include climb endpoints.
+Root owns E interaction, one pause/map overlay, spatial shrine/Boss triggers and retry
+metadata. Controller owns climbing and shallow-water speed; action input still has one
+owner. Projectile style is an optional fourth root spawn argument; cap returns null.
+Mobs must consume finite layers even if capacity rejects a shot. Fine Boss design is out
+of this milestone. Narrative proposals are recorded in docs/story-direction.md only.

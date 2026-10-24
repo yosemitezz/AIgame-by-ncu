@@ -14,7 +14,7 @@ static func _texture(name: String) -> Texture2D:
 
 static func _data() -> Dictionary:
     if _manifest.is_empty():
-        var file: FileAccess = FileAccess.open("res://presentation/feel_frames/manifest.json", FileAccess.READ)
+        var file: FileAccess = FileAccess.open("res://presentation/dungeon_frames/manifest.json", FileAccess.READ)
         if file:
             var parsed: Variant = JSON.parse_string(file.get_as_text())
             if parsed is Dictionary:
@@ -36,7 +36,8 @@ static func hero_region(state: String, frame: int, combo: int = 1) -> Rect2:
     if not states.has(key):
         key = "idle"
     var descriptor: Dictionary = states.get(key, {"start": 0, "count": 4})
-    var index: int = int(descriptor["start"]) + posmod(frame, int(descriptor["count"]))
+    var sample: int = [0, 2, 3, 5][posmod(frame, 4)] if state in ["climb", "climb_idle"] else posmod(frame, int(descriptor["count"]))
+    var index: int = int(descriptor["start"]) + sample
     return Rect2(Vector2(index % 8, index / 8) * HERO_SIZE, HERO_SIZE)
 
 static func weapon_tip_local(combo: int, frame: int) -> Vector2:
@@ -48,7 +49,7 @@ static func weapon_tip_local(combo: int, frame: int) -> Vector2:
     return Vector2(float(point[0]), float(point[1]))
 
 static func silhouette_texture() -> Texture2D:
-    return _texture("res://presentation/feel_frames/hero_silhouette.png")
+    return _texture("res://presentation/dungeon_frames/hero_silhouette.png")
 
 
 static func parry_region(kind: String, state: String, progress: float) -> Rect2:
@@ -111,12 +112,12 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
     var parry_pose: Dictionary = _parry_pose(canvas, kind, state, frame)
     if not parry_pose.is_empty():
         var key: String = "hero" if kind == "hero" else "boss"
-        texture = _texture("res://presentation/parry_frames/%s_%s.png" % [key, "flash" if flashing else "parry"])
+        texture = _texture("res://presentation/dungeon_frames/hero_parry_flash.png" if flashing else "res://presentation/dungeon_frames/hero_parry.png") if kind == "hero" else _texture("res://presentation/parry_frames/%s_%s.png" % [key, "flash" if flashing else "parry"])
         frame_size = HERO_SIZE if kind == "hero" else Vector2(80, 80)
         anchor = HERO_ANCHOR if kind == "hero" else Vector2(40, 76)
         region = parry_region(kind, parry_pose["state"], float(parry_pose["progress"]))
     elif kind == "hero":
-        texture = _texture("res://presentation/feel_frames/hero_flash.png" if flashing else "res://presentation/feel_frames/hero_atlas.png")
+        texture = _texture("res://presentation/dungeon_frames/hero_flash.png" if flashing else "res://presentation/dungeon_frames/hero_atlas.png")
         frame_size = HERO_SIZE
         anchor = HERO_ANCHOR
         region = hero_region(state, frame, _combo(canvas))

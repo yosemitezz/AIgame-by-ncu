@@ -1,0 +1,18 @@
+{
+  "frames": 82,
+  "unique_frames": 74,
+  "climb_unique": 6,
+  "climb_idle_unique": 6,
+  "colors": 11,
+  "weapon_tip_table_preserved": true,
+  "parry_frames": 12,
+  "sha256": {
+    "dungeon-hero-comparison.png": "a99e341d7d139a966a1b2eeda6da2f363224b6f51fbc2ebd1cdb648f5e0f75be",
+    "dungeon-hero-contact.png": "8f19fc31b1a9e67b90180b10d1dd9aa07cfb9fda9d8f10f9a482ffc7f68a5346",
+    "hero_atlas.png": "032abc932c29e39fe4df7e430db4539be682dea4cd0438bd057b0c18abd59858",
+    "hero_flash.png": "a2a7e1ed042ec885c61b5574de8192126880d65330df16af484955678b5ccc5b",
+    "hero_parry.png": "4b0bdef9472e99442c7c1391865b8be29de5672ef4a975f78216963926e26d37",
+    "hero_parry_flash.png": "88b3e7e973f3d6af61a5745c05223770d2b2de79e6cad34b28e81d8f94c2a643",
+    "hero_silhouette.png": "9907a5608b48f977cd16c77729911e61b4e0f59d284481d18101cb15bd682a4c"
+  }
+}

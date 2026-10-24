@@ -29,12 +29,13 @@ func run() -> void:
     await process_frame
     freeze(game)
     check(game.player.health == 8, "scene starts with full health")
-    check(get_nodes_in_group("enemies").size() == 6, "complete authored enemy roster loaded")
-    check(game.level.get_child_count() == game.level.PLATFORMS.size(), "every authored platform body is built")
+    check(get_nodes_in_group("enemies").size() == game.level.ENEMIES.size(), "complete authored enemy roster loaded")
+    for index: int in game.level.PLATFORMS.size():
+        check(game.level.get_node_or_null("Masonry_%02d" % index) != null, "authored platform %d body is built" % index)
     check(InputMap.has_action("parry") and InputMap.has_action("dash"), "input mappings installed")
     var floors: Array[Rect2] = []
     for rectangle: Rect2 in game.level.PLATFORMS:
-        if rectangle.size.y > 16:
+        if rectangle.size.y > 16 and is_equal_approx(rectangle.position.y, 300.0):
             floors.append(rectangle)
     var safe_gap: float = 180.0 * (2.0 * 340.0 / 900.0) * 0.7
     for i: int in range(floors.size() - 1):

@@ -46,6 +46,15 @@ func _initialize() -> void:
 			codepoints[codepoint] = true
 			if not font.has_char(codepoint):
 				missing.append({"character": String.chr(codepoint), "codepoint": "U+%04X" % codepoint})
+	# Validate the actual new interface/interaction copy, beyond the legacy sample.
+	for path: String in ["res://ui/hud.gd", "res://levels/bellkeep.gd"]:
+		var source: String = FileAccess.get_file_as_string(path)
+		for index: int in source.length():
+			var codepoint: int = source.unicode_at(index)
+			if codepoint >= 0x4e00 and codepoint <= 0x9fff and not codepoints.has(codepoint):
+				codepoints[codepoint] = true
+				if not font.has_char(codepoint):
+					missing.append({"character": String.chr(codepoint), "codepoint": "U+%04X" % codepoint})
 	_check(missing.is_empty(), "all_required_glyphs_present")
 	var metrics: Dictionary = {}
 	for size in [12, 24]:
