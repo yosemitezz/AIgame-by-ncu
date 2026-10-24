@@ -94,7 +94,7 @@ func run() -> void:
         game.emit_fx("dash", game.player.position - Vector2(0, 13), Vector2.LEFT, 0.5)
         gradient._process(0.04)
     var counts: Dictionary = gradient.counts()
-    check(int(counts.get("ghosts", 0)) > 0 and int(counts.get("ghosts", 0)) <= 5, "moving dash produces bounded real owner ghosts")
+    check(int(counts.get("ghosts", 0)) > 0 and int(counts.get("ghosts", 0)) <= gradient.MAX_OWNER_GHOSTS, "moving dash produces bounded real owner ghosts")
     game.warning_issued.emit("fan", Vector2(2240, 240), 0.5)
     game.emit_fx("enemy_slash", Vector2(2220, 280), Vector2.LEFT, 1)
     check(not gradient.draw_warnings and int(gradient.counts().get("warnings",0)) == 0 and int(game.effects.counts().get("warnings",0)) > 0, "one warning authority holds the issued warning without a duplicate gradient overlay")

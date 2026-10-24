@@ -84,14 +84,14 @@ func _process(delta: float) -> void:
 	var moving: bool = absf(velocity.x) > 140.0 or dash or attack
 	_spawn_clock -= delta
 	if moving and _spawn_clock <= 0.0 and (_last_at == Vector2.INF or _last_at.distance_to(player.global_position) >= 6.0):
-		_spawn_clock = 0.018 if _level() == 2 else 0.035
+		_spawn_clock = 0.012 if _level() == 2 else 0.024
 		_last_at = player.global_position
 		var direction: float = -1.0 if int(player.get("facing")) < 0 else 1.0
-		for index: int in (4 if _level() == 2 else 2):
+		for index: int in (6 if _level() == 2 else 3):
 			if _marks.size() >= MAX_MARKS:
 				break
 			var offset := Vector2(-direction * _rng.randf_range(100, 290), _rng.randf_range(-150, -70) if index % 2 == 0 else _rng.randf_range(18, 50))
-			_marks.append({"at": (player.global_position + offset).round(), "life": 0.12, "max": 0.12, "d": direction, "length": _rng.randi_range(12, 30) if dash else _rng.randi_range(6, 18), "edge": index % 3 == 2})
+			_marks.append({"at": (player.global_position + offset).round(), "life": 0.16, "max": 0.16, "d": direction, "length": _rng.randi_range(26, 64) if dash else _rng.randi_range(12, 30), "edge": index % 3 == 2})
 	if is_instance_valid(_background):
 		_background.queue_redraw()
 
@@ -104,9 +104,9 @@ func _exit_tree() -> void:
 
 func _draw_background(canvas: CanvasItem) -> void:
 	for mark: Dictionary in _marks:
-		var alpha: float = float(mark["life"]) / float(mark["max"]) * (0.25 if _level() == 2 else 0.16)
+		var alpha: float = float(mark["life"]) / float(mark["max"]) * (0.5 if _level() == 2 else 0.34)
 		var at: Vector2 = mark["at"]
 		var back: Vector2 = Vector2(-float(mark["d"]) * float(mark["length"]), 0)
-		canvas.draw_line(at, (at + back).round(), Color(0.48, 0.59, 0.66, alpha), 1.0, false)
+		canvas.draw_line(at, (at + back).round(), Color(0.62, 0.72, 0.9, alpha), 2.0 if int(mark["length"]) > 40 else 1.0, false)
 		if bool(mark["edge"]):
-			canvas.draw_line(at, at + Vector2(0, -3), Color(0.48, 0.59, 0.66, alpha), 1.0, false)
+			canvas.draw_line(at, at + Vector2(0, -3), Color(0.62, 0.72, 0.9, alpha), 1.0, false)

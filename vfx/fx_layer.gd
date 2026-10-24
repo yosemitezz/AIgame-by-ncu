@@ -10,6 +10,8 @@ extends Node2D
 ## Layers: crisp pixel pass (this node) + additive glow pass (child) + additive afterimages (Ghost nodes).
 
 const GhostOutline = preload("res://presentation/ghost_outline.gdshader")
+const GhostShadow = preload("res://presentation/ghost_shadow.gdshader")
+const HeroSmear = preload("res://vfx/hero_smear.gd")
 const Level = preload("res://levels/bellkeep.gd")
 
 const SIZE_BOOST: float = 1.75   # ring / ray / star / arc radii are this much larger than the first version
@@ -21,7 +23,7 @@ const MAX_GHOSTS: int = 28
 const MAX_TRAIL_POINTS: int = 14
 const TRAIL_LIFE: float = 0.14
 const SLASH_TAIL_LIFE: float = 0.10
-const MAX_OWNER_GHOSTS: int = 5
+const MAX_OWNER_GHOSTS: int = 8
 const GHOST_INTERVAL: float = 0.032
 const GHOST_MIN_DISTANCE: float = 5.0
 const SWEEP_STEPS: int = 12
@@ -33,6 +35,9 @@ const RAMP_SOURCE: Dictionary = {
 	"hurt": ["ffffff", "ffc0b8", "ef7678", "c0405f", "5a1d4a"],
 	"dust": ["f2f6d6", "b8c4cf", "77839c", "394462"],
 	"gold": ["ffffff", "fff1bd", "e9bb68", "88704e"],
+	# Two house palettes: icy blade light and furnace ember. They replace the old hue-cycling rainbow.
+	"blade": ["ffffff", "d6f6ff", "7fd6ff", "4f86e8", "6a48c8", "2c1a62"],
+	"ember": ["ffffff", "ffe9a8", "ffb050", "ee5a38", "a02040", "40102e"],
 	"reflected_tail": ["c4fff6", "73f6df", "43b9aa", "335f79"],
 	"lantern_fan": ["fff1bd", "f4b95f", "bc7545", "67444b"],
 	"bat_seed": ["eedbff", "c69aff", "8e65b7", "514267"],
@@ -85,6 +90,8 @@ var _spawn_event: String = ""
 var _safe_seen: bool = false
 var _attack_profile: Script = null
 var _ghost_material: ShaderMaterial
+var _shadow_material: ShaderMaterial
+var _smear: Node2D = null
 var _ghost_samples: Dictionary = {}
 var _trail_canvas: Node2D
 var _katana_visual: Script = preload("res://presentation/katana_visual.gd")
@@ -130,6 +137,10 @@ func _ready() -> void:
 	_add_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_ghost_material = ShaderMaterial.new()
 	_ghost_material.shader = GhostOutline
+	_shadow_material = ShaderMaterial.new()
+	_shadow_material.shader = GhostShadow
+	_smear = HeroSmear.new()
+	add_child(_smear)
 	_trail_canvas = Node2D.new()
 	_trail_canvas.z_as_relative = false
 	_trail_canvas.z_index = 1
@@ -172,7 +183,18 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PAUSED:
 		clear_motion_decor()
 
+func _speed_level() -> int:
+	if not is_instance_valid(game):
+		return 1
+	var impact: Variant = game.get("impact")
+	if impact != null and is_instance_valid(impact) and bool(impact.get("reduced_motion")):
+		return 0
+	var value: Variant = game.get("speed_effects_level")
+	return clampi(int(value), 0, 2) if value != null else 1
+
 func clear_motion_decor() -> void:
+	if is_instance_valid(_smear):
+		_smear.clear()
 	# Pause suspends combat rather than cancelling it: retain primary shapes and warnings.
 	_body_trail.clear()
 	_proj_trails.clear()
@@ -242,13 +264,14 @@ func ghost_count() -> int:
 func _col(ramp: String, u: float, a: float = 1.0, h: float = 0.0) -> Color:
 	u = clampf(u, 0.0, 1.0)
 	var c: Color
-	if ramp == "rainbow":
-		var sat: float = clampf(u * 5.0, 0.0, 1.0) * 0.62
-		c = Color.from_hsv(fposmod(u * 0.85 + h + _draw_hue + _clock * 0.6, 1.0), sat, 1.0)
-	elif ramp == "flow":
-		# Light flowing along the effect: hue slides with position along the stroke and with time.
-		var sat2: float = clampf(u * 4.0, 0.0, 1.0) * 0.8
-		c = Color.from_hsv(fposmod(0.5 + u * 0.55 + h + _draw_hue + _clock * 1.3, 1.0), sat2, 1.0)
+	if ramp == "rainbow" or ramp == "flow":
+		# Furnace ember or icy blade, never a full spectrum. Hue only drifts a little per swing.
+		var stops_hot: PackedColorArray = _ramps["ember" if ramp == "rainbow" else "blade"]
+		var fh: float = u * float(stops_hot.size() - 1)
+		var ih: int = mini(int(fh), stops_hot.size() - 2)
+		c = stops_hot[ih].lerp(stops_hot[ih + 1], fh - float(ih))
+		var drift: float = (fposmod(h + _draw_hue, 1.0) - 0.5) * 0.08
+		c = Color.from_hsv(fposmod(c.h + drift, 1.0), c.s, c.v)
 	else:
 		var stops: PackedColorArray = _ramps[ramp]
 		var f: float = u * float(stops.size() - 1)
@@ -349,7 +372,7 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 	g.reaction_progress = float(progress) if progress != null else 0.0
 	# Clash/break poses stay readable; a live hurt flash must not repaint an old ghost.
 	g.impact_flash = 0.0
-	g.life = minf(life, 0.16 if kind == "boss" else 0.14)
+	g.life = minf(life, 0.16 if kind == "boss" else 0.3)
 	g.max_life = g.life
 	g.source_id = id
 	g.airborne = source.has_method("is_on_floor") and not bool(source.call("is_on_floor"))
@@ -358,8 +381,14 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 		if snapshot is Dictionary:
 			g.boss_pose_snapshot = snapshot.duplicate(true)
 	g.tint = tint
-	g.base_alpha = minf(alpha, 0.38 if kind == "boss" else 0.32)
-	g.material = _ghost_material
+	g.base_alpha = minf(alpha, 0.38 if kind == "boss" else 0.62)
+	if kind == "hero":
+		# The hero leaves a near-black silhouette with a faint violet rim that follows and fades.
+		g.tint = Color.WHITE
+		g.base_alpha = clampf(alpha * 0.9, 0.3, 0.62)
+		g.material = _shadow_material
+	else:
+		g.material = _ghost_material
 	g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	g.z_as_relative = false
 	g.z_index = 1
@@ -407,7 +436,7 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_sparks(at + Vector2(-d * 6.0, -12.0), Vector2(-d, 0.0), 6 + 2 * int(lc), "flow", 200.0, 0.4, "streak", 0.45)
 			var lp: Node2D = _player()
 			if lp != null:
-				_ghost(lp, "hero", Color.from_hsv(fposmod(_hue_shift + 0.55, 1.0), 0.6, 1.0), 0.55, 0.28)
+				_ghost(lp, "hero", Color.WHITE, 0.6, 0.3)
 			return
 		"unblockable_charge", "charge":
 			kind = "telegraph"
@@ -478,36 +507,35 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 		"parry_ready":
 			_shape("ring", at, 0.2, "cool", {"r0": 16.0, "r1": 5.0, "w": 2.0, "ry": 1.0})
 		"hit":
-			# A hit keeps the swing's hue so the cut and the impact read as one blow, then picks one of four
-			# impact looks (never the same twice in a row). Heavy hits get extra of everything.
+			# White-hot core, two crossed cuts along the blow, a thin shock ring and ember sparks. A fourth of
+			# the finishes changes (never the same twice in a row) so a long fight does not look stamped.
 			var hv: float = clampf(power, 0.6, 2.0)
-			var ncount: int = int(hv * 14.0)
-			_shape("flash", at, 0.1, "warm", {"r": 22.0 + 8.0 * power})
-			_shape("ring", at, 0.18, "rainbow", {"r0": 2.0, "r1": 12.0 + 4.0 * power, "w": 3.0, "ry": 1.0})
-			_shape("slash_mark", at, 0.22, "flow", {"ang": _rng.randf_range(-0.9, 0.9) + (0.0 if dir.x >= 0.0 else PI), "len": 34.0 * hv})
-			_sparks(at, dir, 26 + ncount, "warm", 280.0, 0.65, "streak", 1.2)
-			_sparks(at, dir, 10 + ncount / 2, "rainbow", 180.0, 0.9, "shard", 1.6)
-			_sparks(at, dir, 8, "warm", 120.0, 0.7, "deb", 1.6)
+			var ncount: int = int(hv * 12.0)
+			var base_angle: float = dir.angle() if dir.length() > 0.01 else (0.0 if d > 0.0 else PI)
+			_shape("flash", at, 0.09, "warm", {"r": 20.0 + 8.0 * power})
+			_shape("slash_mark", at, 0.2, "warm", {"ang": base_angle + 0.55, "len": 40.0 * hv})
+			_shape("slash_mark", at, 0.22, "blade", {"ang": base_angle - 0.45, "len": 34.0 * hv})
+			_shape("ring", at, 0.16, "warm", {"r0": 2.0, "r1": 14.0 + 4.0 * power, "w": 2.0, "ry": 1.0})
+			_sparks(at, dir, 18 + ncount, "warm", 300.0, 0.55, "streak", 0.55)
+			_sparks(at, dir, 8 + ncount / 2, "ember", 200.0, 0.8, "shard", 1.3)
+			_sparks(at, dir, 6, "gold", 120.0, 0.7, "deb", 1.6)
+			_smear.pulse(dir, power)
 			var hk: int = _pick_variant(_last_hit_kind, 4)
 			_last_hit_kind = hk
 			match hk:
-				0:   # Starburst
-					_shape("hexagram", at, 0.34, "warm", {"r": 22.0 + 6.0 * power, "spin": 2.2})
-					_shape("star", at, 0.26, "warm", {"r": 14.0 + 4.0 * power})
-					_shape("rays", at, 0.36, "rainbow", {"n": 14, "r1": 30.0 + 8.0 * power, "rot": 0.0})
-					_shape("ring", at, 0.3, "warm", {"r0": 2.0, "r1": 26.0 + 6.0 * power, "w": 3.0, "ry": 1.0})
+				0:   # Star burst
+					_shape("rays", at, 0.3, "ember", {"n": 12, "r1": 30.0 + 8.0 * power, "rot": 0.0})
+					_shape("star", at, 0.22, "warm", {"r": 12.0 + 4.0 * power})
 				1:   # Shock ring
-					_shape("ring", at, 0.34, "warm", {"r0": 2.0, "r1": 30.0 + 8.0 * power, "w": 4.0, "ry": 1.0})
-					_shape("ring", at, 0.3, "rainbow", {"r0": 2.0, "r1": 24.0 + 5.0 * power, "w": 3.0, "ry": 1.0, "sides": 4, "twist": 1.0})
-				2:   # Fountain
-					_sparks(at, Vector2.UP, 16 + ncount, "rainbow", 220.0, 1.0, "twinkle", 0.9)
-					_shape("crystal", at, 0.4, "cool", {"r": 22.0 + 6.0 * power, "rot": _rng.randf() * TAU, "spin": 0.5})
-					_shape("ring", at, 0.32, "rainbow", {"r0": 3.0, "r1": 22.0 + 5.0 * power, "w": 3.0, "ry": 1.0})
-				_:   # Spiral rays
-					_shape("hexagram", at, 0.5, "rainbow", {"r": 26.0 + 7.0 * power, "spin": -3.0, "rot": 0.4})
-					_shape("rays", at, 0.5, "rainbow", {"n": 10, "r1": 34.0 + 8.0 * power, "rot": 3.2})
-					_shape("ring", at, 0.36, "warm", {"r0": 3.0, "r1": 28.0 + 6.0 * power, "w": 3.0, "ry": 1.0, "sides": 4, "twist": -1.2})
-					_shape("star", at, 0.24, "warm", {"r": 12.0 + 4.0 * power})
+					_shape("ring", at, 0.3, "ember", {"r0": 2.0, "r1": 30.0 + 8.0 * power, "w": 3.0, "ry": 1.0})
+					_shape("ring", at, 0.26, "blade", {"r0": 2.0, "r1": 22.0 + 5.0 * power, "w": 2.0, "ry": 1.0, "sides": 4, "twist": 1.0})
+				2:   # Rising embers
+					_sparks(at, Vector2.UP, 14 + ncount, "ember", 200.0, 0.9, "twinkle", 0.8)
+					_shape("crystal", at, 0.32, "blade", {"r": 18.0 + 5.0 * power, "rot": _rng.randf() * TAU, "spin": 0.5})
+				_:   # Cross cut
+					_shape("slash_mark", at, 0.26, "warm", {"ang": base_angle + PI * 0.5 + 0.2, "len": 30.0 * hv})
+					_shape("slash_mark", at, 0.26, "ember", {"ang": base_angle - PI * 0.5 + 0.2, "len": 30.0 * hv})
+					_shape("ring", at, 0.24, "warm", {"r0": 3.0, "r1": 24.0 + 6.0 * power, "w": 2.0, "ry": 1.0, "sides": 4, "twist": -1.2})
 		"hurt":
 			_shape("ring", at, 0.36, "hurt", {"r0": 3.0, "r1": 26.0, "w": 4.0, "ry": 1.0})
 			_shape("crystal", at, 0.3, "hurt", {"r": 18.0, "rot": _rng.randf() * TAU, "spin": 0.5})
@@ -526,7 +554,7 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_sparks(at, Vector2(0.0, 1.0), 7, "flow", 70.0, 0.45, "twinkle", 1.3)
 			var pl2: Node2D = _player()
 			if pl2 != null:
-				_ghost(pl2, "hero", Color(0.7, 0.85, 1.0), 0.6, 0.3)
+				_ghost(pl2, "hero", Color.WHITE, 0.6, 0.3)
 		"stun":
 			_shape("hexagram", at, 0.7, "cool", {"r": 16.0, "spin": 3.0})
 			_shape("crystal", at, 0.55, "gold", {"r": 14.0, "rot": 0.3, "spin": -1.2})
@@ -650,7 +678,9 @@ func _process(delta: float) -> void:
 	if safe and not _safe_seen:
 		clear_hostile()
 	_safe_seen = safe
-	if not safe:
+	if safe:
+		_smear.clear()
+	else:
 		_follow_actors(delta)
 	for i: int in range(_parts.size() - 1, -1, -1):
 		var q: Dictionary = _parts[i]
@@ -832,6 +862,7 @@ func _follow_actors(delta: float) -> void:
 	var safe: bool = is_instance_valid(game) and bool(game.get("story_safe"))
 	# Body ribbon and afterimages follow the hero, so every action leaves a continuous light path.
 	if pl != null:
+		_smear.follow(pl, delta, _speed_level())
 		var dash_t: float = float(pl.get("dash_timer"))
 		var atk_t: float = float(pl.get("attack_timer"))
 		var vel: Vector2 = pl.get("velocity")
@@ -853,22 +884,19 @@ func _follow_actors(delta: float) -> void:
 			_run_clock -= delta
 			if _run_clock <= 0.0:
 				_run_clock = 0.05
-				var shoulder: Vector2 = pl.global_position + Vector2(-fdir * 4.0, -26.0)
-				_part(shoulder, Vector2(-fdir * _rng.randf_range(50.0, 110.0), _rng.randf_range(-14.0, 14.0)), _rng.randf_range(0.08, 0.14), "flow", 3, "streak", 10.0, 1.5)
-				_part(shoulder + Vector2(0.0, 6.0), Vector2(-fdir * _rng.randf_range(40.0, 90.0), _rng.randf_range(-8.0, 20.0)), _rng.randf_range(0.08, 0.14), "rainbow", 2, "twinkle", 0.0, 1.4)
 				if is_on_floor_safe(pl):
 					_part(pl.global_position + Vector2(-fdir * 6.0, -1.0), Vector2(-fdir * _rng.randf_range(20.0, 60.0), _rng.randf_range(-40.0, -12.0)), _rng.randf_range(0.2, 0.4), "dust", 2, "dot", 120.0, 2.0)
 			_run_ghost_clock -= delta
 			if _run_ghost_clock <= 0.0:
-				_run_ghost_clock = 0.07
-				_ghost(pl, "hero", Color.from_hsv(fposmod(_clock * 1.2 + 0.55, 1.0), 0.55, 1.0), 0.32, 0.26)
+				_run_ghost_clock = 0.045
+				_ghost(pl, "hero", Color.WHITE, 0.4, 0.26)
 		_ghost_clock -= delta
 		if dash_t > 0.0 and _ghost_clock <= 0.0:
-			_ghost_clock = 0.03
-			_ghost(pl, "hero", Color.from_hsv(fposmod(_clock * 1.7, 1.0), 0.75, 1.0), 0.75, 0.4)
+			_ghost_clock = 0.026
+			_ghost(pl, "hero", Color.WHITE, 0.75, 0.36)
 		elif atk_t > 0.0 and _ghost_clock <= 0.0:
-			_ghost_clock = 0.055
-			_ghost(pl, "hero", Color.from_hsv(fposmod(_clock * 1.7 + 0.3, 1.0), 0.65, 1.0), 0.45, 0.3)
+			_ghost_clock = 0.04
+			_ghost(pl, "hero", Color.WHITE, 0.55, 0.3)
 		_mote_clock -= delta
 		if _mote_clock <= 0.0 and _parts.size() < MAX_PARTS - 140:
 			_mote_clock = 0.07
@@ -968,15 +996,15 @@ func _draw_body_trail(c: CanvasItem, glow: bool) -> void:
 			continue
 		var life: float = 1.0 - float(b["age"]) / TRAIL_LIFE
 		var u: float = float(i) / float(n)
-		var width: float = maxf(1.0, roundf((1.0 + k) * life))
+		var width: float = maxf(1.0, roundf((2.0 + k * 3.0) * life))
 		if width < 1.0:
 			continue
-		var al: float = life * k * 0.16
+		var al: float = life * k * 0.5
 		var pa: Vector2 = Vector2(a["p"]).round()
 		var pb: Vector2 = Vector2(b["p"]).round()
 		if pa.distance_to(pb) > 60.0:
 			continue
-		c.draw_line(pa, pb, _col("flow", u, al, float(i) * 0.03), width, false)
+		c.draw_line(pa, pb, Color(0.02, 0.0, 0.05, al), width, false)
 
 func _trail_ramp(style: String, friendly: bool) -> String:
 	if friendly: return "reflected_tail"

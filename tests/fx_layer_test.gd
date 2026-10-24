@@ -26,6 +26,7 @@ func run() -> void:
 	game.player.set_physics_process(false)
 	game.music.stop_score()
 	game.music.set_process(false)
+	game.set_story_safe(false)  # stop_score() marks the game story-safe in full-score mode
 	for enemy: Node in get_nodes_in_group("enemies"):
 		enemy.set_physics_process(false)
 	var fx: Node = game.get_node_or_null("FxLayer")
@@ -92,6 +93,7 @@ func run() -> void:
 	# Afterimages: a parry spawns one, and the cap holds under repeated dashes.
 	game.player.set("dash_timer", 1.0)
 	for _i: int in 200:
+		game.player.position.x += 8.0  # afterimages need real travel
 		fx._process(0.03)
 	check(fx.ghost_count() > 0 and fx.ghost_count() <= 28, "dash afterimages spawn and stay capped (%d)" % fx.ghost_count())
 	game.player.set("dash_timer", 0.0)
@@ -102,33 +104,39 @@ func run() -> void:
 	game.player.set("velocity", Vector2(160.0, 0.0))
 	var ran_ghost: bool = false
 	for _i: int in 40:
+		game.player.position.x += 5.0
 		fx._process(0.03)
 		ran_ghost = ran_ghost or fx.ghost_count() > 0
 	check(ran_ghost, "running spawns afterimages and trail particles")
 	game.player.set("velocity", Vector2.ZERO)
-	# Impact blur and heavier camera shake: strong, bounded, decays fully, respects reduced motion.
+	# Speed lines replace the old screen blur: dense but bounded, off for F2, F3 and story-safe sections.
 	var blur: Node = game.get_node_or_null("MotionBlur")
 	check(blur != null, "MotionBlur layer is attached")
-	for _i: int in 120:
-		blur._process(0.05)   # earlier checks fired hundreds of events; let the blur settle first
-	check(not blur.is_active(), "blur is hidden while idle")
-	game.emit_fx("guard_break", Vector2(300, 250), Vector2.RIGHT, 1.7)
-	blur._process(0.016)
-	check(blur.is_active() and blur.blur_vec.length() > 0.05 and blur.radial > 0.2, "guard break produces a strong blur (%.3f / %.2f)" % [blur.blur_vec.length(), blur.radial])
-	check(blur.blur_vec.length() <= blur.MAX_BLUR + 0.0001 and blur.radial <= blur.MAX_RADIAL + 0.0001 and blur.chroma <= blur.MAX_CHROMA + 0.0001, "blur stays inside its caps")
+	for _i: int in 60:
+		blur._process(0.05)
+	check(not blur.is_active(), "speed lines are hidden while idle")
+	game.player.set("dash_timer", 0.12)
+	for _i: int in 30:
+		game.player.position.x += 8.0
+		blur._process(0.02)
+	check(blur.is_active() and blur._marks.size() <= blur.MAX_MARKS, "a dash paints bounded speed lines (%d)" % blur._marks.size())
+	game.player.set("dash_timer", 0.0)
 	for _i: int in 40:
-		blur._process(0.016)
-	check(not blur.is_active(), "blur decays to nothing and hides itself")
+		blur._process(0.05)
+	check(not blur.is_active(), "speed lines decay to nothing")
 	game.impact.reduced_motion = true
-	game.emit_fx("hit", Vector2(300, 250), Vector2.RIGHT, 2.0)
-	blur._process(0.016)
-	check(not blur.is_active(), "reduced motion (F2) disables the blur")
+	game.player.set("dash_timer", 0.12)
+	game.player.position.x += 8.0
+	blur._process(0.02)
+	check(not blur.is_active(), "reduced motion (F2) disables speed lines")
 	game.impact.reduced_motion = false
+	game.player.set("dash_timer", 0.0)
 	game.set_story_safe(true)
-	game.emit_fx("hit", Vector2(300, 250), Vector2.RIGHT, 2.0)
-	blur._process(0.016)
-	check(not blur.is_active(), "no blur in story-safe sections")
+	game.player.set("dash_timer", 0.12)
+	blur._process(0.02)
+	check(not blur.is_active(), "no speed lines in story-safe sections")
 	game.set_story_safe(false)
+	game.player.set("dash_timer", 0.0)
 	game.impact.request(game.player, null, false, true, "break")
 	var peak: float = 0.0
 	for _i: int in 6:
@@ -149,6 +157,7 @@ func run() -> void:
 	fx._process(0.01)
 	check(fx.warning_count() == 0, "no warning lane while story-safe")
 	game.set_story_safe(false)
+	game.player.position = pos
 	check(game.player.health == health and game.player.position == pos and game.score == score, "effects do not change gameplay state")
 	print("FX layer: %d passed, %d failed" % [passed, failed])
 	quit(1 if failed else 0)

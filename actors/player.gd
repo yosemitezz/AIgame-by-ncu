@@ -41,6 +41,9 @@ const PARRY_RECOIL: float = 0.06
 const PARRY_RECOVER: float = 0.10
 const PARRY_COUNTER_DELAY: float = 0.035
 const PARRY_RECOIL_SPEED: float = 55.0
+## Light pushback after a landed hit, by combo step. It starts after hit stop and eases out in a few frames.
+const HIT_RECOIL_SPEED: Array[float] = [85.0, 105.0, 140.0]
+const HIT_RECOIL_TIME: float = 0.1
 ## Shared damage and visual sweep geometry; retain the main project's cadence and step.
 static var HIT_REACH: Array[float] = [AttackProfile.radii(1).x, AttackProfile.radii(2).x, AttackProfile.radii(3).x]
 static var ATTACK_STARTUP: float = AttackProfile.duration(1, "windup")
@@ -129,6 +132,8 @@ var _phase_elapsed: float = 0.0
 var _hit_confirmed: bool = false
 var _strike_done: bool = false
 var _lunge_timer: float = 0.0
+var _recoil_time: float = 0.0
+var _recoil_speed: float = 0.0
 var _hurt_lock: float = 0.0
 var _state_clock: float = 0.0
 var _trail_clock: float = 0.0
@@ -344,6 +349,9 @@ func _physics_process(delta: float) -> void:
 					# Hold the speed through the whole lunge instead of easing in, so the step reads as a lunge.
 					velocity.x = desired
 			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, (1800.0 if is_on_floor() else 1250.0) * delta)
+			if _recoil_time > 0.0:
+				velocity.x = -facing * _recoil_speed * (_recoil_time / HIT_RECOIL_TIME)
+				_recoil_time = maxf(0.0, _recoil_time - delta)
 		if _jump_buffer > 0.0 and _hurt_lock <= 0.0:
 			if _coyote > 0.0:
 				_jump(false)
@@ -512,6 +520,10 @@ func set_impact_freeze(seconds: float) -> void:
 func confirm_attack_hit() -> void:
 	if attack_phase == "active" or attack_phase == "recover":
 		_hit_confirmed = true
+		# The blade bites and the hero is pushed back a few pixels; the forward lunge ends here.
+		_lunge_timer = 0.0
+		_recoil_time = HIT_RECOIL_TIME
+		_recoil_speed = HIT_RECOIL_SPEED[clampi(combo - 1, 0, 2)]
 
 func can_cancel_attack() -> bool:
 	if attack_phase == "none":
@@ -672,6 +684,7 @@ func _advance_attack(delta: float) -> void:
 					_lunge_timer = 0.0
 
 func _cancel_attack() -> void:
+	_recoil_time = 0.0
 	attack_phase = "none"
 	attack_timer = 0.0
 	queued_attack = false
