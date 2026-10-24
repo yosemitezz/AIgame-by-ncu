@@ -21,6 +21,7 @@ class Copy extends Node2D:
 	var impact_flash: float = 0.0
 	var airborne: bool = false
 	var visual_scale: Vector2 = Vector2.ONE
+	var weapon: String = "light"
 	var pose_key: String = ""
 	var boss_pose_snapshot: Dictionary = {}
 
@@ -94,7 +95,7 @@ func follow(hero: Node2D, delta: float, level: int) -> void:
 		return
 	var spacing: float = 5.0 + 5.0 * strength
 	var phase: Variant = hero.get("parry_phase")
-	var key: String = "%s|%s|%s|%s" % [hero.get("animation_state"), hero.get("frame"), hero.get("facing"), hero.get("combo")]
+	var key: String = "%s|%s|%s|%s|%s" % [hero.get("animation_state"), hero.get("frame"), hero.get("facing"), hero.get("combo"), hero.get("weapon")]
 	var parry_progress: float = float(hero.call("get_parry_progress")) if hero.has_method("get_parry_progress") else 0.0
 	var airborne: bool = hero.has_method("is_on_floor") and not bool(hero.call("is_on_floor"))
 	var squash: Variant = hero.get("visual_scale")
@@ -107,6 +108,8 @@ func follow(hero: Node2D, delta: float, level: int) -> void:
 		if copy.pose_key == key + "|" + str(snappedf(parry_progress, 0.1)):
 			continue
 		copy.pose_key = key + "|" + str(snappedf(parry_progress, 0.1))
+		var held: Variant = hero.get("weapon")
+		copy.weapon = String(held) if held != null else "light"
 		copy.state = String(hero.get("animation_state"))
 		copy.frame_index = int(hero.get("frame"))
 		copy.face = int(hero.get("facing"))

@@ -1,9 +1,10 @@
-"""Joint rig for Bellkeep's hero. Every frame is re-rasterised from joint positions, never rotated art.
+"""Joint rig for Bellkeep's hero, a dark-fantasy knight. Every frame is re-rasterised from joint positions, never rotated art.
 
-Why a rig: the previous hand-placed frames had ~15 px legs and a 22 px blade, so cuts barely moved the
-body. Here legs, arms and blade are long (leg 27, arm 23, blade 32), the torso has two segments plus a
-shoulder twist, and each cut is described by where the sword arm points, so windups coil and active
-frames throw the whole body through the cut.
+Why a rig: legs, arms and blade are long (leg 27, arm 23), the torso has two segments plus a shoulder twist,
+and each cut is described by where the sword arm points, so windups coil and active frames throw the whole
+body through the cut. Knight bulk comes from armour pieces (pauldron, cuirass, tabard, cape), not from new
+skeleton lengths. The hero can carry three swords (light, heavy, great); use_weapon() selects the sword spec
+that every sword draw, floor clamp, smear and returned tip uses.
 
 Local coordinates: x forward (hero faces +x, the game mirrors for -x), y down, origin at the feet
 contact point on the ground. Frames are drawn at 4x and reduced with NEAREST so edges stay hard.
@@ -16,17 +17,53 @@ W, H = 144, 128
 ANCHOR = (66, 108)
 K = 4
 SC = 0.84
-P = {'ink': '#101626', 'shade': '#24354e', 'cloak': '#326e89', 'fold': '#4a98aa', 'edge': '#8bc6c9',
-     'plate': '#7a98ae', 'metal': '#b5d6da', 'white': '#eff6d8', 'gold': '#d0a65b', 'skin': '#c8bf93',
-     'cyan': '#71ece1', 'darkgold': '#6e624b', 'night': '#182338'}
+P = {'ink': '#0d1019', 'shade': '#33405a', 'cloak': '#7a2234', 'fold': '#a63348', 'edge': '#d4636a',
+     'plate': '#6f7f93', 'metal': '#c3cfdc', 'white': '#f2f6fa', 'gold': '#c9a24f', 'skin': '#3a2a24',
+     'cyan': '#8fe3ff', 'darkgold': '#6e5a2e', 'night': '#1b2230', 'wine': '#4e1623', 'leather': '#3a2a24',
+     'ember': '#c8601e',
+     'bl': '#c3cfdc', 'bl_dark': '#8c9db0', 'bl_hi': '#ffffff', 'sm1': '#8fb9d6', 'sm2': '#cfeaf7', 'smw': '#ffffff'}
 FLOW = [(65, 224, 217), (72, 191, 237), (92, 151, 242), (122, 115, 228), (163, 103, 217), (205, 116, 205),
         (235, 139, 177), (246, 170, 137), (248, 207, 115)]
 
 THIGH, SHIN = 14.2, 14.0
 SEG_A, SEG_B = 8.5, 9.5           # waist-to-chest, chest-to-shoulder
 UPPER, FORE = 12.0, 11.0
-GRIP, BLADE = 6.0, 32.0
+GRIP, BLADE = 6.0, 32.0           # light sword defaults, kept for reference; drawing uses SPEC
 STAND_HIP = -(THIGH + SHIN) + 0.8
+
+WEAPONS = {
+    'light': dict(blade=32.0, grip=6.0, gw=2.6, guard=6.0, gthick=1.0, gbend=0.9, gat=1.6, pom=1.5, two=False, hb_dist=4.0,
+                  steps=9, wfun=lambda t: 1.9 * (1 - t ** 3) + 0.35, bow=lambda t: 0.5 * math.sin(math.pi * t),
+                  cut=False, fuller='hi', smear_w=12.0,
+                  colors=dict(bl='#c3cfdc', bl_dark='#8c9db0', bl_hi='#ffffff', cyan='#8fe3ff',
+                              sm1='#8fb9d6', sm2='#cfeaf7', smw='#ffffff')),
+    'heavy': dict(blade=28.0, grip=6.0, gw=3.2, guard=9.0, gthick=1.8, gbend=0.8, gat=1.4, pom=2.5, two=False, hb_dist=4.0,
+                  steps=9, wfun=lambda t: 4.6 * (1 - 0.30 * t * t), bow=lambda t: 0.9 * math.sin(math.pi * t),
+                  cut=True, fuller='dark', smear_w=15.0,
+                  colors=dict(bl='#8d9bab', bl_dark='#3d4859', bl_hi='#c3cfdc', cyan='#ff9a4a',
+                              sm1='#9a2f2f', sm2='#ff9a4a', smw='#ffd9a0')),
+    'great': dict(blade=46.0, grip=11.0, gw=2.8, guard=10.0, gthick=1.5, gbend=1.0, gat=1.6, pom=2.0, two=True, hb_dist=6.0,
+                  steps=14, wfun=lambda t: 0.35 + 2.85 * (1 - t) ** 0.85, bow=lambda t: 0.0,
+                  cut=False, fuller='hi', smear_w=14.0, ricasso=3.4,
+                  colors=dict(bl='#b9c6d4', bl_dark='#6f7f93', bl_hi='#f0f6fb', cyan='#ffe9a0',
+                              sm1='#b79a4e', sm2='#ffe9a0', smw='#fffbe8')),
+}
+SPEC = WEAPONS['light']
+WEAPON_ID = 'light'
+
+
+def use_weapon(wid):
+    """Select the active sword spec (light | heavy | great) and its colour family."""
+    global SPEC, WEAPON_ID
+    SPEC, WEAPON_ID = WEAPONS[wid], wid
+    P.update(SPEC['colors'])
+
+
+def sword_reach():
+    return SPEC['gat'] + SPEC['gthick'] - 0.2 + SPEC['blade'] + 1.6
+
+
+use_weapon('light')
 
 
 def rad(d): return math.radians(d)
@@ -128,10 +165,12 @@ def skeleton(p):
     hand = add(sh_n, mul(adir(p['arm']), reach))
     prefer_e = (lambda j: -j[1]) if p['elbow_up'] else (lambda j: j[1] - 0.2 * j[0])
     elbow, hand = ik(sh_n, hand, UPPER, FORE, prefer_e)
-    if p['hb'] is None:
+    if SPEC['two']:
+        hb_t = add(hand, mul(adir(p['blade'] + 180), SPEC['hb_dist']))     # two-handed sword: back hand on the grip
+    elif p['hb'] is None:
         hb_t = add(sh_f, (4.0, 13.0))
     elif p['two_hand']:
-        hb_t = add(hand, mul(adir(p['blade'] + 180), 4.0))
+        hb_t = add(hand, mul(adir(p['blade'] + 180), SPEC['hb_dist']))
     else:
         hb_t = add(sh_f, p['hb'])
     elbow_b, hand_b = ik(sh_f, hb_t, UPPER, FORE, lambda j: j[1] - 0.2 * j[0])
@@ -148,34 +187,42 @@ def skeleton(p):
     return S
 
 
-def draw_scarf(pen, S, p, rot):
-    base = add(S['neck'], (-1.5, 0.5))
+def draw_cape(pen, S, p, rot):
+    """Two-layer crimson cape from the shoulders, trailing along `wind`, with a ragged lower hem."""
+    base0 = add(S['neck'], (-1.2, 0.8))
     wx, wy = p['wind']
+    wy += 0.6 if p['scarf'] < 1.25 else 0.2           # hangs a little under its own weight
     n = math.hypot(wx, wy) or 1
     wx, wy = wx / n, wy / n
-    for tail, (length, amp, off) in enumerate(((10, 1.9, 0.0), (6, 1.3, 2.2))):
-        pts, cur = [base], base
-        segs = int(length * p['scarf'])
-        for i in range(max(2, segs)):
-            u = (i + 1) / max(2, segs)
-            wave = amp * math.sin(p['phase'] + off + i * 0.85) * u
-            cur = (cur[0] + wx * 3.7 + -wy * wave * 0.5, cur[1] + wy * 3.7 + wx * wave * 0.5 + p['droop'] * u * 0.7)
+    layers = ((0.8, 1.6, 1.3, 2.6, 3.8, 2.2, 'wine'), (1.0, 1.9, 0.0, 3.0, 4.8, 0.0, 'cloak'))
+    for layer, (ln, amp, off, hw0, hw1, dy0, fill) in enumerate(layers):
+        start = add(base0, (0.3, dy0))
+        pts, cur = [start], start
+        segs = max(3, int(round(6 * ln * p['scarf'])))
+        for i in range(segs):
+            u = (i + 1) / segs
+            wave = amp * math.sin(p['phase'] + off + i * 0.8) * u
+            cur = (cur[0] + wx * 3.1 - wy * wave * 0.45, cur[1] + wy * 3.1 + wx * wave * 0.45 + p['droop'] * u * 0.7 + 0.35 * u)
             pts.append(cur)
-        top, bot = [], []
+        top, bot, d = [], [], (1.0, 0.0)
         for i, q in enumerate(pts):
             u = i / (len(pts) - 1)
-            hw = lerp(2.3, 0.7, u) if tail == 0 else lerp(1.7, 0.5, u)
+            hw = lerp(hw0, hw1, u)
             if i == 0:
                 d = (pts[1][0] - q[0], pts[1][1] - q[1])
             else:
                 d = (q[0] - pts[i - 1][0], q[1] - pts[i - 1][1])
             l = math.hypot(*d) or 1
-            nx, ny = -d[1] / l, d[0] / l
+            d = (d[0] / l, d[1] / l)
+            nx, ny = -d[1], d[0]
             top.append((q[0] + nx * hw, q[1] + ny * hw))
             bot.append((q[0] - nx * hw, q[1] - ny * hw))
-        pen.poly(top + bot[::-1], 'fold' if tail == 0 else 'cloak', 0.8)
-        pen.line(top[1], top[-2], 'edge', 0.8)
-        pen.circle(pts[-1], 0.9, 'cyan', 0)
+        t_end, b_end = top[-1], bot[-1]
+        hem = [add(lerp2(t_end, b_end, k / 4), mul(d, o)) for k, o in ((1, 2.0), (2, 0.3), (3, 1.7))]
+        pen.poly(top + [add(t_end, mul(d, 0.8))] + hem + [add(b_end, mul(d, 0.6))] + bot[::-1], fill, 0.8)
+        if layer == 1:
+            pen.line(lerp2(top[1], bot[1], 0.5), lerp2(top[-2], bot[-2], 0.5), 'fold', 0.8)
+            pen.line(top[1], top[-2], 'edge', 0.6)
 
 
 def draw_boot(pen, foot, ang, back):
@@ -185,10 +232,12 @@ def draw_boot(pen, foot, ang, back):
     pts = [loc(-3.6, -6.0), loc(2.0, -6.0), loc(2.8, -2.6), loc(7.8, -1.0), loc(8.4, 0.0), loc(-3.6, 0.0)]
     pen.poly(pts, 'shade' if back else 'plate', 0.9)
     pen.poly([loc(4.5, -1.6), loc(8.2, -0.8), loc(8.4, 0.0), loc(4.0, 0.0)], 'metal', 0)
+    if not back:
+        pen.line(loc(-3.0, -5.0), loc(1.4, -5.0), 'gold', 0.5)
 
 
 def draw_leg(pen, hip, knee, ank, foot, ang, back):
-    shade, plate = ('night', 'shade') if back else ('shade', 'plate')
+    shade, plate = ('night', 'shade') if back else ('plate', 'plate')
     pen.capsule(hip, knee, 6.4, 5.2, shade)
     pen.capsule(knee, ank, 5.0, 3.8, plate)
     pen.circle(knee, 2.6, 'metal' if not back else 'plate', 0.7)
@@ -196,48 +245,81 @@ def draw_leg(pen, hip, knee, ank, foot, ang, back):
 
 
 def draw_arm(pen, sh, elbow, hand, back):
-    pen.capsule(sh, elbow, 4.8, 4.0, 'night' if back else 'cloak')
-    pen.capsule(elbow, hand, 4.0, 3.2, 'plate' if not back else 'shade')
-    pen.circle(hand, 2.3, 'gold' if not back else 'darkgold', 0.7)
+    pen.capsule(sh, elbow, 4.8, 4.0, 'night' if back else 'shade')
+    pen.capsule(elbow, hand, 4.2, 3.4, 'plate' if not back else 'shade')
+    if not back:
+        pen.circle(elbow, 2.1, 'metal', 0.6)
+
+
+def draw_gauntlet(pen, hand, back=False):
+    pen.circle(hand, 2.5, 'plate' if not back else 'shade', 0.7)
+    pen.circle((hand[0] + 0.3, hand[1] - 0.6), 1.2, 'metal', 0)
 
 
 def draw_sword(pen, hand, ang, glow):
+    sp = SPEC
     u = adir(ang)
     n = (-u[1], u[0])
-    pen.capsule(add(hand, mul(u, -GRIP)), add(hand, mul(u, 1.2)), 2.6, 2.6, 'night', 0.8)
-    for k in range(3):
-        c = add(hand, mul(u, -GRIP + 1.4 + k * 1.8))
-        pen.line(add(c, mul(n, -1.1)), add(c, mul(n, 1.1)), 'gold', 0.6)
-    pen.poly([add(add(hand, mul(u, 1.6)), mul(n, 3.2)), add(add(hand, mul(u, 2.4)), mul(n, 3.2)),
-              add(add(hand, mul(u, 2.4)), mul(n, -3.2)), add(add(hand, mul(u, 1.6)), mul(n, -3.2))], 'gold', 0.7)
-    front, back = [], []
-    steps = 9
+    L, G = sp['blade'], sp['grip']
+    # Grip with wrap, then pommel.
+    pen.capsule(add(hand, mul(u, -G)), add(hand, mul(u, 1.2)), sp['gw'], sp['gw'], 'leather', 0.8)
+    for k in range(int(G / 1.8)):
+        c = add(hand, mul(u, -G + 1.4 + k * 1.8))
+        pen.line(add(c, mul(n, -sp['gw'] * 0.4)), add(c, mul(n, sp['gw'] * 0.4)), 'darkgold', 0.6)
+    pc = add(hand, mul(u, -G - sp['pom'] * 0.5))
+    pen.circle(pc, sp['pom'], 'gold', 0.8)
+    pen.circle((pc[0] - 0.3, pc[1] - 0.4), sp['pom'] * 0.4, 'metal', 0)
+    # Crossguard.
+    hw = sp['guard'] / 2
+    g_front, g_back = [], []
+    for s in (-1.0, -0.5, 0.0, 0.5, 1.0):
+        a = sp['gat'] + sp['gbend'] * s * s
+        g_front.append(add(add(hand, mul(u, a)), mul(n, s * hw)))
+        g_back.append(add(add(hand, mul(u, a + sp['gthick'])), mul(n, s * hw)))
+    pen.poly(g_front + g_back[::-1], 'gold', 0.7)
+    # Blade.
+    b0 = sp['gat'] + sp['gthick'] - 0.2
+    steps = sp['steps']
+    mid, front, back = [], [], []
     for i in range(steps + 1):
         t = i / steps
-        along = 2.6 + BLADE * t
-        bow = 2.4 * math.sin(math.pi * t) * (1 - 0.35 * t)
-        w = 1.9 * (1 - t ** 3) + 0.35
-        c = add(add(hand, mul(u, along)), mul(n, -bow))
+        c = add(add(hand, mul(u, b0 + L * t)), mul(n, -sp['bow'](t)))
+        w = sp['wfun'](t)
+        mid.append(c)
         front.append(add(c, mul(n, -w * 0.45)))
         back.append(add(c, mul(n, w * 0.55)))
-    tip = add(add(hand, mul(u, 2.6 + BLADE + 1.6)), mul(n, 0.0))
-    pen.poly(front + [tip] + back[::-1], 'metal', 0.8)
-    pen.line(add(front[1], mul(n, 0.2)), front[-2], 'white', 0.8)
+    if sp['cut']:
+        back = back[:int(steps * 0.82) + 1]
+        tip = add(front[-1], mul(u, 1.4))
+    else:
+        tip = add(add(hand, mul(u, b0 + L + 1.6)), mul(n, 0.0))
+    pen.poly(front + [tip] + back[::-1], 'bl', 0.8)
+    if sp.get('ricasso'):
+        r = sp['ricasso'] / L
+        j = max(1, int(r * steps + 0.5))
+        pen.poly([front[0], front[j], back[j], back[0]], 'bl_dark', 0)
+    j0, j1 = 1, len(front) - 2
+    if sp['fuller'] == 'hi':
+        pen.line(add(front[j0], mul(n, 0.2)), front[j1], 'bl_hi', 0.8)
+    else:
+        pen.line(mid[j0], mid[int(steps * 0.8)], 'bl_dark', 1.2)
+        pen.line(add(front[j0], mul(n, 0.3)), front[int(steps * 0.75)], 'bl_hi', 0.6)
     if glow:
-        pen.line(back[2], back[-3], 'cyan', 0.6)
+        pen.line(back[2], back[len(back) - 3 if sp['cut'] else -3], 'cyan', 0.6)
     return tip
 
 
 def draw_smear(pen, S, p):
     a0, a1 = p['smear']
     hand = S['hand']
-    L = BLADE + 3.0
+    L = SPEC['blade'] + 3.0
     steps = 9
+    sw = SPEC['smear_w']
     outer = [add(hand, mul(adir(lerp(a0, a1, i / steps)), L)) for i in range(steps + 1)]
-    inner = [add(hand, mul(adir(lerp(a0, a1, i / steps)), L - 12.0 * (0.25 + 0.75 * (i / steps)))) for i in range(steps + 1)]
-    pen.poly(outer + inner[::-1], 'fold', 0)
-    pen.poly([outer[i] for i in range(steps // 2, steps + 1)] + [inner[i] for i in range(steps, steps // 2 - 1, -1)], 'edge', 0)
-    pen.line(outer[1], outer[-1], 'white', 0.7)
+    inner = [add(hand, mul(adir(lerp(a0, a1, i / steps)), L - sw * (0.25 + 0.75 * (i / steps)))) for i in range(steps + 1)]
+    pen.poly(outer + inner[::-1], 'sm1', 0)
+    pen.poly([outer[i] for i in range(steps // 2, steps + 1)] + [inner[i] for i in range(steps, steps // 2 - 1, -1)], 'sm2', 0)
+    pen.line(outer[1], outer[-1], 'smw', 0.7)
 
 
 def draw_head(pen, S, p, rot):
@@ -245,19 +327,32 @@ def draw_head(pen, S, p, rot):
     tilt = rot + p['head'] + p['lean'] + p['curve']
     f = vdir(tilt)                         # up direction of the head
     r = (-f[1], f[0])                      # forward direction of the face
-    r = (r[0], r[1])
-    loc = lambda a, b: (hc[0] + r[0] * a + f[0] * b * -1 * -1, hc[1] + r[1] * a + f[1] * b)
-    # Hood with a long swept-back point.
+    loc = lambda a, b: (hc[0] + r[0] * a + f[0] * b, hc[1] + r[1] * a + f[1] * b)
+    # Crimson plume swept back along the wind.
     wx, wy = p['wind']
-    peak = (hc[0] + wx * 12.5 - 0.0, hc[1] + wy * 4.0 - 2.5)
-    pen.poly([loc(-5.5, 1.5), loc(-3.0, 5.8), loc(2.5, 6.8), loc(6.0, 3.5), loc(7.2, -1.5), loc(5.5, -5.5),
-              loc(0.0, -7.2), loc(-5.0, -5.0)], 'shade', 0.9)
-    pen.poly([loc(-4.0, 4.2), peak, loc(-5.5, -4.5)], 'cloak', 0.8)
-    pen.poly([loc(0.5, 4.8), loc(5.4, 3.0), loc(6.6, -1.2), loc(4.4, -4.4), loc(0.2, -4.0)], 'skin', 0.5)
-    pen.poly([loc(-0.5, -4.4), loc(4.8, -4.8), loc(6.8, -1.6), loc(3.2, -2.4)], 'shade', 0)
-    pen.poly([loc(4.0, -1.8), loc(6.6, -1.8), loc(6.6, -0.4), loc(4.0, -0.4)], 'ink', 0)
-    pen.poly([loc(4.6, -1.6), loc(6.2, -1.6), loc(6.2, -0.8), loc(4.6, -0.8)], 'cyan', 0)
-    pen.poly([loc(-1.0, 4.2), loc(5.6, 3.0), loc(6.0, 5.2), loc(0.0, 6.6)], 'fold', 0.5)       # face wrap
+    wy += 0.3
+    nn = math.hypot(wx, wy) or 1
+    wd = (wx / nn, wy / nn)
+    wob = math.sin(p['phase'] * 1.3)
+    q0 = loc(-1.0, 6.4)
+    q1 = add(q0, add(mul(wd, 4.0), (0.0, -0.4)))
+    q2 = add(q1, add(mul(wd, 4.0), (0.0, 0.9 + 0.5 * wob)))
+    q3 = add(q2, add(mul(wd, 3.4), (0.0, 1.8 + 0.6 * wob)))
+    pen.capsule(q0, q1, 3.4, 2.8, 'cloak', 0.8)
+    pen.capsule(q1, q2, 2.8, 1.9, 'cloak', 0.8)
+    pen.capsule(q2, q3, 1.9, 0.9, 'fold', 0.7)
+    pen.line(q0, q2, 'fold', 0.7)
+    # Gorget and closed bascinet.
+    pen.circle(S['neck'], 3.0, 'shade', 0.7)
+    pen.poly([loc(-5.2, -5.5), loc(-5.8, 0.5), loc(-4.2, 4.8), loc(-0.5, 7.0), loc(3.5, 6.2), loc(6.0, 3.0), loc(6.6, -1.0),
+              loc(6.2, -5.5), loc(3.0, -7.0), loc(-3.0, -7.0)], 'plate', 0.9)
+    pen.poly([loc(-5.2, -5.5), loc(-5.8, 0.5), loc(-4.2, 4.8), loc(-2.0, 4.0), loc(-2.8, -0.5), loc(-3.0, -6.6)], 'shade', 0)
+    pen.poly([loc(-1.5, 6.0), loc(2.5, 5.6), loc(4.6, 3.4), loc(1.0, 4.2)], 'metal', 0)
+    pen.line(loc(-5.4, 3.2), loc(6.2, 3.2), 'gold', 0.6)                       # brow band
+    pen.poly([loc(1.0, 1.0), loc(6.8, 1.2), loc(6.8, -0.9), loc(1.0, -0.9)], 'ink', 0)    # visor slit
+    pen.poly([loc(5.2, 0.5), loc(6.4, 0.5), loc(6.4, -0.3), loc(5.2, -0.3)], 'ember', 0)  # dim ember glint
+    pen.line(loc(4.4, -2.6), loc(4.4, -5.2), 'ink', 0.5)                       # breaths
+    pen.circle(loc(-1.0, 6.4), 1.2, 'gold', 0.5)                               # plume mount
 
 
 def draw_torso(pen, S, p):
@@ -270,55 +365,94 @@ def draw_torso(pen, S, p):
         nx, ny = -dy / l, dx / l
         return [(a[0] + nx * wa, a[1] + ny * wa), (b[0] + nx * wb, b[1] + ny * wb), (b[0] - nx * wb, b[1] - ny * wb), (a[0] - nx * wa, a[1] - ny * wa)]
     pen.poly(side(hip, waist, 4.4, 4.0), 'shade', 0.9)
-    pen.poly(side(waist, sh, 4.0 + 0.0, wide + 1.2), 'cloak', 0.9)
-    # Chest plate faces forward more as the twist opens it.
+    pen.poly(side(waist, sh, 4.0 + 0.0, wide + 1.2), 'shade', 0.9)
+    # Breastplate faces forward more as the twist opens it.
     mid = lerp2(waist, sh, 0.55)
     face = 0.4 + 0.6 * max(0.0, math.sin(phi) * 1.4)
     pen.poly(side(lerp2(waist, sh, 0.15), lerp2(waist, sh, 0.92), 2.0 + 1.5 * face, 2.6 + 1.8 * face), 'plate', 0.7)
-    pen.line(lerp2(waist, sh, 0.2), lerp2(waist, sh, 0.85), 'cyan', 0.6)
-    pen.circle(mid, 0.9, 'metal', 0)
-    # Belt and sash tails.
+    pen.line(lerp2(waist, sh, 0.2), lerp2(waist, sh, 0.85), 'gold', 0.5)
+    pen.line(add(lerp2(waist, sh, 0.7), (-1.6, 0.0)), add(lerp2(waist, sh, 0.7), (1.6, 0.0)), 'metal', 0.5)
+    pen.circle(mid, 0.8, 'metal', 0)
+    # Belt with buckle.
     bdir = vdir(p['lean'])
-    pen.poly(side(add(hip, mul(bdir, 0.6)), add(hip, mul(bdir, 2.6)), 4.8, 4.8), 'gold', 0.7)
-    wx, wy = p['wind']
-    for i, (ln, sg) in enumerate(((10, 1), (7, 2))):
-        a = add(hip, (-1.5 * sg, 0.8))
-        b = (a[0] + wx * ln * p['sash'] * 0.8 - 0.8, a[1] + 3.5 + wy * 2 + ln * 0.5 * (1 - abs(wx) * 0.3))
-        pen.capsule(a, b, 3.4, 1.4, 'darkgold' if i else 'gold', 0.7)
+    pen.poly(side(add(hip, mul(bdir, 0.6)), add(hip, mul(bdir, 2.6)), 4.8, 4.8), 'leather', 0.7)
+    pen.circle(add(add(hip, mul(bdir, 1.6)), mul(adir(p['lean']), 3.0)), 1.2, 'gold', 0.5)
+
+
+def draw_tabard(pen, S, p):
+    """Crimson surcoat flap hanging over the belt; sways a little with wind and phase."""
+    hip = S['hip']
+    bdir = vdir(p['lean'])
+    fw = adir(p['lean'])
+    bc = add(add(hip, mul(bdir, 1.2)), mul(fw, 1.5))
+    tl, tr = add(bc, mul(fw, -3.0)), add(bc, mul(fw, 3.0))
+    wx = p['wind'][0]
+    sway = 1.0 * math.sin(p['phase'] * 1.3) * p['sash']
+    off = lambda k: (wx * 1.6 * p['sash'] + sway * k, 0.0)
+    bl = add(add(tl, (0.0, 9.0)), off(0.6))
+    br = add(add(tr, (0.0, 9.0)), off(1.0))
+    bm = add(add(bc, (0.0, 11.5)), off(0.8))
+    pen.poly([tl, tr, br, bm, bl], 'cloak', 0.8)
+    pen.line(lerp2(tl, tr, 0.5), bm, 'fold', 0.7)
+    pen.line(bl, bm, 'gold', 0.5)
+    pen.line(bm, br, 'gold', 0.5)
 
 
 def draw_shoulder(pen, S, rot):
     s = S['sh_n']
-    pen.circle(s, 4.1, 'plate', 0.8)
-    pen.circle((s[0] + 0.3, s[1] - 0.4), 2.7, 'metal', 0)
-    pen.poly([(s[0] - 2.0, s[1] - 3.6), (s[0] - 5.4, s[1] - 7.6), (s[0] + 1.2, s[1] - 4.4)], 'plate', 0.7)
+    pen.poly([(s[0] - 2.0, s[1] - 3.6), (s[0] - 5.4, s[1] - 7.6), (s[0] + 1.2, s[1] - 4.4)], 'plate', 0.7)   # spike
+    pen.circle(s, 4.6, 'gold', 0.8)                                       # rim
+    pen.circle((s[0], s[1] + 0.2), 3.8, 'plate', 0)
+    pen.circle((s[0] - 0.4, s[1] - 0.8), 2.2, 'metal', 0)
+    pen.circle((s[0] + 1.6, s[1] + 1.4), 0.7, 'gold', 0)                  # rivet
 
 
-def render(p):
+def _render_once(p):
     pen = Pen()
     S = skeleton(p)
     rot = p['rot']
-    if p['smear']:
-        draw_smear(pen, S, p)
-    draw_scarf(pen, S, p, rot)
-    draw_leg(pen, S['hip'], S['knee_b'], S['ank_b'], S['foot_b'], p['fba'] + rot, True)
-    draw_arm(pen, S['sh_f'], S['elbow_b'], S['hand_b'], True)
-    draw_torso(pen, S, p)
-    draw_head(pen, S, p, rot)
-    draw_leg(pen, S['hip'], S['knee_f'], S['ank_f'], S['foot_f'], p['ffa'] + rot, False)
-    draw_shoulder(pen, S, rot)
-    draw_arm(pen, S['sh_n'], S['elbow'], S['hand'], False)
-    if p['two_hand']:
-        pen.circle(S['hand_b'], 2.2, 'gold', 0.6)
+    sp = SPEC
     ang = p['blade'] + rot
-    reach = 2.6 + BLADE + 1.6
+    reach = sword_reach()
     floor_y = -1.5
     if S['hand'][1] + math.sin(rad(ang)) * reach > floor_y:
         s_t = max(-1.0, min(1.0, (floor_y - S['hand'][1]) / reach))
         c_sign = 1.0 if math.cos(rad(ang)) >= 0 else -1.0
         ang = math.degrees(math.atan2(s_t, c_sign * math.sqrt(max(0.0, 1 - s_t * s_t))))
+    if sp['two']:
+        tgt = add(S['hand'], mul(adir(ang), -sp['hb_dist']))
+        S['elbow_b'], S['hand_b'] = ik(S['sh_f'], tgt, UPPER, FORE, lambda j: j[1] - 0.2 * j[0])
+    if p['smear']:
+        draw_smear(pen, S, p)
+    draw_cape(pen, S, p, rot)
+    draw_leg(pen, S['hip'], S['knee_b'], S['ank_b'], S['foot_b'], p['fba'] + rot, True)
+    draw_arm(pen, S['sh_f'], S['elbow_b'], S['hand_b'], True)
+    draw_torso(pen, S, p)
+    draw_head(pen, S, p, rot)
+    draw_leg(pen, S['hip'], S['knee_f'], S['ank_f'], S['foot_f'], p['ffa'] + rot, False)
+    draw_tabard(pen, S, p)
+    draw_shoulder(pen, S, rot)
+    draw_arm(pen, S['sh_n'], S['elbow'], S['hand'], False)
     tip = draw_sword(pen, S['hand'], ang, p['glow'])
+    draw_gauntlet(pen, S['hand'])
+    if p['two_hand'] or sp['two']:
+        draw_gauntlet(pen, S['hand_b'])
     return pen.result(), S, tip
+
+
+def render(p):
+    """Render one pose. If the active sword would leave the cell (under 1 px margin), shorten only the blade."""
+    global SPEC
+    full = SPEC
+    try:
+        for k in range(12):
+            im, S, tip = _render_once(p)
+            bb = im.getchannel('A').getbbox()
+            if bb is None or min(bb[0], bb[1], W - bb[2], H - bb[3]) >= 1 or k == 11:
+                return im, S, tip
+            SPEC = dict(full, blade=full['blade'] - 2.0 * (k + 1))
+    finally:
+        SPEC = full
 
 
 # ----------------------------------------------------------------------------------------------- poses

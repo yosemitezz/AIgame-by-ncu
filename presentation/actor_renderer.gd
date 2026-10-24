@@ -23,6 +23,24 @@ static func _data() -> Dictionary:
                 _manifest = parsed
     return _manifest
 
+## The three swords share every state, frame index and anchor; only the sheet differs.
+const WEAPON_SUFFIX := {"light": "", "heavy": "_heavy", "great": "_great"}
+
+static func weapon_of(actor: Object) -> String:
+    var value: Variant = actor.get("weapon") if actor != null else null
+    return str(value) if value != null and WEAPON_SUFFIX.has(str(value)) else "light"
+
+## Sheet path for a weapon, falling back to the base sheet while an art set is missing.
+static func hero_sheet(base: String, weapon: String) -> String:
+    var suffix: String = str(WEAPON_SUFFIX.get(weapon, ""))
+    if suffix == "":
+        return base
+    var path: String = base.replace(".png", suffix + ".png")
+    return path if ResourceLoader.exists(path) else base
+
+static func silhouette_texture_for(weapon: String) -> Texture2D:
+    return _texture(hero_sheet("res://presentation/feel_frames/hero_silhouette.png", weapon))
+
 static func is_airborne(actor: Object) -> bool:
     var saved: Variant = actor.get("airborne")
     if saved != null:
@@ -47,9 +65,12 @@ static func hero_region(state: String, frame: int, combo: int = 1, airborne: boo
     var index: int = int(descriptor["start"]) + posmod(frame, int(descriptor["count"]))
     return Rect2(Vector2(index % 8, index / 8) * HERO_SIZE, HERO_SIZE)
 
-static func weapon_tip_local(combo: int, frame: int, airborne: bool = false) -> Vector2:
+static func weapon_tip_local(combo: int, frame: int, airborne: bool = false, weapon: String = "light") -> Vector2:
     var data: Dictionary = _data()
     var tips: Dictionary = data.get("hero", {}).get("weapon_tips", {})
+    var per_weapon: Variant = data.get("hero", {}).get("weapons", {}).get(weapon, {})
+    if per_weapon is Dictionary and per_weapon.get("weapon_tips") is Dictionary:
+        tips = per_weapon["weapon_tips"]
     var key: String = "%scut_%d_attack" % ["air_" if airborne else "", clampi(combo, 1, 3)]
     var points: Array = tips.get(key, [[20, -24]])
     var point: Array = points[clampi(frame, 0, points.size() - 1)]
@@ -126,11 +147,13 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
     if not parry_pose.is_empty():
         var key: String = "hero" if kind == "hero" else "boss"
         texture = _texture("res://presentation/parry_frames/%s_%s.png" % [key, "flash" if flashing else "parry"])
+        if kind == "hero":
+            texture = _texture(hero_sheet("res://presentation/parry_frames/hero_%s.png" % ("flash" if flashing else "parry"), weapon_of(canvas)))
         frame_size = HERO_SIZE if kind == "hero" else Vector2(80, 80)
         anchor = HERO_ANCHOR if kind == "hero" else Vector2(40, 76)
         region = parry_region(kind, parry_pose["state"], float(parry_pose["progress"]))
     elif kind == "hero":
-        texture = _texture("res://presentation/feel_frames/hero_flash.png" if flashing else "res://presentation/feel_frames/hero_atlas.png")
+        texture = _texture(hero_sheet("res://presentation/feel_frames/hero_flash.png" if flashing else "res://presentation/feel_frames/hero_atlas.png", weapon_of(canvas)))
         frame_size = HERO_SIZE
         anchor = HERO_ANCHOR
         region = hero_region(state, frame, _combo(canvas), is_airborne(canvas))

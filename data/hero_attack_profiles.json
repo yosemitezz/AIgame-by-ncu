@@ -123,5 +123,136 @@
       "lunge_seconds": 0.085
     }
   },
-  "timing_source": "main-project original attack cadence and step, retained during selective migration"
+  "timing_source": "main-project original attack cadence and step, retained during selective migration",
+  "weapons": {
+    "light": {
+      "name": "轻剑",
+      "name_en": "Arming Sword",
+      "ramp": "blade",
+      "hit_stop": 1.0,
+      "recoil": 1.0,
+      "kick": 0.0,
+      "damage": [
+        1,
+        1,
+        2
+      ]
+    },
+    "heavy": {
+      "name": "重剑",
+      "name_en": "Falchion",
+      "ramp": "ember",
+      "hit_stop": 1.35,
+      "recoil": 1.2,
+      "kick": 2.5,
+      "combos": {
+        "1": {
+          "id": "iron_fall",
+          "radii": [
+            168,
+            78
+          ],
+          "blade_span_degrees": 40,
+          "phase_seconds": {
+            "windup": 0.12,
+            "active": 0.12,
+            "recover": 0.22
+          },
+          "lunge_speed": 150,
+          "lunge_seconds": 0.09,
+          "damage": 2
+        },
+        "2": {
+          "id": "rending_tide",
+          "radii": [
+            184,
+            88
+          ],
+          "blade_span_degrees": 42,
+          "phase_seconds": {
+            "windup": 0.14,
+            "active": 0.13,
+            "recover": 0.24
+          },
+          "lunge_speed": 160,
+          "lunge_seconds": 0.09,
+          "damage": 2
+        },
+        "3": {
+          "id": "executioner",
+          "radii": [
+            206,
+            104
+          ],
+          "blade_span_degrees": 54,
+          "phase_seconds": {
+            "windup": 0.2,
+            "active": 0.17,
+            "recover": 0.32
+          },
+          "lunge_speed": 190,
+          "lunge_seconds": 0.1,
+          "damage": 3
+        }
+      }
+    },
+    "great": {
+      "name": "双手剑",
+      "name_en": "Greatsword",
+      "ramp": "gold",
+      "hit_stop": 1.6,
+      "recoil": 1.45,
+      "kick": 4.0,
+      "combos": {
+        "1": {
+          "id": "long_moon",
+          "radii": [
+            236,
+            78
+          ],
+          "blade_span_degrees": 34,
+          "phase_seconds": {
+            "windup": 0.16,
+            "active": 0.15,
+            "recover": 0.28
+          },
+          "lunge_speed": 110,
+          "lunge_seconds": 0.1,
+          "damage": 2
+        },
+        "2": {
+          "id": "rising_wall",
+          "radii": [
+            256,
+            88
+          ],
+          "blade_span_degrees": 36,
+          "phase_seconds": {
+            "windup": 0.18,
+            "active": 0.16,
+            "recover": 0.3
+          },
+          "lunge_speed": 120,
+          "lunge_seconds": 0.1,
+          "damage": 3
+        },
+        "3": {
+          "id": "sky_cleaver",
+          "radii": [
+            280,
+            104
+          ],
+          "blade_span_degrees": 46,
+          "phase_seconds": {
+            "windup": 0.26,
+            "active": 0.2,
+            "recover": 0.4
+          },
+          "lunge_speed": 160,
+          "lunge_seconds": 0.1,
+          "damage": 4
+        }
+      }
+    }
+  }
 }

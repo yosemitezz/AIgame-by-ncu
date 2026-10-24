@@ -59,6 +59,7 @@ class Ghost extends Node2D:
 	var impact_flash: float = 0.0
 	var source_id: int = 0
 	var airborne: bool = false
+	var weapon: String = "light"
 	var boss_pose_snapshot: Dictionary = {}
 
 	func is_on_floor() -> bool:
@@ -357,6 +358,8 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 	var g := Ghost.new()
 	g.kind = kind
 	g.state = String(source.get("animation_state"))
+	var held: Variant = source.get("weapon")
+	g.weapon = String(held) if held != null else "light"
 	g.frame_index = int(source.get("frame"))
 	g.face = int(source.get("facing"))
 	var cmb: Variant = source.get("combo")
@@ -506,6 +509,12 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_sparks(at + Vector2(d * 14.0, 0.0), Vector2(d, 0.0), 8, "warm", 130.0, 0.4)
 		"parry_ready":
 			_shape("ring", at, 0.2, "cool", {"r0": 16.0, "r1": 5.0, "w": 2.0, "ry": 1.0})
+		"weapon_swap":
+			# Drawing a new sword: a flash on the hilt and a ring in that sword's colour.
+			var swap_ramp: String = ["blade", "ember", "gold"][clampi(roundi(power) - 1, 0, 2)]
+			_shape("flash", at, 0.1, swap_ramp, {"r": 16.0})
+			_shape("ring", at, 0.3, swap_ramp, {"r0": 3.0, "r1": 22.0, "w": 2.0, "ry": 0.8, "sides": 4, "twist": 0.8})
+			_sparks(at, Vector2.UP, 10, swap_ramp, 120.0, 0.5, "twinkle", 1.2)
 		"hit":
 			# White-hot core, two crossed cuts along the blow, a thin shock ring and ember sparks. A fourth of
 			# the finishes changes (never the same twice in a row) so a long fight does not look stamped.
@@ -736,8 +745,25 @@ func _profile_call(method: String, arguments: Array = []) -> Variant:
 	return _attack_profile.callv(method, arguments)
 
 func _profile_slash(actor: Node2D, combo: int) -> void:
-	_shape("profile", actor.global_position, 0.12, "flow", {"combo": combo, "style": style_kind, "profile": true, "sample_step": -1})
+	var info: Dictionary = _profile_call("weapon_info")
+	var ramp: String = String(info.get("ramp", "blade"))
+	_shape("profile", actor.global_position, 0.12, "flow", {"combo": combo, "style": style_kind, "profile": true, "sample_step": -1, "ramp": ramp})
 	_profile_geometry(_shapes.back(), actor)
+	var weapon: String = String(actor.get("weapon")) if actor.get("weapon") != null else "light"
+	var d: float = -1.0 if int(actor.get("facing")) < 0 else 1.0
+	var foot: Vector2 = actor.global_position + Vector2(d * 14.0, -1.0)
+	# Weight: heavy blades kick dust off the floor, the greatsword also throws a ground shockwave on the finisher.
+	if weapon == "heavy":
+		_sparks(foot, Vector2(d, -0.2), 6 + combo * 2, "dust", 110.0, 0.4, "dot", 1.2)
+		_sparks(actor.global_position + Vector2(d * 30.0, -22.0), Vector2(d, 0.0), 8 + combo * 3, "ember", 240.0, 0.5, "streak", 0.8)
+		if combo == 3:
+			_shape("ring", foot, 0.34, "ember", {"r0": 4.0, "r1": 34.0, "w": 3.0, "ry": 0.28})
+	elif weapon == "great":
+		_sparks(foot, Vector2(d, -0.1), 8 + combo * 3, "dust", 140.0, 0.5, "dot", 1.3)
+		_sparks(actor.global_position + Vector2(d * 48.0, -22.0), Vector2(d, 0.0), 10 + combo * 4, "gold", 280.0, 0.55, "streak", 0.7)
+		_shape("ring", foot, 0.3 + 0.05 * float(combo), "gold", {"r0": 4.0, "r1": 26.0 + 10.0 * float(combo), "w": 3.0, "ry": 0.26})
+		if combo == 3:
+			_shape("rays", actor.global_position + Vector2(d * 60.0, -22.0), 0.34, "gold", {"n": 10, "r1": 44.0, "rot": 0.0})
 
 func _profile_geometry(shape: Dictionary, actor: Node2D) -> void:
 	var progress: float = float(actor.call("get_attack_progress"))
@@ -776,7 +802,7 @@ func _draw_profile(c: CanvasItem, shape: Dictionary, glow: bool) -> void:
 	var colors := PackedColorArray()
 	for index: int in range(1, polygon.size()):
 		edge.append(polygon[index].round())
-		colors.append(_col("flow", float(index) / polygon.size(), alpha, float(shape.get("style", 0)) * 0.11))
+		colors.append(_col(String(shape.get("ramp", "flow")), float(index) / polygon.size(), alpha, float(shape.get("style", 0)) * 0.11))
 	# The query supplies the exact outer limit; inset triangles keep the primary branch's cut-crystal style.
 	if not glow:
 		var center: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
@@ -786,14 +812,14 @@ func _draw_profile(c: CanvasItem, shape: Dictionary, glow: bool) -> void:
 			var a: Vector2 = polygon[index].round()
 			var b: Vector2 = polygon[last].round()
 			var inset: Vector2 = center.lerp((a+b)*0.5, 0.62).round()
-			c.draw_colored_polygon(PackedVector2Array([a,b,inset]), _col("flow", float(index)/polygon.size(), fade*0.25, float(shape.get("style",0))*0.11))
+			c.draw_colored_polygon(PackedVector2Array([a,b,inset]), _col(String(shape.get("ramp", "flow")), float(index)/polygon.size(), fade*0.25, float(shape.get("style",0))*0.11))
 	# The very same queried polygon is the energy's limit; no old circle or long needle outside it.
 	if not glow:
-		c.draw_colored_polygon(polygon, _col("flow", 0.5, 0.06 * fade))
+		c.draw_colored_polygon(polygon, _col(String(shape.get("ramp", "flow")), 0.5, 0.06 * fade))
 	c.draw_polyline_colors(edge, colors, 7.0 if glow else 4.0, false)
 	var origin: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
 	var leading: Vector2 = Vector2(shape.get("leading", polygon[polygon.size()-1])).round()
-	c.draw_line(origin, leading, _col("flow", 0.35, alpha * 0.75), 8.0 if glow else 5.0, false)
+	c.draw_line(origin, leading, _col(String(shape.get("ramp", "flow")), 0.35, alpha * 0.75), 8.0 if glow else 5.0, false)
 	if not glow:
 		c.draw_line(origin, leading, Color(1, 1, 0.94, fade * 0.88), 2.0, false)
 

@@ -5,6 +5,7 @@ signal health_changed(current: int, maximum: int)
 signal died
 signal state_changed(state: String, frame: int, direction: int)
 signal parried
+signal weapon_changed(id: String)
 
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
 const AttackProfile = preload("res://combat/attack_profile.gd")
@@ -146,6 +147,9 @@ var _hit_confirmed: bool = false
 var _strike_done: bool = false
 var _lunge_timer: float = 0.0
 var _recoil_time: float = 0.0
+## Sword in hand: "light", "heavy" or "great". Switching waits for the current swing to finish.
+var weapon: String = "light"
+var _weapon_request: String = ""
 var _recoil_speed: float = 0.0
 var _hurt_lock: float = 0.0
 var _state_clock: float = 0.0
@@ -176,6 +180,11 @@ func _ready() -> void:
 	collider.position = Vector2(0.0, -13.0)
 	add_child(collider)
 	add_to_group("player")
+	var kept: Variant = get_tree().get_meta("bellkeep_weapon", "light") if is_inside_tree() else "light"
+	if str(kept) != "light" and AttackProfile.set_weapon(str(kept)):
+		weapon = str(kept)
+	else:
+		AttackProfile.set_weapon("light")
 	wings = LightWings.new()
 	wings.name = "LightWings"
 	add_child(wings)
@@ -192,6 +201,7 @@ func _capture_input() -> void:
 		_climb_release_required = false
 	if Input.is_action_just_pressed("attack"):
 		queued_attack = true
+	_capture_weapon_input()
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer = JUMP_BUFFER
 		_jump_cut_requested = false
@@ -204,6 +214,46 @@ func _capture_input() -> void:
 	if Input.is_action_just_pressed("parry"):
 		_parry_buffer = 0.12
 	_crouch_held = (InputMap.has_action("crouch") and Input.is_action_pressed("crouch")) or (InputMap.has_action("climb_down") and Input.is_action_pressed("climb_down"))
+
+func _capture_weapon_input() -> void:
+	if InputMap.has_action("weapon_next") and Input.is_action_just_pressed("weapon_next"):
+		_weapon_request = _cycled_weapon(1)
+	elif InputMap.has_action("weapon_prev") and Input.is_action_just_pressed("weapon_prev"):
+		_weapon_request = _cycled_weapon(-1)
+	for id: String in AttackProfile.weapon_ids():
+		var action: String = "weapon_" + id
+		if InputMap.has_action(action) and Input.is_action_just_pressed(action):
+			_weapon_request = id
+
+func _cycled_weapon(step: int) -> String:
+	var ids: Array[String] = AttackProfile.weapon_ids()
+	var from: String = _weapon_request if _weapon_request != "" else weapon
+	var index: int = ids.find(from)
+	return ids[posmod(index + step, ids.size())]
+
+## Equip a sword. Returns false when the id is unknown or already in hand.
+func set_weapon(id: String) -> bool:
+	if id == weapon or not AttackProfile.set_weapon(id):
+		AttackProfile.set_weapon(weapon)
+		return false
+	weapon = id
+	_weapon_request = ""
+	if is_inside_tree():
+		get_tree().set_meta("bellkeep_weapon", id)
+	weapon_changed.emit(id)
+	_fx("weapon_swap", global_position + Vector2(0.0, -20.0), Vector2(facing, 0.0), float(AttackProfile.weapon_ids().find(id) + 1))
+	queue_redraw()
+	return true
+
+func _apply_weapon_request(safe: bool) -> void:
+	if _weapon_request == "" or safe or dead:
+		return
+	if attack_phase != "none" or dash_timer > 0.0 or parry_phase == "recoil":
+		return
+	var wanted: String = _weapon_request
+	_weapon_request = ""
+	if wanted != weapon:
+		set_weapon(wanted)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Merge physical aliases into one directional held edge. Releases and new
@@ -350,6 +400,7 @@ func _physics_process(delta: float) -> void:
 		_dash_buffer = 0.0
 	elif not safe and _parry_buffer > 0.0:
 		_start_parry()
+	_apply_weapon_request(safe)
 	if queued_attack and attack_phase == "none" and dash_timer <= 0.0 and not _parry_blocks_attack() and _hurt_lock <= 0.0 and not safe:
 		_start_attack()
 	var used_climb: bool = climbing
@@ -372,7 +423,7 @@ func _physics_process(delta: float) -> void:
 			if is_on_floor() and attack_phase != "none":
 				desired *= 0.32 if attack_phase == "windup" else 0.70
 				if _lunge_timer > 0.0 and attack_phase == "active" and _can_ground_lunge(delta):
-					desired = facing * LUNGE_SPEED[clampi(combo - 1, 0, 2)]
+					desired = facing * AttackProfile.lunge_speed(combo)
 					# Hold the speed through the whole lunge instead of easing in, so the step reads as a lunge.
 					velocity.x = desired
 			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, _horizontal_acceleration(desired) * delta)
@@ -560,7 +611,10 @@ func set_impact_freeze(seconds: float) -> void:
 	if is_instance_valid(game) and bool(game.story_safe):
 		combat_freeze = 0.0
 		return
-	combat_freeze = maxf(combat_freeze, clampf(seconds, 0.0, 0.12))
+	var weight: float = 1.0
+	if attack_phase == "active" or attack_phase == "recover":
+		weight = float(AttackProfile.weapon_info().get("hit_stop", 1.0))
+	combat_freeze = maxf(combat_freeze, clampf(seconds * weight, 0.0, 0.12 * weight))
 
 func confirm_attack_hit() -> void:
 	if attack_phase == "active" or attack_phase == "recover":
@@ -568,7 +622,13 @@ func confirm_attack_hit() -> void:
 		# The blade bites and the hero is pushed back a few pixels; the forward lunge ends here.
 		_lunge_timer = 0.0
 		_recoil_time = HIT_RECOIL_TIME
-		_recoil_speed = HIT_RECOIL_SPEED[clampi(combo - 1, 0, 2)]
+		var info: Dictionary = AttackProfile.weapon_info()
+		_recoil_speed = HIT_RECOIL_SPEED[clampi(combo - 1, 0, 2)] * float(info.get("recoil", 1.0))
+		var kick: float = float(info.get("kick", 0.0))
+		if kick > 0.0 and is_instance_valid(game):
+			var impact: Variant = game.get("impact")
+			if impact != null and is_instance_valid(impact):
+				impact.add_kick(Vector2(float(facing), 0.0), kick)
 
 func can_cancel_attack() -> bool:
 	if attack_phase == "none":
@@ -644,7 +704,7 @@ func _start_attack() -> void:
 	combo = combo % 3 + 1 if _combo_grace > 0.0 else 1
 	attack_serial += 1
 	_attack_elapsed = 0.0
-	attack_timer = COMBO_LENGTHS[combo - 1]
+	attack_timer = AttackProfile.total_duration(combo)
 	attack_sweep_from = AttackProfile.contact_start()
 	attack_sweep_to = attack_sweep_from
 	_attack_query_progress = attack_sweep_from
@@ -660,11 +720,8 @@ func get_attack_progress() -> float:
 	return clampf(_phase_elapsed / maxf(0.001, _phase_duration()), 0.0, 1.0)
 
 func _phase_duration() -> float:
-	var slot: int = clampi(combo - 1, 0, 2)
 	match attack_phase:
-		"windup": return COMBO_WINDUP[slot]
-		"active": return COMBO_ACTIVE[slot]
-		"recover": return COMBO_RECOVER[slot]
+		"windup", "active", "recover": return AttackProfile.duration(clampi(combo, 1, 3), attack_phase)
 	return 0.0
 
 func _enter_attack_phase(stage: String) -> void:
@@ -672,7 +729,7 @@ func _enter_attack_phase(stage: String) -> void:
 	_phase_elapsed = 0.0
 	_state_clock = 0.0
 	if stage == "active":
-		_lunge_timer = LUNGE_TIME
+		_lunge_timer = AttackProfile.lunge_seconds(combo)
 		_fx("lunge", global_position + Vector2(0.0, -2.0), Vector2(facing, 0.0), float(combo))
 		_fx("slash", global_position + Vector2(facing * 22.0, -18.0), Vector2(facing, 0.0), float(combo))
 	_set_animation("attack" if stage == "active" else stage, 0.0)
@@ -696,7 +753,7 @@ func _query_active_sweep(progress: float) -> bool:
 	_strike_done = true
 	_set_animation("attack", 0.0)
 	if is_instance_valid(game) and not bool(game.story_safe):
-		game.hero_attack(self, 2 if combo == 3 else 1, AttackProfile.radii(combo).x, combo)
+		game.hero_attack(self, AttackProfile.damage(combo), AttackProfile.radii(combo).x, combo)
 	return combat_freeze > 0.0 or attack_phase == "none"
 
 func _advance_attack(delta: float) -> void:

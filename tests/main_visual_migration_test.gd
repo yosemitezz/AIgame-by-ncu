@@ -3,7 +3,7 @@ extends SceneTree
 const Katana = preload("res://presentation/katana_visual.gd")
 const Renderer = preload("res://presentation/actor_renderer.gd")
 const Boss = preload("res://combat/boss.gd")
-const HERO_SHA: String = "06dd2263c3640969416449cfae1f9372290bc041b0ca9fbfeb938a147e43b8c3"
+const HERO_SHA: String = "a544f3443546e66ccddcd19ed566ed2af3fa000f189fd2eef9861a81158a4ea8"
 const IMPACT_SHA: String = "4bff7680dc43e6615561771b3d688b2d4fc3663e646fa70ce26a612c44ed9a48"
 var passed: int = 0
 var failed: int = 0

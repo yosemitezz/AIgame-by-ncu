@@ -1,9 +1,11 @@
-"""Builds the hero atlas, silhouette, flash and parry sheets from tools/hero_rig.py.
+"""Builds the hero atlas, silhouette, flash and parry sheets from tools/hero_rig.py for the three swords.
 
 Only the hero parts of presentation/feel_frames and presentation/parry_frames are touched; enemy, effect and
 Boss sheets stay owned by generate_combat_frames.py / generate_parry_frames.py. Run after editing the rig:
 
     python tools/generate_hero_atlas.py
+
+light keeps the original file names; heavy and great add the _heavy / _great suffix.
 """
 import json
 import sys
@@ -18,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FEEL = ROOT / 'presentation/feel_frames'
 PARRY = ROOT / 'presentation/parry_frames'
 COLS = 8
+WEAPON_IDS = ('light', 'heavy', 'great')
 
 
 def tint(atlas, color):
@@ -26,7 +29,12 @@ def tint(atlas, color):
     return out
 
 
-def main():
+def suffix(wid):
+    return '' if wid == 'light' else '_' + wid
+
+
+def build_weapon(wid):
+    R.use_weapon(wid)
     states = R.atlas_states()
     total = sum(n for _, n, _ in states)
     rows = -(-total // COLS)
@@ -42,30 +50,45 @@ def main():
             index += 1
         if name.startswith(('cut_', 'air_cut_')):
             tips[name] = pts
-    atlas.save(FEEL / 'hero_atlas.png')
-    tint(atlas, '#63c5d2').save(FEEL / 'hero_silhouette.png')
-    tint(atlas, '#e8fff0').save(FEEL / 'hero_flash.png')
-
-    manifest_path = FEEL / 'manifest.json'
-    info = json.loads(manifest_path.read_text(encoding='utf-8'))
-    info['hero'].update({'canvas': [R.W, R.H], 'anchor': list(R.ANCHOR), 'columns': COLS, 'states': mapping,
-                         'total_frames': total, 'weapon_tips': tips})
-    info['hero']['source'] = 'Joint rig in tools/hero_rig.py, re-rasterised per frame at 4x then reduced with NEAREST.'
-    manifest_path.write_text(json.dumps(info, indent=2) + '\n', encoding='utf-8')
-
     ps = R.PARRY_STATES
     sheet = Image.new('RGBA', (4 * R.W, len(ps) * R.H))
     for row, state in enumerate(ps):
         for f in range(4):
             im, _, _ = R.render(R.parry(state, f))
             sheet.alpha_composite(im, (f * R.W, row * R.H))
-    sheet.save(PARRY / 'hero_parry.png')
-    tint(sheet, '#e8fff0').save(PARRY / 'hero_flash.png')
+    return atlas, mapping, total, tips, sheet
+
+
+def main():
+    results = {wid: build_weapon(wid) for wid in WEAPON_IDS}
+    R.use_weapon('light')
+
+    feel_weapons, parry_weapons = {}, {}
+    for wid, (atlas, _, _, tips, sheet) in results.items():
+        s = suffix(wid)
+        atlas.save(FEEL / f'hero_atlas{s}.png')
+        tint(atlas, '#63c5d2').save(FEEL / f'hero_silhouette{s}.png')
+        tint(atlas, '#e8fff0').save(FEEL / f'hero_flash{s}.png')
+        feel_weapons[wid] = {'atlas': f'hero_atlas{s}.png', 'flash': f'hero_flash{s}.png',
+                             'silhouette': f'hero_silhouette{s}.png', 'weapon_tips': tips}
+        sheet.save(PARRY / f'hero_parry{s}.png')
+        tint(sheet, '#e8fff0').save(PARRY / f'hero_flash{s}.png')
+        parry_weapons[wid] = {'parry': f'hero_parry{s}.png', 'flash': f'hero_flash{s}.png'}
+
+    _, mapping, total, tips, sheet = results['light']
+    source = ('Dark-fantasy knight joint rig in tools/hero_rig.py (bascinet, pauldron, crimson cape and tabard, '
+              'three swords: light, heavy, great), re-rasterised per frame at 4x then reduced with NEAREST.')
+    manifest_path = FEEL / 'manifest.json'
+    info = json.loads(manifest_path.read_text(encoding='utf-8'))
+    info['hero'].update({'canvas': [R.W, R.H], 'anchor': list(R.ANCHOR), 'columns': COLS, 'states': mapping,
+                         'total_frames': total, 'weapon_tips': tips, 'weapons': feel_weapons, 'source': source})
+    manifest_path.write_text(json.dumps(info, indent=2) + '\n', encoding='utf-8', newline='\n')
+
     pm_path = PARRY / 'manifest.json'
     pm = json.loads(pm_path.read_text(encoding='utf-8'))
-    pm['hero'].update({'canvas': [R.W, R.H], 'anchor': list(R.ANCHOR)})
-    pm_path.write_text(json.dumps(pm, indent=2) + '\n', encoding='utf-8')
-    print('hero frames', total, 'atlas', atlas.size, 'parry sheet', sheet.size)
+    pm['hero'].update({'canvas': [R.W, R.H], 'anchor': list(R.ANCHOR), 'weapons': parry_weapons, 'source': source})
+    pm_path.write_text(json.dumps(pm, indent=2) + '\n', encoding='utf-8', newline='\n')
+    print('hero frames', total, 'atlas', results['light'][0].size, 'parry sheet', sheet.size)
 
 
 if __name__ == '__main__':

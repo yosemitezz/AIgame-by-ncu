@@ -2,6 +2,9 @@ extends RefCounted
 ## One geometry source for accepted melee queries, the main sword arc and pose art.
 const DATA_PATH: String = "res://data/hero_attack_profiles.json"
 static var _data: Dictionary = {}
+## The sword in hand. Light is the base table; heavy and great override it per combo step.
+static var weapon: String = "light"
+static var _merged: Dictionary = {}
 
 static func data() -> Dictionary:
 	if _data.is_empty():
@@ -12,10 +15,51 @@ static func data() -> Dictionary:
 				_data = value
 	return _data
 
-static func profile(combo: int) -> Dictionary:
-	var table: Dictionary = data().get("combos", {})
-	var value: Variant = table.get(str(clampi(combo, 1, 3)), {})
-	return value.duplicate(true) if value is Dictionary else {}
+static func weapon_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for key: Variant in data().get("weapons", {}):
+		ids.append(str(key))
+	if ids.is_empty():
+		ids.append("light")
+	return ids
+
+static func set_weapon(id: String) -> bool:
+	if not weapon_ids().has(id):
+		return false
+	weapon = id
+	return true
+
+static func weapon_info(id: String = "") -> Dictionary:
+	var table: Dictionary = data().get("weapons", {})
+	var value: Variant = table.get(weapon if id == "" else id, {})
+	return value if value is Dictionary else {}
+
+static func profile(combo: int, id: String = "") -> Dictionary:
+	var key: String = str(clampi(combo, 1, 3))
+	var wid: String = weapon if id == "" else id
+	var cache_key: String = wid + ":" + key
+	if not _merged.has(cache_key):
+		var table: Dictionary = data().get("combos", {})
+		var base: Variant = table.get(key, {})
+		var out: Dictionary = base.duplicate(true) if base is Dictionary else {}
+		var over: Variant = weapon_info(wid).get("combos", {})
+		if over is Dictionary and over.get(key) is Dictionary:
+			for field: Variant in over[key]:
+				out[field] = over[key][field]
+		var damage: Variant = weapon_info(wid).get("damage")
+		if not out.has("damage"):
+			out["damage"] = int(damage[clampi(combo, 1, 3) - 1]) if damage is Array and damage.size() >= 3 else (2 if combo == 3 else 1)
+		_merged[cache_key] = out
+	return _merged[cache_key].duplicate(true)
+
+static func damage(combo: int) -> int:
+	return maxi(1, int(profile(combo).get("damage", 1)))
+
+static func lunge_speed(combo: int) -> float:
+	return float(profile(combo).get("lunge_speed", 130.0))
+
+static func lunge_seconds(combo: int) -> float:
+	return float(profile(combo).get("lunge_seconds", 0.085))
 
 static func origin() -> Vector2:
 	var value: Array = data().get("origin", [0.0, -24.0])
