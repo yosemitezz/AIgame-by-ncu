@@ -1,4 +1,4 @@
-param([string]$Godot='D:\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe',[string]$From='')
+param([string]$Godot='D:\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe',[string]$From='',[string[]]$Only=@())
 $ErrorActionPreference='Stop'
 [Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)
 $projectRoot=Split-Path $PSScriptRoot -Parent
@@ -8,8 +8,9 @@ $env:TMP=$env:TEMP
 $env:APPDATA=Join-Path $projectRoot '.local/appdata'
 $env:LOCALAPPDATA=$env:APPDATA
 $env:XDG_CACHE_HOME=Join-Path $projectRoot '.local/cache'
-$checks=@('main_dungeon_migration_test','main_player_migration_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','music_203_config_test','parry_controller_test','boss_parry_test','parry_integration_test','hero_motion_test','main_visual_migration_test','main_authored_boss_test','main_boss_runtime_test','main_enemy_cast_test','main_enemy_visual_test','source-chart','font','startup')
+$checks=@('main_dungeon_migration_test','main_player_migration_test','friend_controls_test','friend_input_map_test','ut_hud_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','music_203_config_test','parry_controller_test','boss_parry_test','parry_integration_test','hero_motion_test','main_visual_migration_test','main_authored_boss_test','main_boss_runtime_test','main_enemy_cast_test','main_enemy_visual_test','source-chart','font','startup')
 if($From){$index=[Array]::IndexOf($checks,$From);if($index -lt 0){throw 'Unknown -From'};$checks=$checks[$index..($checks.Count-1)]}
+if($Only.Count){foreach($item in $Only){if($item -notin $checks){throw ('Unknown check: '+$item)}};$checks=@($checks | Where-Object {$_ -in $Only})}
 foreach($name in $checks){
  $stdout=Join-Path $projectRoot ('artifacts/unified-'+$name+'-console.log')
  $stderr=Join-Path $projectRoot ('artifacts/unified-'+$name+'-error.log')

@@ -8,6 +8,7 @@ signal parried
 
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
 const AttackProfile = preload("res://combat/attack_profile.gd")
+const DirectionTaps = preload("res://combat/double_tap_tracker.gd")
 const LightWings = preload("res://vfx/light_wings.gd")
 ## Air jumps are unlimited: every press in the air jumps again. Wings open at WING_OPEN_RATE per second and fold over WING_FOLD_TIME.
 const INFINITE_AIR_JUMPS: bool = true
@@ -17,6 +18,10 @@ const RUN_SPEED: float = 180.0
 const JUMP_SPEED: float = -340.0
 const GRAVITY: float = 900.0
 const DASH_SPEED: float = 420.0
+const DASH_DURATION: float = 0.17
+const DASH_COOLDOWN: float = 0.42
+const DASH_INVULNERABILITY: float = 0.23
+const DIRECTION_TAPS: Dictionary = {"move_left": Vector2.LEFT, "move_right": Vector2.RIGHT, "climb_up": Vector2.UP, "climb_down": Vector2.DOWN}
 ## Crouch walk speed factor, crouch blend time, landing squat, air-jump flip and apex window.
 const CROUCH_SPEED: float = 0.45
 const CROUCH_BLEND: float = 0.12
@@ -56,6 +61,12 @@ var invuln: float = 0.0
 var parry_timer: float = 0.0
 var parry_phase: String = "none"
 var dash_timer: float = 0.0
+var dash_direction: Vector2 = Vector2.RIGHT
+var _dash_intent: Vector2 = Vector2.ZERO
+var _direction_taps: RefCounted = DirectionTaps.new(0.25)
+var _tap_clock: float = 0.0
+var _tap_held: Dictionary = {}
+var _tap_keys: Dictionary = {}
 var attack_timer: float = 0.0
 var attack_phase: String = "none"
 var attack_serial: int = 0
@@ -95,7 +106,17 @@ var wing_amount: float = 0.0
 var wing_flap: float = 0.0
 var _wings_out: bool = false
 var wings: Node2D
-var _dash_cooldown: float = 0.0
+# One per-direction authority. The computed legacy property supports old fixture resets.
+var _dash_cooldowns: Dictionary = {Vector2.LEFT: 0.0, Vector2.RIGHT: 0.0, Vector2.UP: 0.0, Vector2.DOWN: 0.0}
+var _dash_cooldown: float:
+	get:
+		return float(_dash_cooldowns.get(dash_direction, 0.0))
+	set(value):
+		if value <= 0.0:
+			for direction: Vector2 in _dash_cooldowns:
+				_dash_cooldowns[direction] = 0.0
+		else:
+			_dash_cooldowns[dash_direction] = value
 var _dash_buffer: float = 0.0
 var _parry_cooldown: float = 0.0
 var _parry_buffer: float = 0.0
@@ -139,6 +160,7 @@ func _capture_input() -> void:
 	# Capture every edge BEFORE a hit-stop early return. One combo intent survives
 	# any windup/active/recovery length and cannot stack into an unattended chain.
 	_move_axis = Input.get_axis("move_left", "move_right")
+	_capture_direction_taps()
 	_climb_axis = Input.get_axis("climb_up", "climb_down") if InputMap.has_action("climb_up") and InputMap.has_action("climb_down") else 0.0
 	if is_zero_approx(_climb_axis):
 		_climb_release_required = false
@@ -149,14 +171,88 @@ func _capture_input() -> void:
 	if Input.is_action_just_released("jump"):
 		_jump_cut_requested = true
 	if Input.is_action_just_pressed("dash"):
+		# Empty in the main physical key map; retain the original logical input/test API.
 		_dash_buffer = 0.16
+		_dash_intent = Vector2(_move_axis if not is_zero_approx(_move_axis) else float(facing), 0.0)
 	if Input.is_action_just_pressed("parry"):
 		_parry_buffer = 0.12
 	_crouch_held = (InputMap.has_action("crouch") and Input.is_action_pressed("crouch")) or (InputMap.has_action("climb_down") and Input.is_action_pressed("climb_down"))
 
+func _unhandled_input(event: InputEvent) -> void:
+	# Merge physical aliases into one directional held edge. Releases and new
+	# presses can both occur between physics samples, so keep the real key set.
+	if dead or _parry_paused() or (is_instance_valid(game) and bool(game.story_safe)):
+		return
+	if event is InputEventKey and event.echo:
+		return
+	for action: String in DIRECTION_TAPS:
+		if not InputMap.has_action(action):
+			continue
+		var presses: bool = event.is_action_pressed(action, false)
+		var releases: bool = event.is_action_released(action)
+		if not presses and not releases:
+			continue
+		var keys: Dictionary = _tap_keys.get(action, {})
+		var was_held: bool = _tap_held.get(action, false) == true
+		var code: int = _direction_key(event)
+		if presses:
+			keys[code] = true
+		else:
+			keys.erase(code)
+		_tap_keys[action] = keys
+		_tap_held[action] = not keys.is_empty()
+		if presses and not was_held:
+			_register_direction_press(action)
+
+func _direction_key(event: InputEvent) -> int:
+	if event is InputEventKey:
+		return int(event.physical_keycode if event.physical_keycode != 0 else event.keycode)
+	return -1
+
+func _register_direction_press(action: String) -> void:
+	if _direction_taps.register_press(StringName(action), _tap_clock):
+		_dash_intent = DIRECTION_TAPS[action]
+		_dash_buffer = 0.16
+
+func _capture_direction_taps() -> void:
+	# Logical Input.action_press does not emit an event; retain that old API.
+	# The shared held edge prevents event delivery and polling counting twice.
+	for action: String in DIRECTION_TAPS:
+		if not InputMap.has_action(action):
+			continue
+		var keys: Dictionary = _tap_keys.get(action, {})
+		var pressed: bool = Input.is_action_pressed(action) or not keys.is_empty()
+		var was_held: bool = _tap_held.get(action, false) == true
+		if pressed and not was_held and Input.is_action_just_pressed(action):
+			_register_direction_press(action)
+		_tap_held[action] = pressed
+
+func reset_direction_taps() -> void:
+	_direction_taps.reset()
+	_tap_clock = 0.0
+	_dash_buffer = 0.0
+	_dash_intent = Vector2.ZERO
+	_tap_held.clear()
+	_tap_keys.clear()
+	# Holding an alias across pause/retry is not a new directional press.
+	for action: String in DIRECTION_TAPS:
+		var keys: Dictionary = {}
+		if InputMap.has_action(action):
+			for binding: InputEvent in InputMap.action_get_events(action):
+				if binding is InputEventKey:
+					var code: int = _direction_key(binding)
+					var held: bool = Input.is_physical_key_pressed(code) if binding.physical_keycode != 0 else Input.is_key_pressed(code)
+					if held:
+						keys[code] = true
+		_tap_keys[action] = keys
+		_tap_held[action] = not keys.is_empty() or (InputMap.has_action(action) and Input.is_action_pressed(action))
+
 func _physics_process(delta: float) -> void:
 	if _parry_paused():
+		reset_direction_taps()
 		return
+	# Pausable physics time for input windows; actor hit-stop does not stop capture.
+	_tap_clock += maxf(0.0, delta)
 	_capture_input()
 	impact_flash = maxf(0.0, impact_flash - delta)
 	# Defensive windows and cooldowns use real physics delta, even in local freeze.
@@ -168,10 +264,12 @@ func _physics_process(delta: float) -> void:
 			_clear_parry()
 	elif parry_phase == "none":
 		parry_phase = "ready"
-	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
+	for direction: Vector2 in _dash_cooldowns:
+		_dash_cooldowns[direction] = maxf(0.0, float(_dash_cooldowns[direction]) - delta)
 	_parry_cooldown = maxf(0.0, _parry_cooldown - delta)
 	var safe: bool = is_instance_valid(game) and bool(game.story_safe)
 	if safe:
+		reset_direction_taps()
 		reset_traversal(true)
 		_clear_parry()
 		_cancel_attack()
@@ -182,6 +280,7 @@ func _physics_process(delta: float) -> void:
 		_parry_buffer = 0.0
 		_hurt_lock = 0.0
 	if dead:
+		reset_direction_taps()
 		reset_traversal(true)
 		_clear_parry()
 		_cancel_attack()
@@ -215,7 +314,7 @@ func _physics_process(delta: float) -> void:
 	_update_climb_intent(delta, safe)
 	if not safe:
 		_update_water(delta)
-	if _dash_buffer > 0.0 and _start_dash(_move_axis):
+	if _dash_buffer > 0.0 and _start_dash(_move_axis, _dash_intent):
 		_dash_buffer = 0.0
 	elif not safe and _parry_buffer > 0.0:
 		_start_parry()
@@ -226,10 +325,10 @@ func _physics_process(delta: float) -> void:
 		_move_climb(delta)
 	elif dash_timer > 0.0:
 		dash_timer = maxf(0.0, dash_timer - delta)
-		velocity = Vector2(facing * DASH_SPEED, 0.0)
+		velocity = dash_direction * DASH_SPEED
 		_trail_clock -= delta
 		if _trail_clock <= 0.0:
-			_fx("dash_ghost", global_position + Vector2(0.0, -13.0), Vector2(-facing, 0.0), 0.55)
+			_fx("dash_ghost", global_position + Vector2(0.0, -13.0), -dash_direction, 0.55)
 			_trail_clock = 0.045
 	else:
 		if not is_on_floor():
@@ -423,20 +522,29 @@ func can_cancel_attack() -> bool:
 		return _hit_confirmed or _phase_elapsed >= RECOVER_CANCEL_DELAY
 	return false
 
-func _start_dash(move_axis: float) -> bool:
-	if dead or _dash_cooldown > 0.0 or _hurt_lock > 0.0 or combat_freeze > 0.0 or parry_phase == "recoil" or not can_cancel_attack() or (is_instance_valid(game) and bool(game.story_safe)):
+func _start_dash(move_axis: float, requested_direction: Vector2 = Vector2.ZERO) -> bool:
+	var direction: Vector2 = requested_direction if requested_direction.is_finite() else Vector2.ZERO
+	if direction.is_zero_approx():
+		direction = Vector2(signf(move_axis) if not is_zero_approx(move_axis) else float(facing), 0.0)
+	# Only four cardinal evasions: no diagonal speed gain or position teleport.
+	var cardinal: Vector2 = Vector2(signf(direction.x), 0.0) if absf(direction.x) >= absf(direction.y) else Vector2(0.0, signf(direction.y))
+	if dead or _parry_paused() or dash_timer > 0.0 or float(_dash_cooldowns.get(cardinal, 0.0)) > 0.0 or _hurt_lock > 0.0 or combat_freeze > 0.0 or parry_phase == "recoil" or not can_cancel_attack() or (is_instance_valid(game) and bool(game.story_safe)):
 		return false
 	if move_axis != 0.0:
 		facing = 1 if move_axis > 0.0 else -1
 	_leave_climb(true)
 	_cancel_attack()
 	_clear_parry()
-	dash_timer = 0.16
-	_dash_cooldown = 0.48
-	invuln = maxf(invuln, 0.15)
+	dash_direction = cardinal
+	if not is_zero_approx(dash_direction.x):
+		facing = 1 if dash_direction.x > 0.0 else -1
+	_dash_intent = Vector2.ZERO
+	dash_timer = DASH_DURATION
+	_dash_cooldowns[cardinal] = DASH_COOLDOWN
+	invuln = maxf(invuln, DASH_INVULNERABILITY)
 	parry_timer = 0.0
 	_trail_clock = 0.0
-	_fx("dash_start", global_position + Vector2(0.0, -13.0), Vector2(facing, 0.0), 0.5)
+	_fx("dash_start", global_position + Vector2(0.0, -13.0), dash_direction, 0.5)
 	return true
 
 func _update_wings(delta: float) -> void:
@@ -581,6 +689,7 @@ func _cancel_attack() -> void:
 func receive_hit(amount: int, origin: Vector2) -> bool:
 	if dead or invuln > 0.0 or amount <= 0 or (is_instance_valid(game) and bool(game.story_safe)):
 		return false
+	reset_direction_taps()
 	reset_traversal(true)
 	health = maxi(0, health - amount)
 	impact_flash = 0.11
@@ -710,6 +819,8 @@ func _clear_parry() -> void:
 	_parry_seen.clear()
 
 func revive(at: Vector2) -> void:
+	reset_direction_taps()
+	dash_direction = Vector2.RIGHT
 	reset_traversal()
 	global_position = at
 	velocity = Vector2.ZERO

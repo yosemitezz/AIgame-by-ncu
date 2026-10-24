@@ -1,0 +1,11 @@
+# Friend controls milestone
+
+The main side-scroller uses the chosen friend controls: left Shift opens a 0.16-second physical-contact parry window; right Shift is unbound. Holding the key does not renew protection. Double-tap WASD or arrow directions within 0.25 seconds to dodge: 0.17-second movement, 0.23-second immunity and a separate 0.42-second cooldown for each direction. Existing side-view speed 420 and solid/one-way collision remain. Single W/S still climb, single S crouches away from a chain, and Space jumps. Attacks retain the existing commitment and confirmed-hit cancellation rules.
+
+Real non-echo key events capture short taps between physics frames. A and left-arrow (and the other aliases) form one held direction: adding an alias while held does not count as another tap. Pause/map, accepted damage, rest, death and retry clear old tap candidates. Local hit-stop buffers input without changing the music clock. HUD, pause help and level tutorial strings show the new keys. The unused LV label was removed.
+
+Validation used a temporary selected-source snapshot based on ab62b127, containing only this milestone. Concurrent uncommitted environment/map/UI work was left in the main worktree and excluded. The snapshot imported cleanly and passed these 12 bounded categories: player migration 50/0; controls 52/0; real physical key map 33/0; HUD 15/0; scene migration 54/0; integration 24/0; music 30/0; parry controller 49/0; Boss parry 43/0; parry integration 18/0; main Boss runtime 62/0; short startup exit 0. Logs are in ignored artifacts/friend-input-final/.
+
+Independent review found and closed the alias-key false double tap. An earlier fixture intermittently checked before synthetic input was delivered; explicit event flushing made injection deterministic, with three bounded 52/0 reruns followed by the selected-source regression. No game playthrough, subjective difficulty approval or full-song sync claim is made.
+
+Still pending outside this input milestone: the heavy-beat falling HUD and its unspecified effects, fixed attack slot 2, full-song local alignment, additional weapons and the final narrative sequence. Main gameplay continues to use the redistributable generated score. The supplied local audio was not copied or uploaded.

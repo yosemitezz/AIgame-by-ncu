@@ -20,10 +20,10 @@ const TYPE_RATE: float = 28.0
 const HINT_SECONDS: float = 7.0
 ## Everything this file prints besides the state dictionary, kept in one list so a test can check the font has every glyph.
 const STRINGS: Array[String] = [
-    "旅人", "LV 01", "HP", "碎片", "攻击 J", "弹刀 K", "冲刺 SHIFT", "地图 TAB", "* ", "架势", "执刃钟守", "破架 / 可反击",
+    "旅人", "HP", "碎片", "攻击 J", "格挡 左SHIFT", "闪避 双击WASD", "地图 TAB", "* ", "架势", "执刃钟守", "破架 / 可反击",
     "定拍", "游离", "休止 / 双方禁伤", "终章", "刀刃交锋", "星火回返", "破架 / 反击窗口",
     "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  ESC 暂停", "歇息片刻", "ESC 继续冒险", "TAB 查看地图", "R 返回检查点", "F5 重新启程",
-    "F2 震屏：", "M 声音：", "F3 速度感：", "关闭", "开启", "静音", "标准", "强", "空格跳跃 / W、S攀爬 / E操作门与机关",
+    "F2 震屏：", "M 声音：", "F3 速度感：", "关闭", "开启", "静音", "标准", "强", "左SHIFT格挡 / 双击WASD闪避 / E交互",
     "游戏结束", "保持决心……", "R 从检查点重试   F5 重新启程", "钟声之后", "声音仍在。记忆却止于此处。", "第一章结束", "F5 重新启程   R 重试",
     "钟堡 / 路线图", "悬链书库  ·  破碎回廊  ·  淤水墓廊", "红心 你的位置    青线 铁链    蓝线 浅水    黄色 门 / 检查点", "TAB 或 ESC 返回冒险", "低血!"]
 var state: Dictionary = {}
@@ -151,7 +151,6 @@ func _draw_hud(layout: Dictionary, has_boss: bool) -> void:
     var ink: Color = RED if low and int(_clock * 4.0) % 2 == 0 else WHITE
     var y: float = status.position.y + 14.0
     text(Vector2(status.position.x, y), "旅人", 12, WHITE)
-    text(Vector2(status.position.x + 34, y), "LV 01", 12, WHITE)
     text(Vector2(status.position.x + 90, y), "HP", 12, WHITE)
     var bar_x: float = status.position.x + 114.0
     var bar_w: float = hp_bar_width(maximum)
@@ -174,7 +173,7 @@ func _draw_hud(layout: Dictionary, has_boss: bool) -> void:
 ## Four orange command buttons in the FIGHT / ACT / ITEM / MERCY spot. They list the real combat keys; the one that is in use
 ## turns yellow and shows the soul.
 func _draw_buttons(row: Rect2) -> void:
-    var labels: Array[String] = ["攻击 J", "弹刀 K", "冲刺 SHIFT", "地图 TAB"]
+    var labels: Array[String] = ["攻击 J", "格挡 左SHIFT", "闪避 双击WASD", "地图 TAB"]
     var active: Array[bool] = [
         false,
         str(state.get("parry_notice", "")) != "" or str(state.get("reaction", "")) == "guard_break",
@@ -226,7 +225,7 @@ func _draw_pause(rect: Rect2) -> void:
     centered(rect.position.y + 200, "F2 震屏：" + ("关闭" if state.get("reduced_motion", false) else "开启"), 12, CYAN)
     centered(rect.position.y + 222, "M 声音：" + ("静音" if state.get("muted", false) else "开启"), 12, CYAN)
     centered(rect.position.y + 244, "F3 速度感：" + ["关闭", "标准", "强"][clampi(int(state.get("speed_effects_level", 1)), 0, 2)], 12, CYAN)
-    centered(rect.position.y + 266, "空格跳跃 / W、S攀爬 / E操作门与机关", 12, GRAY)
+    centered(rect.position.y + 266, "左SHIFT格挡 / 双击WASD闪避 / E交互", 12, GRAY)
 
 ## GAME OVER: the soul holds, cracks, bursts into shards, then the text types in.
 func _draw_game_over() -> void:

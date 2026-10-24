@@ -90,9 +90,9 @@ const SHARDS: Array[Vector2] = [
 ]
 const ZONES: Array[Dictionary] = [
 	{"x": 0.0, "title": "THE WAKING NAVE", "hint": "A/D move  /  SPACE jump  /  Follow the cyan light"},
-	{"x": 274.0, "title": "A BORROWED EDGE", "hint": "J slash, chain three cuts  /  K parry on contact"},
+	{"x": 274.0, "title": "A BORROWED EDGE", "hint": "J slash, chain three cuts  /  LEFT SHIFT parry on contact"},
 	{"x": 500.0, "title": "THE BROKEN CLOISTER", "hint": "Jump the broken stones  /  A second jump reaches the upper route"},
-	{"x": 1000.0, "title": "ASHEN CAUSEWAY", "hint": "SHIFT dash  /  Gold shots can be turned into cyan starfire"},
+	{"x": 1000.0, "title": "ASHEN CAUSEWAY", "hint": "Double-tap WASD to dodge  /  LEFT SHIFT reflects gold shots"},
 	{"x": 1798.0, "title": "EMBER SHRINE", "hint": "Checkpoint ahead  /  A quiet breath before the bell"},
 	{"x": 2090.0, "title": "THE BELLWARDEN'S TRIAL", "hint": "An elite guards the passage  /  Watch its wind-up"},
 	{"x": 2470.0, "title": "BEFORE THE LAST CHIME", "hint": "The bell marks attacks, but your blade answers their contact"},

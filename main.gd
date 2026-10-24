@@ -144,9 +144,13 @@ func _setup_input() -> void:
     _bind("climb_up", [KEY_W, KEY_UP])
     _bind("climb_down", [KEY_S, KEY_DOWN])
     _bind("interact", [KEY_E])
-    _bind("dash", [KEY_SHIFT, KEY_L])
+    _bind("dash", []) # Logical fixture API; physical dodge is a directional double tap.
     _bind("attack", [KEY_J, KEY_Z])
-    _bind("parry", [KEY_K, KEY_X])
+    _bind("parry", [])
+    var guard_key := InputEventKey.new()
+    guard_key.physical_keycode = KEY_SHIFT
+    guard_key.location = KEY_LOCATION_LEFT
+    InputMap.action_add_event("parry", guard_key)
     _bind("crouch", [KEY_S, KEY_DOWN])
     var mouse := InputEventMouseButton.new()
     mouse.button_index = MOUSE_BUTTON_LEFT
@@ -480,6 +484,8 @@ func _unhandled_input(event: InputEvent) -> void:
             _refresh_hud()
 
 func _set_overlay(screen: String) -> void:
+    if is_instance_valid(player):
+        player.reset_direction_taps()
     _overlay = screen if screen in ["pause", "map"] else ""
     _paused = _overlay != ""
     get_tree().paused = _paused
