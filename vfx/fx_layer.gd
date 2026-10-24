@@ -13,7 +13,7 @@ const Level = preload("res://levels/bellkeep.gd")
 
 const SIZE_BOOST: float = 1.75   # ring / ray / star / arc radii are this much larger than the first version
 const SPEED_BOOST: float = 1.4
-const MAX_PARTS: int = 520
+const MAX_PARTS: int = 800
 const MAX_SHAPES: int = 64
 const MAX_WARNINGS: int = 24
 const MAX_GHOSTS: int = 28
@@ -66,6 +66,14 @@ var _proj_trails: Dictionary = {}
 var _clock: float = 0.0
 var _ghost_clock: float = 0.0
 var _boss_ghost_clock: float = 0.0
+## Per-attack variety: every swing re-rolls a hue and a "personality", never repeating the last one,
+## and the hit that follows reuses the swing's hue so slash + impact read as one colourful blow.
+var _hue_shift: float = 0.0
+var _draw_hue: float = 0.0
+var _last_hue: float = 0.0
+var _last_slash_kind: int = -1
+var _last_hit_kind: int = -1
+var style_kind: int = 0
 var _last_deflect_clock: float = -10.0
 var _last_deflect_at: Vector2 = Vector2.INF
 var _run_clock: float = 0.0
@@ -117,11 +125,11 @@ func _col(ramp: String, u: float, a: float = 1.0, h: float = 0.0) -> Color:
 	var c: Color
 	if ramp == "rainbow":
 		var sat: float = clampf(u * 5.0, 0.0, 1.0) * 0.62
-		c = Color.from_hsv(fposmod(u * 0.85 + h + _clock * 0.6, 1.0), sat, 1.0)
+		c = Color.from_hsv(fposmod(u * 0.85 + h + _draw_hue + _clock * 0.6, 1.0), sat, 1.0)
 	elif ramp == "flow":
 		# Light flowing along the effect: hue slides with position along the stroke and with time.
 		var sat2: float = clampf(u * 4.0, 0.0, 1.0) * 0.8
-		c = Color.from_hsv(fposmod(0.5 + u * 0.55 + h + _clock * 1.3, 1.0), sat2, 1.0)
+		c = Color.from_hsv(fposmod(0.5 + u * 0.55 + h + _draw_hue + _clock * 1.3, 1.0), sat2, 1.0)
 	else:
 		var stops: PackedColorArray = _ramps[ramp]
 		var f: float = u * float(stops.size() - 1)
@@ -143,12 +151,12 @@ func _player() -> Node2D:
 func _part(at: Vector2, vel: Vector2, life: float, ramp: String, size: int = 2, kind: String = "dot", grav: float = 100.0, drag: float = 0.0) -> void:
 	if _parts.size() >= MAX_PARTS:
 		return
-	_parts.append({"p": at, "v": vel, "life": life, "max": life, "ramp": ramp, "size": size, "kind": kind, "grav": grav, "drag": drag, "h": _rng.randf()})
+	_parts.append({"p": at, "v": vel, "life": life, "max": life, "ramp": ramp, "size": size, "kind": kind, "grav": grav, "drag": drag, "h": fposmod(_hue_shift + _rng.randf() * 0.32, 1.0)})
 
 func _shape(type: String, at: Vector2, life: float, ramp: String, extra: Dictionary = {}) -> void:
 	if _shapes.size() >= MAX_SHAPES:
 		_shapes.remove_at(0)
-	var s: Dictionary = {"type": type, "at": at, "life": life, "max": life, "ramp": ramp}
+	var s: Dictionary = {"type": type, "at": at, "life": life, "max": life, "ramp": ramp, "sh": _hue_shift, "seed": _rng.randf() * 100.0}
 	for key: String in extra:
 		var v: Variant = extra[key]
 		if key in ["r", "r0", "r1", "h", "w0", "len"]:
@@ -233,31 +241,77 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 	match kind:
 		"slash":
 			var combo: int = clampi(int(roundf(power)), 1, 3)
-			# Wide, layered crescents: a big flowing outer sweep, a rainbow middle, a white-hot inner edge.
-			_shape("arc", at, 0.38 + 0.06 * float(combo), "flow", {"d": d, "r": 30.0 + 8.0 * float(combo), "w": 4.0 + float(combo) * 1.5, "flip": combo == 2, "half": 1.5 if combo < 3 else 2.2, "sweep": true})
-			_shape("arc", at, 0.32 + 0.05 * float(combo), "rainbow", {"d": d, "r": 23.0 + 6.0 * float(combo), "w": 3.0, "flip": combo == 2, "half": 1.3 if combo < 3 else 1.9})
-			_shape("arc", at, 0.26 + 0.05 * float(combo), "cool", {"d": d, "r": 15.0 + 4.0 * float(combo), "w": 2.0, "flip": combo == 2, "half": 1.1 if combo < 3 else 1.6})
-			_shape("streaks", at + Vector2(d * 10.0, 0.0), 0.3, "flow", {"d": d, "len": 38.0 + 10.0 * float(combo), "n": 4 + combo})
-			_sparks(at + Vector2(d * 18.0, 0.0), Vector2(d, 0.0), 12 + combo * 5, "flow", 200.0, 0.55)
-			_sparks(at + Vector2(d * 18.0, 0.0), Vector2(d, 0.0), 6 + combo * 2, "rainbow", 150.0, 0.7, "shard", 1.3)
-			_shape("star", at + Vector2(d * 24.0, 0.0), 0.26, "flow", {"r": 9.0 + 3.0 * float(combo)})
+			_roll_style()
+			var c3: float = float(combo)
+			var tip: Vector2 = at + Vector2(d * 18.0, 0.0)
+			# Six swing personalities. Each re-rolls hue, and never repeats the previous swing's pick.
+			match style_kind:
+				0:   # Wide flowing crescent: the signature cut.
+					_shape("arc", at, 0.38 + 0.06 * c3, "flow", {"d": d, "r": 30.0 + 8.0 * c3, "w": 4.0 + c3 * 1.5, "flip": combo == 2, "half": 1.5 if combo < 3 else 2.2, "sweep": true})
+					_shape("arc", at, 0.32 + 0.05 * c3, "rainbow", {"d": d, "r": 23.0 + 6.0 * c3, "w": 3.0, "flip": combo == 2, "half": 1.3 if combo < 3 else 1.9})
+					_shape("arc", at, 0.26 + 0.05 * c3, "cool", {"d": d, "r": 15.0 + 4.0 * c3, "w": 2.0, "flip": combo == 2, "half": 1.1 if combo < 3 else 1.6})
+					_sparks(tip, Vector2(d, 0.0), 14 + combo * 6, "flow", 220.0, 0.6)
+				1:   # Double slash: two thin crossing arcs, one up one down.
+					_shape("arc", at, 0.34, "rainbow", {"d": d, "r": 34.0 + 6.0 * c3, "w": 3.0, "flip": false, "half": 1.4, "sweep": true})
+					_shape("arc", at, 0.34, "flow", {"d": d, "r": 30.0 + 6.0 * c3, "w": 3.0, "flip": true, "half": 1.4, "sweep": true})
+					_shape("cross", tip, 0.22, "flow", {"r": 12.0 + 3.0 * c3, "d": d})
+					_sparks(tip, Vector2(d, 0.0), 16 + combo * 5, "rainbow", 240.0, 0.6, "streak", 1.0)
+				2:   # Thrust: a long needle of streaks and a star at the tip.
+					_shape("streaks", at + Vector2(d * 6.0, 0.0), 0.34, "rainbow", {"d": d, "len": 70.0 + 14.0 * c3, "n": 3 + combo})
+					_shape("streaks", at + Vector2(d * 6.0, 0.0), 0.28, "flow", {"d": d, "len": 52.0 + 10.0 * c3, "n": 3})
+					_shape("star", at + Vector2(d * (36.0 + 6.0 * c3), 0.0), 0.3, "flow", {"r": 12.0 + 3.0 * c3})
+					_sparks(at + Vector2(d * 34.0, 0.0), Vector2(d, 0.0), 20 + combo * 6, "flow", 300.0, 0.55, "streak", 0.5)
+				3:   # Spin: big full ring of petals around the hero.
+					_shape("arc", at, 0.42, "rainbow", {"d": d, "r": 34.0 + 6.0 * c3, "w": 5.0, "flip": false, "half": 2.6, "sweep": true})
+					_shape("ring", at, 0.4, "flow", {"r0": 8.0, "r1": 46.0 + 8.0 * c3, "w": 4.0, "ry": 0.85})
+					_shape("rays", at, 0.4, "rainbow", {"n": 12 + combo * 2, "r1": 38.0 + 8.0 * c3, "rot": 1.8})
+					_sparks(at, Vector2.ZERO, 22 + combo * 6, "flow", 200.0, 0.6, "twinkle", PI)
+				4:   # Shatter: the cut bursts into tumbling colour shards.
+					_shape("arc", at, 0.3 + 0.05 * c3, "flow", {"d": d, "r": 28.0 + 8.0 * c3, "w": 4.0, "flip": combo == 2, "half": 1.4, "sweep": true})
+					_sparks(tip, Vector2(d, -0.2), 18 + combo * 6, "rainbow", 280.0, 0.9, "shard", 1.2)
+					_sparks(tip, Vector2(d, 0.2), 10 + combo * 4, "flow", 200.0, 0.7, "shard", 1.4)
+					_shape("flash", tip, 0.1, "cool", {"r": 18.0 + 4.0 * c3})
+				_:   # Comet: one fat arc dragging a long tail of fast streaks.
+					_shape("arc", at, 0.45, "flow", {"d": d, "r": 36.0 + 8.0 * c3, "w": 7.0, "flip": combo != 2, "half": 1.7, "sweep": true})
+					_shape("streaks", at, 0.4, "rainbow", {"d": d, "len": 56.0, "n": 5, "both": true})
+					_sparks(tip, Vector2(d, 0.0), 24 + combo * 6, "rainbow", 260.0, 0.7, "streak", 0.9)
+			_shape("star", at + Vector2(d * 24.0, 0.0), 0.26, "flow", {"r": 9.0 + 3.0 * c3})
+			# Every swing also throws a few rising twinkles, so the air keeps glittering after it.
+			_sparks(tip, Vector2.UP, 5 + combo * 2, "rainbow", 90.0, 0.9, "twinkle", 1.4)
 			if combo == 3:
 				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.5, "flow", {"r0": 6.0, "r1": 52.0, "w": 5.0, "ry": 0.75})
 				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.4, "rainbow", {"r0": 4.0, "r1": 36.0, "w": 3.0, "ry": 0.75})
-				_sparks(at + Vector2(d * 22.0, 0.0), Vector2(d, 0.0), 22, "rainbow", 280.0, 0.8, "twinkle", 1.3)
+				_sparks(at + Vector2(d * 22.0, 0.0), Vector2(d, 0.0), 26, "rainbow", 300.0, 0.9, "twinkle", 1.3)
 		"enemy_slash":
 			_shape("arc", at, 0.28, "warm", {"d": d, "r": 18.0 + 8.0 * power, "w": 3.0, "flip": false, "half": 1.3})
 			_sparks(at + Vector2(d * 14.0, 0.0), Vector2(d, 0.0), 8, "warm", 130.0, 0.4)
 		"parry_ready":
 			_shape("ring", at, 0.2, "cool", {"r0": 16.0, "r1": 5.0, "w": 2.0, "ry": 1.0})
 		"hit":
+			# A hit keeps the swing's hue so the cut and the impact read as one blow, then picks one of four
+			# impact looks (never the same twice in a row). Heavy hits get extra of everything.
+			var hv: float = clampf(power, 0.6, 2.0)
+			var ncount: int = int(hv * 14.0)
 			_shape("flash", at, 0.1, "warm", {"r": 22.0 + 8.0 * power})
-			_shape("star", at, 0.28, "warm", {"r": 16.0 + 5.0 * power})
-			_shape("rays", at, 0.34, "warm", {"n": 14, "r1": 28.0 + 8.0 * power, "rot": 0.0})
-			_shape("ring", at, 0.3, "warm", {"r0": 2.0, "r1": 26.0 + 8.0 * power, "w": 3.0, "ry": 1.0})
-			_sparks(at, dir, 22, "warm", 260.0, 0.6, "streak", 1.2)
-			_sparks(at, dir, 12, "rainbow", 150.0, 0.8, "shard", 1.6)
+			_shape("slash_mark", at, 0.22, "flow", {"ang": _rng.randf_range(-0.9, 0.9) + (0.0 if dir.x >= 0.0 else PI), "len": 34.0 * hv})
+			_sparks(at, dir, 26 + ncount, "warm", 280.0, 0.65, "streak", 1.2)
+			_sparks(at, dir, 10 + ncount / 2, "rainbow", 180.0, 0.9, "shard", 1.6)
 			_sparks(at, dir, 8, "warm", 120.0, 0.7, "deb", 1.6)
+			var hk: int = _pick_variant(_last_hit_kind, 4)
+			_last_hit_kind = hk
+			match hk:
+				0:   # Starburst
+					_shape("star", at, 0.3, "warm", {"r": 16.0 + 5.0 * power})
+					_shape("rays", at, 0.36, "rainbow", {"n": 14, "r1": 30.0 + 8.0 * power, "rot": 0.0})
+				1:   # Shock ring
+					_shape("ring", at, 0.34, "warm", {"r0": 2.0, "r1": 30.0 + 8.0 * power, "w": 4.0, "ry": 1.0})
+					_shape("ring", at, 0.26, "rainbow", {"r0": 2.0, "r1": 18.0 + 4.0 * power, "w": 2.0, "ry": 1.0})
+				2:   # Fountain
+					_sparks(at, Vector2.UP, 16 + ncount, "rainbow", 220.0, 1.0, "twinkle", 0.9)
+					_shape("cross", at, 0.22, "warm", {"r": 12.0 + 4.0 * power, "d": 1.0})
+				_:   # Spiral rays
+					_shape("rays", at, 0.5, "rainbow", {"n": 10, "r1": 34.0 + 8.0 * power, "rot": 3.2})
+					_shape("star", at, 0.24, "warm", {"r": 12.0 + 4.0 * power})
 		"hurt":
 			_shape("ring", at, 0.36, "hurt", {"r0": 3.0, "r1": 26.0, "w": 4.0, "ry": 1.0})
 			_shape("star", at, 0.24, "hurt", {"r": 12.0})
@@ -314,6 +368,24 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_shape("star", at, 0.24, "gold", {"r": 6.0})
 		_:
 			_sparks(at, dir, 5, "gold", 80.0, 0.35, "dot")
+
+func _pick_variant(last: int, count: int) -> int:
+	var pick: int = _rng.randi_range(0, count - 1)
+	if pick == last:
+		pick = (pick + 1 + _rng.randi_range(0, count - 2)) % count
+	return pick
+
+func _roll_style() -> void:
+	## A new swing: pick a personality different from the last swing, and a hue at least 0.2 away.
+	style_kind = _pick_variant(_last_slash_kind, 6)
+	_last_slash_kind = style_kind
+	var h: float = _rng.randf()
+	var tries: int = 0
+	while absf(fposmod(h - _last_hue + 0.5, 1.0) - 0.5) < 0.2 and tries < 6:
+		h = _rng.randf()
+		tries += 1
+	_last_hue = h
+	_hue_shift = h
 
 func _recent_deflect(at: Vector2) -> bool:
 	var now: float = _clock
@@ -525,6 +597,7 @@ func _paint(c: CanvasItem, glow: bool) -> void:
 	_draw_body_trail(c, glow)
 	for s: Dictionary in _shapes:
 		var t: float = 1.0 - float(s["life"]) / float(s["max"])
+		_draw_hue = float(s.get("sh", 0.0))
 		match String(s["type"]):
 			"arc": _arc(c, s, t, glow)
 			"ring": _ring(c, s, t, glow)
@@ -535,6 +608,8 @@ func _paint(c: CanvasItem, glow: bool) -> void:
 			"flash": _flash(c, s, t, glow)
 			"cross": _cross(c, s, t, glow)
 			"streaks": _streaks(c, s, t, glow)
+			"slash_mark": _slash_mark(c, s, t, glow)
+	_draw_hue = 0.0
 	for q: Dictionary in _parts:
 		_particle(c, q, glow)
 	if not glow:
@@ -748,6 +823,23 @@ func _streaks(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 			var p1: Vector2 = (at + Vector2(sgn * reach * shrink, off * 1.5)).round()
 			var cols := PackedColorArray([Color(1, 1, 1, al), _col(ramp, 0.4 + t * 0.5, al * 0.7, float(i) * 0.12)])
 			c.draw_polyline_colors(PackedVector2Array([p0, p1]), cols, (6.0 if glow else (3.0 if i == n / 2 else 2.0)), false)
+
+func _slash_mark(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
+	## A diagonal cut line through the contact point: tapered, white at the centre, colour at the ends.
+	var at: Vector2 = Vector2(s["at"]).round()
+	var dirv: Vector2 = Vector2.from_angle(float(s["ang"]))
+	var reach: float = float(s["len"]) * (0.5 + 0.7 * minf(t * 4.0, 1.0)) * 0.5
+	var al: float = (1.0 - t) * (1.0 - t) * (0.25 if glow else 1.0)
+	var steps: int = 8
+	for side: int in 2:
+		var sgn: float = 1.0 if side == 0 else -1.0
+		var pts := PackedVector2Array()
+		var cols := PackedColorArray()
+		for i: int in range(steps + 1):
+			var f: float = float(i) / float(steps)
+			pts.append((at + dirv * sgn * reach * f).round())
+			cols.append(Color(1, 1, 1, al).lerp(_col("flow", f, al, 0.0), clampf(f * 1.4, 0.0, 1.0)))
+		c.draw_polyline_colors(pts, cols, (6.0 if glow else (3.0 if t < 0.4 else 2.0)), false)
 
 func _bars(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	var at: Vector2 = s["at"]

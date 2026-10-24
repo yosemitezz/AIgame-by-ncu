@@ -52,10 +52,35 @@ func run() -> void:
 	for _i: int in 20:
 		await process_frame
 	check(fx.shape_count() > 0, "deflect survives real draw frames")
+	# Variety: no two swings in a row look alike, and every personality shows up.
+	var kinds_seen: Dictionary = {}
+	var prev_kind: int = -1
+	var prev_hue: float = -1.0
+	var repeats: int = 0
+	var close_hue: int = 0
+	for _i: int in 80:
+		game.emit_fx("slash", Vector2(300, 250), Vector2.RIGHT, float(1 + _i % 3))
+		kinds_seen[fx.style_kind] = true
+		if fx.style_kind == prev_kind:
+			repeats += 1
+		if prev_hue >= 0.0 and absf(fposmod(fx._hue_shift - prev_hue + 0.5, 1.0) - 0.5) < 0.2:
+			close_hue += 1
+		prev_kind = fx.style_kind
+		prev_hue = fx._hue_shift
+		fx._process(0.1)
+	check(repeats == 0, "no swing repeats the previous swing style (%d repeats)" % repeats)
+	check(kinds_seen.size() == 6, "all six swing personalities appear (%d)" % kinds_seen.size())
+	check(close_hue <= 4, "consecutive swings differ in hue (%d too close of 80)" % close_hue)
+	var hit_kinds: Dictionary = {}
+	for _i: int in 40:
+		game.emit_fx("hit", Vector2(300, 250), Vector2.RIGHT, 1.0)
+		hit_kinds[fx._last_hit_kind] = true
+		fx._process(0.1)
+	check(hit_kinds.size() == 4, "all four hit looks appear (%d)" % hit_kinds.size())
 	# Hammer the caps.
 	for _i: int in 300:
 		game.emit_fx("burst", Vector2(300, 250), Vector2.ZERO, 3.0)
-	check(fx.particle_count() <= 520 and fx.shape_count() <= 64, "particle and shape caps hold (%d / %d)" % [fx.particle_count(), fx.shape_count()])
+	check(fx.particle_count() <= 800 and fx.shape_count() <= 64, "particle and shape caps hold (%d / %d)" % [fx.particle_count(), fx.shape_count()])
 	for _i: int in 4:
 		await process_frame
 	# Everything expires.
@@ -63,7 +88,7 @@ func run() -> void:
 		fx._process(0.05)
 	# Ambient motes keep spawning by design, so only shapes and afterimages must drain completely.
 	check(fx.shape_count() == 0 and fx.ghost_count() == 0, "all shapes and afterimages expire")
-	check(fx.particle_count() <= 520, "ambient particles stay bounded")
+	check(fx.particle_count() <= 800, "ambient particles stay bounded")
 	# Afterimages: a parry spawns one, and the cap holds under repeated dashes.
 	game.player.set("dash_timer", 1.0)
 	for _i: int in 200:
