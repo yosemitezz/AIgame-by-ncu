@@ -6,6 +6,8 @@ signal warning_issued(kind: String, at: Vector2, duration: float)
 signal vfx_requested(kind: String, at: Vector2, direction: Vector2, power: float)
 signal animation_event(actor: Node, state: String, frame: int, facing: int)
 signal parry_contacted(defender: Node, source: Node, contact: Vector2, kind: String)
+signal narrative_event(kind: String, payload: Dictionary)
+signal corruption_visual_changed(amount: float)
 
 const Player = preload("res://actors/player.gd")
 const Enemy = preload("res://actors/enemy.gd")
@@ -35,6 +37,8 @@ var checkpoint: Vector2 = Level.SPAWN
 var score: int = 0
 var story_safe: bool = false
 var outcome: String = ""
+var chapter_complete: bool = false
+var corruption_visual: float = 0.0
 var checkpoint_active: bool = false
 var elite_defeated: bool = false
 var boss_started: bool = false
@@ -62,6 +66,7 @@ func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     _rng.seed = 424242
     _setup_input()
+    chapter_complete = bool(get_tree().get_meta("bellkeep_chapter_complete", false))
     checkpoint_active = bool(get_tree().get_meta("bellkeep_checkpoint", false))
     elite_defeated = bool(get_tree().get_meta("bellkeep_elite", false))
     _collected = get_tree().get_meta("bellkeep_shards", {}).duplicate()
@@ -305,6 +310,7 @@ func _start_boss() -> void:
     boss.start_encounter()
 
 func on_enemy_defeated(enemy: Node2D) -> void:
+    emit_narrative_event("enemy_defeated", {"kind": enemy.kind, "at": enemy.global_position})
     if enemy.kind == "elite":
         elite_defeated = true
         checkpoint = Vector2(2500, 280)
@@ -328,6 +334,9 @@ func on_boss_defeated() -> void:
     if outcome != "":
         return
     outcome = "victory"
+    chapter_complete = true
+    get_tree().set_meta("bellkeep_chapter_complete", true)
+    emit_narrative_event("chapter_complete", {"boss_victory": true})
     _ending_clock = 0
     set_story_safe(true)
     music.stop_score()
@@ -341,6 +350,16 @@ func _on_player_died() -> void:
     set_story_safe(true)
     music.stop_score()
     _refresh_hud()
+
+func set_corruption_visual(amount: float) -> void:
+    # Presentation parameter only. No kill mapping, possession or forced defeat rule.
+    var clamped: float = clampf(amount, 0.0, 1.0)
+    if not is_equal_approx(corruption_visual, clamped):
+        corruption_visual = clamped
+        corruption_visual_changed.emit(corruption_visual)
+
+func emit_narrative_event(kind: String, payload: Dictionary = {}) -> void:
+    narrative_event.emit(kind, payload.duplicate(true))
 
 func announce(text: String, seconds: float = 3.0) -> void:
     _announcement = text
@@ -433,7 +452,7 @@ func _reload(full: bool) -> void:
     _reloading = true
     get_tree().paused = false
     if full:
-        for key: String in ["bellkeep_checkpoint", "bellkeep_elite", "bellkeep_shards", "bellkeep_doors"]:
+        for key: String in ["bellkeep_checkpoint", "bellkeep_elite", "bellkeep_shards", "bellkeep_doors", "bellkeep_chapter_complete"]:
             if get_tree().has_meta(key):
                 get_tree().remove_meta(key)
     get_tree().call_deferred("reload_current_scene")

@@ -98,17 +98,20 @@ func run() -> void:
     game.boss.health = 1
     game.boss.receive_hit(1, game.player.position)
     check(game.outcome == "victory" and game.story_safe and not game.music.running, "boss defeat completes chapter safely")
+    check(game.chapter_complete and get_meta("bellkeep_chapter_complete", false), "chapter victory has a separate completion record")
     game._reload(false)
     await process_frame
     await process_frame
     game = current_scene
     freeze(game)
     check(game.checkpoint_active and game.elite_defeated and game.player.position.x >= 2490, "retry reload retains unlocked checkpoint")
+    check(game.chapter_complete, "explicit replay retains earned chapter completion")
     game._reload(true)
     await process_frame
     await process_frame
     game = current_scene
     freeze(game)
     check(not game.checkpoint_active and not game.elite_defeated and game.score == 0, "new journey clears runtime progress")
+    check(not game.chapter_complete, "only a new journey clears chapter completion")
     print("Integration: %d passed, %d failed" % [passed, failed])
     quit(1 if failed else 0)

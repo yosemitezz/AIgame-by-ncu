@@ -67,6 +67,12 @@ func run() -> void:
     game.player.position = Vector2(800,500)
     game._refresh_hud()
     check(game._hud.state["zone"] == "淤水墓廊", "HUD resolves room by two-dimensional location")
+    var hp_before: int = game.player.health
+    var section_before: String = game.music.current_section
+    game.set_corruption_visual(2.0)
+    check(game.corruption_visual == 1.0 and game.player.health == hp_before and game.music.current_section == section_before, "corruption presentation parameter clamps without damage or score authority")
+    game.set_corruption_visual(-1.0)
+    check(game.corruption_visual == 0.0, "new hero remains clean until an explicit presentation parameter is supplied")
     var serial: int = game.player.attack_serial
     game._set_overlay("map")
     Input.action_press("attack")

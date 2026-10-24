@@ -23,3 +23,27 @@ Boss victory and chapter completion must remain completed when the narrative dea
 The dungeon milestone retains replaceable teaching/ending placeholders and the already working safe ending. It adds no new betrayal identity or motive. A later story implementation should replace those placeholders through a narrative interface, preserve the score/rest safety contract, and not alter combat success records.
 
 The current UI now renders ordinary combat death in the normal text color. The distinct red narrative-death/blood presentation is reserved for the later ending pass; this milestone does not pretend that scene has been implemented.
+
+## User's foreshadowing direction: trigger design still open
+
+The user proposed a first near-death Boss encounter in which the Boss does not finish
+the protagonist. Dizziness/blackened vision precedes the flying eye's rescue; the Boss
+responds with surprise and pain when the protagonist returns. Clean starting armor
+progressively gains dark wisps after mob kills, then a demonic death aura after the Boss,
+hinting at corruption and eventual possession.
+
+This is a direction for a later story/presentation pass. Do not force a deliberate loss,
+claim a winnable fight is secretly unwinnable, turn "near death" into a real death that
+erases victory, or decide the rescue trigger/health restoration/identity/motive here.
+The Boss collaborator retains fine encounter design. Suggested hand reaches, a weak
+acting eye, wisps entering armor seams and alternate first-victory triggers are not canon.
+
+## Available integration interface
+
+- Root `narrative_event(kind, payload)` publishes real `enemy_defeated` and `chapter_complete` events.
+- `emit_narrative_event(kind, payload)` can relay later agreed story cues; payload is copied.
+- `corruption_visual` defaults to zero. `set_corruption_visual(amount)` clamps 0..1 and emits
+  `corruption_visual_changed(amount)`. It changes no damage, input, Boss phase or music rule.
+- No automatic per-kill mapping, black-aura renderer or rescue trigger is implemented yet.
+- `chapter_complete` is stored independently in running-session metadata. Explicit replay
+  keeps it; only F5/new journey clears it. Narrative death must preserve that record.

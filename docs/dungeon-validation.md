@@ -56,3 +56,5 @@ At final remote inspection integrate/vfx-primary advanced to
 Those newer edits are preserved in their own branch and not claimed as merged here.
 This milestone retains the already reviewed 205b8e7 presentation baseline and its
 runtime compatibility fixes; new source working files are not overwritten.
+
+Follow-up narrative interface check: integration 51/0, dungeon integration 47/0, short startup PASS; independent review has no findings. Only events, visual parameters and a separate session completion record were added. No rescue trigger, automatic corruption mapping or new Boss behavior is implemented.
