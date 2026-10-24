@@ -232,6 +232,18 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_shape("bars", at, 0.34, "warm", {"d": d, "len": 30.0})
 			_sparks(at, Vector2(-d, 0.0), 4, "warm", 90.0, 0.35, "streak", 0.6)
 			return
+		"lunge":
+			# The forward step of a ground strike: dust kicked up at the heels, speed lines trailing
+			# behind, and a tinted afterimage left where the hero started, in this swing's hue.
+			var lc: float = clampf(power, 1.0, 3.0)
+			_shape("bars", at + Vector2(0.0, -12.0), 0.26 + 0.04 * lc, "flow", {"d": d, "len": 22.0 + 8.0 * lc})
+			_shape("ring", at, 0.22, "dust", {"r0": 2.0, "r1": 12.0 + 3.0 * lc, "w": 2.0, "ry": 0.3})
+			_sparks(at + Vector2(-d * 4.0, 0.0), Vector2(-d, -0.35), 8 + 3 * int(lc), "dust", 150.0, 0.4, "dot", 0.5)
+			_sparks(at + Vector2(-d * 6.0, -12.0), Vector2(-d, 0.0), 6 + 2 * int(lc), "flow", 200.0, 0.4, "streak", 0.45)
+			var lp: Node2D = _player()
+			if lp != null:
+				_ghost(lp, "hero", Color.from_hsv(fposmod(_hue_shift + 0.55, 1.0), 0.6, 1.0), 0.55, 0.28)
+			return
 		"unblockable_charge", "charge":
 			kind = "telegraph"
 		"impact":

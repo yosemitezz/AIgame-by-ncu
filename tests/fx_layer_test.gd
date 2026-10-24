@@ -34,7 +34,7 @@ func run() -> void:
 	var pos: Vector2 = game.player.position
 	var score: int = game.score
 	# Doubled-up contact events must collapse into one deflect, not stack.
-	for kind: String in ["blade_parry", "projectile_parry", "guard_break", "dash_start", "enemy_dash", "dash_ghost", "unblockable_charge", "impact", "debris"]:
+	for kind: String in ["blade_parry", "projectile_parry", "guard_break", "dash_start", "enemy_dash", "dash_ghost", "unblockable_charge", "impact", "debris", "lunge"]:
 		game.emit_fx(kind, Vector2(300, 250), Vector2.RIGHT, 1.2)
 	fx._process(0.2)
 	for kind: String in KINDS:

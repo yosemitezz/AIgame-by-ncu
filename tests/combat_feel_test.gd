@@ -117,6 +117,33 @@ func run() -> void:
 	check(arena.strikes.size() == count_at_recovery, "recovery performs no damage queries")
 	check(to_phase("none") and player.attack_timer == 0.0, "completed swing clears attack state")
 
+	# Forward step: every ground strike carries the hero forward, the finisher furthest, and the
+	# step happens in the active phase only (timings and damage windows are not touched).
+	var reach_by_combo: Array[float] = []
+	for n: int in [1, 2, 3]:
+		reset_actor()
+		# move_and_slide only uses the fixed 1/60 step inside a physics frame, so wait on physics_frame.
+		await physics_frame
+		ticks(3, 1.0 / 60.0)
+		player.combo = n - 1
+		player._combo_grace = 1.0
+		var x0: float = player.position.x
+		player._start_attack()
+		var moved_in_windup: float = 0.0
+		var guard: int = 0
+		while player.attack_phase == "windup" and guard < 60:
+			player._physics_process(1.0 / 60.0)
+			guard += 1
+		moved_in_windup = player.position.x - x0
+		guard = 0
+		while player.attack_phase != "none" and guard < 200:
+			player._physics_process(1.0 / 60.0)
+			guard += 1
+		reach_by_combo.append(player.position.x - x0)
+		check(moved_in_windup < 3.0, "combo %d does not move during windup (%.1f px)" % [n, moved_in_windup])
+	check(reach_by_combo[0] >= 12.0 and reach_by_combo[0] <= 26.0, "light strike steps forward 12 to 26 px (%.1f)" % reach_by_combo[0])
+	check(reach_by_combo[1] > reach_by_combo[0] and reach_by_combo[2] > reach_by_combo[1], "each combo step is longer than the last (%.1f / %.1f / %.1f)" % [reach_by_combo[0], reach_by_combo[1], reach_by_combo[2]])
+	check(reach_by_combo[2] <= 44.0, "finisher step stays under 44 px (%.1f)" % reach_by_combo[2])
 	reset_actor()
 	await process_frame
 	player._start_attack()

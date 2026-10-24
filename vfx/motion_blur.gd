@@ -121,6 +121,8 @@ func _on_fx(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_kick(dir, 0.07, 0.34, 0.034, at)
 		"dash_start", "enemy_dash":
 			_kick(dir, 0.04, 0.05, 0.0, at)
+		"lunge":
+			_kick(dir, 0.02 + 0.008 * p, 0.0, 0.0, at)
 		"death", "boss_defeat", "burst":
 			_kick(Vector2.RIGHT, 0.02, 0.3, 0.03, at)
 
