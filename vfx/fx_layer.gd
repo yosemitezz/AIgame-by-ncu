@@ -33,6 +33,11 @@ const RAMP_SOURCE: Dictionary = {
 	"hurt": ["ffffff", "ffc0b8", "ef7678", "c0405f", "5a1d4a"],
 	"dust": ["f2f6d6", "b8c4cf", "77839c", "394462"],
 	"gold": ["ffffff", "fff1bd", "e9bb68", "88704e"],
+	"reflected_tail": ["c4fff6", "73f6df", "43b9aa", "335f79"],
+	"lantern_fan": ["fff1bd", "f4b95f", "bc7545", "67444b"],
+	"bat_seed": ["eedbff", "c69aff", "8e65b7", "514267"],
+	"bat_bloom": ["fff0ff", "e59bff", "a46ab8", "60416f"],
+	"jailer_link": ["f3ffcf", "cce675", "95a94d", "4d6148"],
 }
 
 class Ghost extends Node2D:
@@ -914,7 +919,8 @@ func _track_projectiles() -> void:
 		trail.append((node as Node2D).global_position)
 		while trail.size() > 12:
 			trail.pop_front()
-		_proj_trails[id] = {"pts": trail, "friendly": bool(node.get("friendly"))}
+		var style: Variant = node.get("style")
+		_proj_trails[id] = {"pts": trail, "friendly": bool(node.get("friendly")), "style": str(style) if style != null else "default"}
 	for id: Variant in _proj_trails.keys():
 		if not seen.has(id):
 			_proj_trails.erase(id)
@@ -972,6 +978,10 @@ func _draw_body_trail(c: CanvasItem, glow: bool) -> void:
 			continue
 		c.draw_line(pa, pb, _col("flow", u, al, float(i) * 0.03), width, false)
 
+func _trail_ramp(style: String, friendly: bool) -> String:
+	if friendly: return "reflected_tail"
+	return style if style in ["lantern_fan","bat_seed","bat_bloom","jailer_link"] else "warm"
+
 func _draw_projectile_trails(c: CanvasItem, glow: bool) -> void:
 	for id: Variant in _proj_trails:
 		var info: Dictionary = _proj_trails[id]
@@ -980,16 +990,17 @@ func _draw_projectile_trails(c: CanvasItem, glow: bool) -> void:
 		if n < 2:
 			continue
 		var friendly: bool = info["friendly"]
+		var tail_ramp: String = _trail_ramp(str(info.get("style","default")), friendly)
 		var line := PackedVector2Array()
 		var cols := PackedColorArray()
 		for i: int in n:
 			var u: float = float(i) / float(n - 1)   # 1 = head
 			line.append(Vector2(pts[i]).round())
 			if friendly:
-				cols.append(_col("flow", 1.0 - u, u * (0.22 if glow else 0.9), float(i) * 0.04))
+				cols.append(_col(tail_ramp, 1.0 - u, u * (0.12 if glow else 0.72)))
 			else:
 				# Hostile shots keep a thin, low-alpha warm tail so safe lanes stay readable.
-				cols.append(_col("warm", 0.2 + (1.0 - u) * 0.6, u * (0.1 if glow else 0.42)))
+				cols.append(_col(tail_ramp, 0.2 + (1.0 - u) * 0.6, u * (0.06 if glow else 0.34)))
 		var w: float = 3.0 if friendly else 2.0
 		c.draw_polyline_colors(line, cols, w * (2.6 if glow else 1.0), false)
 

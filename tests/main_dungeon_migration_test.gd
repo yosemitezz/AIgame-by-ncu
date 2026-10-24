@@ -62,7 +62,7 @@ func check_contract() -> void:
 	for i: int in ORIGINAL_SHARDS.size():
 		check(Level.SHARDS[i] == ORIGINAL_SHARDS[i],"stable original shard %d" % i)
 	for entry: Dictionary in Level.ENEMIES:
-		check(entry["kind"] in ["sentry","wisp","elite"],"no new creature category in migration")
+		check(entry["kind"] in ["sentry","wisp","elite","lantern","jailer","bat"],"every encounter uses a supported six-kind enemy")
 	check(map.room_at(Vector2(1450,48)).get("id","") == "archive","library map room exposed")
 	check(map.room_at(Vector2(1100,500)).get("id","") == "crypt","crypt map room exposed")
 	check(map.room_at(Vector2(1100,300)).is_empty(),"legacy nave falls back to existing zones")

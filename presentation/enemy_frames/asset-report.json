@@ -1,0 +1,53 @@
+{
+  "total_frames": 192,
+  "kinds": {
+    "sentry": {
+      "frames": 32,
+      "unique_frames": 32,
+      "opaque_palette_colors": 8,
+      "all_landmarks_in_bounds": true,
+      "alpha_binary": true,
+      "atlas_sha256": "f23617add976f92da7fcdea9c04cbb7b3de0ac162cbb4e01282205c921a22560"
+    },
+    "wisp": {
+      "frames": 32,
+      "unique_frames": 28,
+      "opaque_palette_colors": 5,
+      "all_landmarks_in_bounds": true,
+      "alpha_binary": true,
+      "atlas_sha256": "f4b6f25391ab1295cef2e9dd56b2986ea600350b765faab426529f94d9615a01"
+    },
+    "elite": {
+      "frames": 32,
+      "unique_frames": 31,
+      "opaque_palette_colors": 7,
+      "all_landmarks_in_bounds": true,
+      "alpha_binary": true,
+      "atlas_sha256": "6392319f5a20aa52986a10bd1e5c000fc6f3887e24179e9b3e13caeb86b6f3b7"
+    },
+    "lantern": {
+      "frames": 32,
+      "unique_frames": 30,
+      "opaque_palette_colors": 10,
+      "all_landmarks_in_bounds": true,
+      "alpha_binary": true,
+      "atlas_sha256": "60e2104f7189e9513396db7a0950219df1067c20577931e3036c067a4b2169f1"
+    },
+    "jailer": {
+      "frames": 32,
+      "unique_frames": 30,
+      "opaque_palette_colors": 6,
+      "all_landmarks_in_bounds": true,
+      "alpha_binary": true,
+      "atlas_sha256": "5d7fa63501c2b4788c57fa13843ff5f06866376fba80e1ed5d12d8f9249ca98c"
+    },
+    "bat": {
+      "frames": 32,
+      "unique_frames": 26,
+      "opaque_palette_colors": 8,
+      "all_landmarks_in_bounds": true,
+      "alpha_binary": true,
+      "atlas_sha256": "555dfe62bb05d553a8bd94d761c4d24693e43c829ae8789410629293c4932edf"
+    }
+  }
+}

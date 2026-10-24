@@ -52,4 +52,11 @@ Controls: A/D or arrows move; Space jumps; W/up and S/down climb; S/down crouche
 
 The newer long-limb hero, infinite air jumps, light wings, angular effects, heavy impact and layered original sounds are preserved. Shared sword envelopes now reach 180/204/228 logical pixels, with swept geometry and world occlusion. The original pixel katana Boss family is integrated with current reaction-state fallbacks. See docs/main-project-migration.md.
 
-Run tools/verify_main.ps1 for bounded migration checks after the normal Godot import. The friend PR3 planners are saved separately; their presence does not mean the final authored attacks already run in the main Boss. The original boss_attack subproject is retained unchanged, and its audio is not used by the main game.
+Run tools/verify_main.ps1 for bounded migration checks after the normal Godot import. The final friend PR3 action plans now run in the main Boss: four normal, four accelerated, random square/diamond X/+ and four geometric laser formations. The original boss_attack subproject is retained unchanged, and its audio is not used by the main game.
+
+
+## Authored Boss and enemy cast milestone
+
+The main Boss calls the friend planners through the existing MusicDirector, contact-parry/posture rules and one damage authority. The six enemy kinds are bone sentry, water wisp, armored elite, lantern cleric, chain jailer and winged imp; eleven encounters introduce them across the dungeon, with delayed finite barrages, readable gaps, occlusion and room gates.192 original native-pixel cells and their editable generator are in presentation/enemy_frames and tools/generate_enemy_cast.py.
+
+Validation: the19-check unified migration suite passed, followed by the203BPM configuration3/0, music30/0 and startup checks. Main Boss runtime62/0, authored logic86/0, source-chart audit14/0, enemy cast90/0 and enemy visual859/0. The large visual count mostly checks individual frame bounds and anchors; visual taste and difficulty remain for the user to play. See docs/friend-handoff-compatibility.md for the generated112BPM default, audited203BPM source, pending heavy-beat UI/input decisions and unchanged standalone audio. No exported package or full-song latency claim is made.

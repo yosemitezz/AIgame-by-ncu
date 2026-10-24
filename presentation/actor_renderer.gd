@@ -1,4 +1,5 @@
 extends RefCounted
+const EnemyVisual = preload("res://presentation/enemy_visual.gd")
 const KatanaVisual = preload("res://presentation/katana_visual.gd")
 ## Sprite presentation only; phase and facing come from gameplay.
 ## New integer-grid poses retain a stable feet anchor. No gameplay transforms.
@@ -105,6 +106,9 @@ static func _parry_pose(actor: Object, kind: String, state: String, frame: int) 
     return {"state": key, "progress": progress}
 
 static func paint(canvas: Node2D, kind: String, state: String, frame: int, facing: int) -> void:
+    if EnemyVisual.supports(kind):
+        EnemyVisual.paint(canvas, kind, state, frame, facing)
+        return
     if kind == "boss":
         KatanaVisual.paint(canvas, state, frame, facing)
         return

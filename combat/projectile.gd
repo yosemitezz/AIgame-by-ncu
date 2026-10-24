@@ -15,7 +15,7 @@ func configure(owner_game: Node, at: Vector2, motion: Vector2, is_friendly: bool
 	position = at
 	velocity = motion
 	friendly = is_friendly
-	style = shot_style if shot_style in ["sentry_shard", "wisp_seed", "elite_rune"] else "default"
+	style = shot_style if shot_style in ["sentry_shard", "wisp_seed", "elite_rune", "lantern_fan", "bat_seed", "bat_bloom", "jailer_link"] else "default"
 
 func _ready() -> void:
 	add_to_group("projectiles")
@@ -134,20 +134,28 @@ func clear() -> void:
 func core_color() -> Color:
 	if friendly:
 		return Color("73f6df")
-	return {"sentry_shard": Color("f4b95f"), "wisp_seed": Color("ed88d9"), "elite_rune": Color("cce675")}.get(style, Color("ffd47c"))
+	return {"sentry_shard": Color("f4b95f"), "wisp_seed": Color("ed88d9"), "elite_rune": Color("cce675"), "lantern_fan": Color("f4b95f"), "bat_seed": Color("c69aff"), "bat_bloom": Color("e59bff"), "jailer_link": Color("cce675")}.get(style, Color("ffd47c"))
 
 func _draw() -> void:
 	# Only the collision-readable core lives here. The scene FxLayer owns every tail.
 	var ink: Color = core_color()
 	var outline := Color("151829")
-	if style == "sentry_shard":
+	if style in ["sentry_shard", "lantern_fan"]:
 		draw_colored_polygon(PackedVector2Array([Vector2(0,-5),Vector2(4,0),Vector2(0,5),Vector2(-4,0)]), outline)
 		draw_colored_polygon(PackedVector2Array([Vector2(0,-4),Vector2(3,0),Vector2(0,4),Vector2(-3,0)]), ink)
-	elif style == "wisp_seed":
+	elif style in ["wisp_seed", "bat_bloom"]:
 		var axis: Vector2 = velocity.normalized() if velocity.length_squared() > 0 else Vector2.RIGHT
 		var side := Vector2(-axis.y, axis.x)
 		draw_colored_polygon(PackedVector2Array([(axis*5).round(),(-axis*3+side*4).round(),(-axis*4).round(),(-axis*3-side*4).round()]), outline)
 		draw_colored_polygon(PackedVector2Array([(axis*4).round(),(-axis*2+side*3).round(),(-axis*3).round(),(-axis*2-side*3).round()]), ink)
+	elif style == "bat_seed":
+		draw_rect(Rect2(-4,-4,8,8), outline)
+		draw_rect(Rect2(-3,-3,6,6), ink)
+		draw_rect(Rect2(-1,-1,2,2), Color("f3ffea"))
+	elif style == "jailer_link":
+		draw_rect(Rect2(-4,-4,8,8), outline)
+		draw_rect(Rect2(-3,-3,6,6), ink)
+		draw_rect(Rect2(-1,-1,2,2), outline)
 	elif style == "elite_rune":
 		draw_rect(Rect2(-4,-4,8,8), outline)
 		draw_rect(Rect2(-3,-3,6,6), ink)

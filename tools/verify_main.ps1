@@ -8,14 +8,15 @@ $env:TMP=$env:TEMP
 $env:APPDATA=Join-Path $projectRoot '.local/appdata'
 $env:LOCALAPPDATA=$env:APPDATA
 $env:XDG_CACHE_HOME=Join-Path $projectRoot '.local/cache'
-$checks=@('main_dungeon_migration_test','main_player_migration_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','parry_controller_test','boss_parry_test','parry_integration_test','hero_motion_test','main_visual_migration_test','font','startup')
+$checks=@('main_dungeon_migration_test','main_player_migration_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','music_203_config_test','parry_controller_test','boss_parry_test','parry_integration_test','hero_motion_test','main_visual_migration_test','main_authored_boss_test','main_boss_runtime_test','main_enemy_cast_test','main_enemy_visual_test','source-chart','font','startup')
 if($From){$index=[Array]::IndexOf($checks,$From);if($index -lt 0){throw 'Unknown -From'};$checks=$checks[$index..($checks.Count-1)]}
 foreach($name in $checks){
  $stdout=Join-Path $projectRoot ('artifacts/unified-'+$name+'-console.log')
  $stderr=Join-Path $projectRoot ('artifacts/unified-'+$name+'-error.log')
  $log=Join-Path $projectRoot ('artifacts/unified-'+$name+'.log')
  $args=@('--headless','--path',$projectRoot,'--log-file',$log)
- if($name -eq 'font'){$args+=@('--script','res://tools/font_glyph_check.gd')}
+ if($name -eq 'source-chart'){$args+=@('--script','res://tools/audit_friend_chart.gd')}
+ elseif($name -eq 'font'){$args+=@('--script','res://tools/font_glyph_check.gd')}
  elseif($name -eq 'startup'){$args+=@('--quit-after','60')}
  else{$args+=@('--script',('res://tests/'+$name+'.gd'))}
  $proc=Start-Process -FilePath $Godot -ArgumentList $args -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru

@@ -1,0 +1,5233 @@
+{
+  "version": 1,
+  "license": "MIT",
+  "source": "Original integer-pixel geometry and pose tables in tools/generate_enemy_cast.py. No outside images or 3D.",
+  "canvas": [
+    80,
+    80
+  ],
+  "anchor": [
+    40,
+    76
+  ],
+  "columns": 4,
+  "kinds": {
+    "sentry": {
+      "atlas": "sentry_atlas.png",
+      "flash": "sentry_flash.png",
+      "states": {
+        "idle": {
+          "start": 0,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_idle_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                35,
+                73,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                32,
+                -27
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_idle_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                21,
+                36,
+                73,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                32,
+                -25
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_idle_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                23,
+                35,
+                74,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                33,
+                -25
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_idle_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                21,
+                35,
+                73,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                32,
+                -27
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "run": {
+          "start": 4,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_run_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                35,
+                75,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                34,
+                -15
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_run_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                23,
+                36,
+                75,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -18
+              ],
+              "weapon_tip": [
+                34,
+                -12
+              ],
+              "guard_point": [
+                12,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_run_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                23,
+                35,
+                75,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                34,
+                -17
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_run_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                21,
+                36,
+                74,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                33,
+                -18
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "windup": {
+          "start": 8,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_windup_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                35,
+                61,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                19,
+                -40
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_windup_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                20,
+                35,
+                54,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                9,
+                -41
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_windup_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                20,
+                37,
+                54,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -17
+              ],
+              "weapon_tip": [
+                -2,
+                -38
+              ],
+              "guard_point": [
+                8,
+                -17
+              ]
+            },
+            {
+              "name": "sentry_windup_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                18,
+                37,
+                54,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                7,
+                -17
+              ],
+              "weapon_tip": [
+                -8,
+                -35
+              ],
+              "guard_point": [
+                7,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "attack": {
+          "start": 12,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_attack_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                36,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -18
+              ],
+              "weapon_tip": [
+                35,
+                -21
+              ],
+              "guard_point": [
+                12,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_attack_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                24,
+                35,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                35,
+                -14
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_attack_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                24,
+                36,
+                73,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -18
+              ],
+              "weapon_tip": [
+                32,
+                -7
+              ],
+              "guard_point": [
+                12,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_attack_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                21,
+                37,
+                70,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -17
+              ],
+              "weapon_tip": [
+                28,
+                -2
+              ],
+              "guard_point": [
+                10,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "recover": {
+          "start": 16,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_recover_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                37,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -17
+              ],
+              "weapon_tip": [
+                29,
+                -2
+              ],
+              "guard_point": [
+                12,
+                -17
+              ]
+            },
+            {
+              "name": "sentry_recover_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                22,
+                36,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -18
+              ],
+              "weapon_tip": [
+                31,
+                -7
+              ],
+              "guard_point": [
+                11,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_recover_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                22,
+                35,
+                74,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                33,
+                -16
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_recover_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                35,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -19
+              ],
+              "weapon_tip": [
+                31,
+                -25
+              ],
+              "guard_point": [
+                9,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "hurt": {
+          "start": 20,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_hurt_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                35,
+                63,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                21,
+                -6
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            },
+            {
+              "name": "sentry_hurt_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                19,
+                36,
+                57,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                15,
+                -3
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_hurt_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                19,
+                37,
+                52,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                7,
+                -17
+              ],
+              "weapon_tip": [
+                10,
+                0
+              ],
+              "guard_point": [
+                7,
+                -17
+              ]
+            },
+            {
+              "name": "sentry_hurt_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                36,
+                61,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                19,
+                -4
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "parry": {
+          "start": 24,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_parry_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                36,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                30,
+                -30
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            },
+            {
+              "name": "sentry_parry_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                20,
+                37,
+                57,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -17
+              ],
+              "weapon_tip": [
+                15,
+                -39
+              ],
+              "guard_point": [
+                9,
+                -17
+              ]
+            },
+            {
+              "name": "sentry_parry_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                20,
+                37,
+                54,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -17
+              ],
+              "weapon_tip": [
+                2,
+                -39
+              ],
+              "guard_point": [
+                8,
+                -17
+              ]
+            },
+            {
+              "name": "sentry_parry_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                36,
+                62,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                20,
+                -38
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            }
+          ],
+          "optional": true
+        },
+        "dead": {
+          "start": 28,
+          "count": 4,
+          "frames": [
+            {
+              "name": "sentry_dead_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                58,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "sentry_dead_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                24,
+                62,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "sentry_dead_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                24,
+                66,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "sentry_dead_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                24,
+                70,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        }
+      },
+      "flying": false,
+      "total_frames": 32
+    },
+    "wisp": {
+      "atlas": "wisp_atlas.png",
+      "flash": "wisp_flash.png",
+      "states": {
+        "idle": {
+          "start": 0,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_idle_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                40,
+                51,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                16,
+                -18
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_idle_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                29,
+                38,
+                51,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -20
+              ],
+              "weapon_tip": [
+                19,
+                -20
+              ],
+              "guard_point": [
+                8,
+                -20
+              ]
+            },
+            {
+              "name": "wisp_idle_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                30,
+                40,
+                52,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                17,
+                -18
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_idle_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                29,
+                41,
+                54,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -17
+              ],
+              "weapon_tip": [
+                19,
+                -17
+              ],
+              "guard_point": [
+                8,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "run": {
+          "start": 4,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_run_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                25,
+                40,
+                52,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                17,
+                -18
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_run_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                31,
+                38,
+                53,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                10,
+                -20
+              ],
+              "weapon_tip": [
+                21,
+                -20
+              ],
+              "guard_point": [
+                10,
+                -20
+              ]
+            },
+            {
+              "name": "wisp_run_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                30,
+                40,
+                52,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                17,
+                -18
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_run_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                29,
+                41,
+                54,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -17
+              ],
+              "weapon_tip": [
+                19,
+                -17
+              ],
+              "guard_point": [
+                8,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "windup": {
+          "start": 8,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_windup_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                40,
+                55,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                7,
+                -18
+              ],
+              "weapon_tip": [
+                15,
+                -18
+              ],
+              "guard_point": [
+                7,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_windup_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                27,
+                37,
+                57,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                6,
+                -21
+              ],
+              "weapon_tip": [
+                17,
+                -21
+              ],
+              "guard_point": [
+                6,
+                -21
+              ]
+            },
+            {
+              "name": "wisp_windup_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                26,
+                39,
+                59,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                5,
+                -19
+              ],
+              "weapon_tip": [
+                13,
+                -19
+              ],
+              "guard_point": [
+                5,
+                -19
+              ]
+            },
+            {
+              "name": "wisp_windup_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                25,
+                39,
+                54,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                4,
+                -19
+              ],
+              "weapon_tip": [
+                15,
+                -19
+              ],
+              "guard_point": [
+                4,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "attack": {
+          "start": 12,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_attack_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                26,
+                40,
+                58,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                18,
+                -18
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_attack_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                31,
+                38,
+                62,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                11,
+                -20
+              ],
+              "weapon_tip": [
+                22,
+                -20
+              ],
+              "guard_point": [
+                11,
+                -20
+              ]
+            },
+            {
+              "name": "wisp_attack_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                31,
+                40,
+                64,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                18,
+                -18
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_attack_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                28,
+                42,
+                58,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -16
+              ],
+              "weapon_tip": [
+                19,
+                -16
+              ],
+              "guard_point": [
+                8,
+                -16
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "recover": {
+          "start": 16,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_recover_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                26,
+                41,
+                53,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                10,
+                -17
+              ],
+              "weapon_tip": [
+                18,
+                -17
+              ],
+              "guard_point": [
+                10,
+                -17
+              ]
+            },
+            {
+              "name": "wisp_recover_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                30,
+                38,
+                52,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                9,
+                -20
+              ],
+              "weapon_tip": [
+                20,
+                -20
+              ],
+              "guard_point": [
+                9,
+                -20
+              ]
+            },
+            {
+              "name": "wisp_recover_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                29,
+                40,
+                51,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                16,
+                -18
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_recover_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                28,
+                41,
+                53,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                7,
+                -17
+              ],
+              "weapon_tip": [
+                18,
+                -17
+              ],
+              "guard_point": [
+                7,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "hurt": {
+          "start": 20,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_hurt_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                40,
+                51,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                16,
+                -18
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_hurt_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                27,
+                38,
+                49,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                6,
+                -20
+              ],
+              "weapon_tip": [
+                17,
+                -20
+              ],
+              "guard_point": [
+                6,
+                -20
+              ]
+            },
+            {
+              "name": "wisp_hurt_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                26,
+                41,
+                48,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                5,
+                -17
+              ],
+              "weapon_tip": [
+                13,
+                -17
+              ],
+              "guard_point": [
+                5,
+                -17
+              ]
+            },
+            {
+              "name": "wisp_hurt_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                28,
+                41,
+                53,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                7,
+                -17
+              ],
+              "weapon_tip": [
+                18,
+                -17
+              ],
+              "guard_point": [
+                7,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "parry": {
+          "start": 24,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_parry_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                40,
+                56,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                16,
+                -18
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            },
+            {
+              "name": "wisp_parry_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                28,
+                39,
+                58,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                7,
+                -19
+              ],
+              "weapon_tip": [
+                18,
+                -19
+              ],
+              "guard_point": [
+                7,
+                -19
+              ]
+            },
+            {
+              "name": "wisp_parry_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                27,
+                41,
+                60,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                6,
+                -17
+              ],
+              "weapon_tip": [
+                14,
+                -17
+              ],
+              "guard_point": [
+                6,
+                -17
+              ]
+            },
+            {
+              "name": "wisp_parry_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                28,
+                41,
+                57,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": [
+                7,
+                -17
+              ],
+              "weapon_tip": [
+                18,
+                -17
+              ],
+              "guard_point": [
+                7,
+                -17
+              ]
+            }
+          ],
+          "optional": true
+        },
+        "dead": {
+          "start": 28,
+          "count": 4,
+          "frames": [
+            {
+              "name": "wisp_dead_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                28,
+                68,
+                51,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "wisp_dead_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                27,
+                69,
+                54,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "wisp_dead_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                23,
+                69,
+                58,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "wisp_dead_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                19,
+                70,
+                62,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        }
+      },
+      "flying": true,
+      "total_frames": 32
+    },
+    "elite": {
+      "atlas": "elite_atlas.png",
+      "flash": "elite_flash.png",
+      "states": {
+        "idle": {
+          "start": 0,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_idle_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                20,
+                29,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -20
+              ],
+              "weapon_tip": [
+                21,
+                -34
+              ],
+              "guard_point": [
+                11,
+                -20
+              ]
+            },
+            {
+              "name": "elite_idle_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                20,
+                30,
+                70,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                21,
+                -33
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            },
+            {
+              "name": "elite_idle_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                21,
+                29,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -20
+              ],
+              "weapon_tip": [
+                23,
+                -33
+              ],
+              "guard_point": [
+                12,
+                -20
+              ]
+            },
+            {
+              "name": "elite_idle_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                29,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -20
+              ],
+              "weapon_tip": [
+                21,
+                -34
+              ],
+              "guard_point": [
+                11,
+                -20
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "run": {
+          "start": 4,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_run_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                21,
+                29,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -20
+              ],
+              "weapon_tip": [
+                27,
+                -27
+              ],
+              "guard_point": [
+                12,
+                -20
+              ]
+            },
+            {
+              "name": "elite_run_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                22,
+                30,
+                77,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                29,
+                -25
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "elite_run_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                21,
+                29,
+                75,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -20
+              ],
+              "weapon_tip": [
+                27,
+                -29
+              ],
+              "guard_point": [
+                12,
+                -20
+              ]
+            },
+            {
+              "name": "elite_run_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                30,
+                73,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                25,
+                -29
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "windup": {
+          "start": 8,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_windup_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                20,
+                29,
+                58,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -20
+              ],
+              "weapon_tip": [
+                7,
+                -37
+              ],
+              "guard_point": [
+                11,
+                -20
+              ]
+            },
+            {
+              "name": "elite_windup_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                19,
+                30,
+                57,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                0,
+                -33
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            },
+            {
+              "name": "elite_windup_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                18,
+                31,
+                56,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                -6,
+                -26
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            },
+            {
+              "name": "elite_windup_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                17,
+                31,
+                56,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                -8,
+                -22
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "attack": {
+          "start": 12,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_attack_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                30,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                27,
+                -28
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "elite_attack_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                23,
+                29,
+                79,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -20
+              ],
+              "weapon_tip": [
+                31,
+                -24
+              ],
+              "guard_point": [
+                14,
+                -20
+              ]
+            },
+            {
+              "name": "elite_attack_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                22,
+                30,
+                78,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                30,
+                -18
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "elite_attack_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                31,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -14
+              ],
+              "guard_point": [
+                11,
+                -18
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "recover": {
+          "start": 16,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_recover_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                31,
+                78,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -18
+              ],
+              "weapon_tip": [
+                30,
+                -16
+              ],
+              "guard_point": [
+                13,
+                -18
+              ]
+            },
+            {
+              "name": "elite_recover_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                21,
+                30,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -19
+              ],
+              "weapon_tip": [
+                29,
+                -21
+              ],
+              "guard_point": [
+                12,
+                -19
+              ]
+            },
+            {
+              "name": "elite_recover_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                20,
+                29,
+                75,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -20
+              ],
+              "weapon_tip": [
+                26,
+                -28
+              ],
+              "guard_point": [
+                11,
+                -20
+              ]
+            },
+            {
+              "name": "elite_recover_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                19,
+                29,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -20
+              ],
+              "weapon_tip": [
+                21,
+                -33
+              ],
+              "guard_point": [
+                10,
+                -20
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "hurt": {
+          "start": 20,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_hurt_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                20,
+                29,
+                76,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -20
+              ],
+              "weapon_tip": [
+                27,
+                -16
+              ],
+              "guard_point": [
+                11,
+                -20
+              ]
+            },
+            {
+              "name": "elite_hurt_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                18,
+                30,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -19
+              ],
+              "weapon_tip": [
+                24,
+                -11
+              ],
+              "guard_point": [
+                9,
+                -19
+              ]
+            },
+            {
+              "name": "elite_hurt_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                17,
+                31,
+                68,
+                79
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -18
+              ],
+              "weapon_tip": [
+                20,
+                -6
+              ],
+              "guard_point": [
+                8,
+                -18
+              ]
+            },
+            {
+              "name": "elite_hurt_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                19,
+                30,
+                75,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -13
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "parry": {
+          "start": 24,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_parry_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                20,
+                30,
+                66,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                18,
+                -35
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            },
+            {
+              "name": "elite_parry_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                19,
+                31,
+                57,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                4,
+                -34
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            },
+            {
+              "name": "elite_parry_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                18,
+                31,
+                56,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -18
+              ],
+              "weapon_tip": [
+                -4,
+                -29
+              ],
+              "guard_point": [
+                9,
+                -18
+              ]
+            },
+            {
+              "name": "elite_parry_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                19,
+                30,
+                57,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -19
+              ],
+              "weapon_tip": [
+                8,
+                -36
+              ],
+              "guard_point": [
+                10,
+                -19
+              ]
+            }
+          ],
+          "optional": true
+        },
+        "dead": {
+          "start": 28,
+          "count": 4,
+          "frames": [
+            {
+              "name": "elite_dead_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                62,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "elite_dead_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                23,
+                64,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "elite_dead_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                23,
+                66,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "elite_dead_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                23,
+                67,
+                69,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        }
+      },
+      "flying": false,
+      "total_frames": 32
+    },
+    "lantern": {
+      "atlas": "lantern_atlas.png",
+      "flash": "lantern_flash.png",
+      "states": {
+        "idle": {
+          "start": 0,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_idle_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                27,
+                28,
+                63,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -24
+              ],
+              "weapon_tip": [
+                17,
+                -12
+              ],
+              "guard_point": [
+                12,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_idle_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                27,
+                29,
+                66,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -23
+              ],
+              "weapon_tip": [
+                20,
+                -11
+              ],
+              "guard_point": [
+                12,
+                -23
+              ]
+            },
+            {
+              "name": "lantern_idle_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                28,
+                28,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -24
+              ],
+              "weapon_tip": [
+                24,
+                -12
+              ],
+              "guard_point": [
+                13,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_idle_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                27,
+                28,
+                67,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -24
+              ],
+              "weapon_tip": [
+                21,
+                -12
+              ],
+              "guard_point": [
+                12,
+                -24
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "run": {
+          "start": 4,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_run_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                28,
+                28,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -24
+              ],
+              "weapon_tip": [
+                18,
+                -12
+              ],
+              "guard_point": [
+                13,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_run_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                29,
+                29,
+                68,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -23
+              ],
+              "weapon_tip": [
+                22,
+                -11
+              ],
+              "guard_point": [
+                14,
+                -23
+              ]
+            },
+            {
+              "name": "lantern_run_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                28,
+                28,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -24
+              ],
+              "weapon_tip": [
+                24,
+                -12
+              ],
+              "guard_point": [
+                13,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_run_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                27,
+                29,
+                67,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -23
+              ],
+              "weapon_tip": [
+                21,
+                -11
+              ],
+              "guard_point": [
+                12,
+                -23
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "windup": {
+          "start": 8,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_windup_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                27,
+                28,
+                60,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -26
+              ],
+              "weapon_tip": [
+                14,
+                -16
+              ],
+              "guard_point": [
+                9,
+                -26
+              ]
+            },
+            {
+              "name": "lantern_windup_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                26,
+                29,
+                62,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -28
+              ],
+              "weapon_tip": [
+                16,
+                -18
+              ],
+              "guard_point": [
+                8,
+                -28
+              ]
+            },
+            {
+              "name": "lantern_windup_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                25,
+                30,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                7,
+                -30
+              ],
+              "weapon_tip": [
+                18,
+                -20
+              ],
+              "guard_point": [
+                7,
+                -30
+              ]
+            },
+            {
+              "name": "lantern_windup_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                24,
+                30,
+                61,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                6,
+                -32
+              ],
+              "weapon_tip": [
+                15,
+                -22
+              ],
+              "guard_point": [
+                6,
+                -32
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "attack": {
+          "start": 12,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_attack_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                29,
+                29,
+                70,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                18,
+                -23
+              ],
+              "weapon_tip": [
+                24,
+                -14
+              ],
+              "guard_point": [
+                18,
+                -23
+              ]
+            },
+            {
+              "name": "lantern_attack_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                30,
+                28,
+                74,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                19,
+                -24
+              ],
+              "weapon_tip": [
+                28,
+                -16
+              ],
+              "guard_point": [
+                19,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_attack_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                29,
+                29,
+                76,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                18,
+                -23
+              ],
+              "weapon_tip": [
+                30,
+                -16
+              ],
+              "guard_point": [
+                18,
+                -23
+              ]
+            },
+            {
+              "name": "lantern_attack_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                27,
+                30,
+                72,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                16,
+                -22
+              ],
+              "weapon_tip": [
+                26,
+                -16
+              ],
+              "guard_point": [
+                16,
+                -22
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "recover": {
+          "start": 16,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_recover_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                29,
+                30,
+                65,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -22
+              ],
+              "weapon_tip": [
+                19,
+                -10
+              ],
+              "guard_point": [
+                14,
+                -22
+              ]
+            },
+            {
+              "name": "lantern_recover_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                28,
+                29,
+                67,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -23
+              ],
+              "weapon_tip": [
+                21,
+                -11
+              ],
+              "guard_point": [
+                13,
+                -23
+              ]
+            },
+            {
+              "name": "lantern_recover_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                27,
+                28,
+                69,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -24
+              ],
+              "weapon_tip": [
+                23,
+                -12
+              ],
+              "guard_point": [
+                12,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_recover_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                26,
+                28,
+                66,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -24
+              ],
+              "weapon_tip": [
+                20,
+                -12
+              ],
+              "guard_point": [
+                11,
+                -24
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "hurt": {
+          "start": 20,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_hurt_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                27,
+                28,
+                63,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -24
+              ],
+              "weapon_tip": [
+                17,
+                -12
+              ],
+              "guard_point": [
+                12,
+                -24
+              ]
+            },
+            {
+              "name": "lantern_hurt_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                25,
+                29,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -23
+              ],
+              "weapon_tip": [
+                18,
+                -11
+              ],
+              "guard_point": [
+                10,
+                -23
+              ]
+            },
+            {
+              "name": "lantern_hurt_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                24,
+                30,
+                66,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -22
+              ],
+              "weapon_tip": [
+                20,
+                -10
+              ],
+              "guard_point": [
+                9,
+                -22
+              ]
+            },
+            {
+              "name": "lantern_hurt_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                26,
+                29,
+                66,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -23
+              ],
+              "weapon_tip": [
+                20,
+                -11
+              ],
+              "guard_point": [
+                11,
+                -23
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "parry": {
+          "start": 24,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_parry_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                27,
+                29,
+                59,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -26
+              ],
+              "weapon_tip": [
+                13,
+                -15
+              ],
+              "guard_point": [
+                9,
+                -26
+              ]
+            },
+            {
+              "name": "lantern_parry_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                26,
+                30,
+                62,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -25
+              ],
+              "weapon_tip": [
+                16,
+                -14
+              ],
+              "guard_point": [
+                8,
+                -25
+              ]
+            },
+            {
+              "name": "lantern_parry_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                25,
+                30,
+                65,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                7,
+                -25
+              ],
+              "weapon_tip": [
+                19,
+                -14
+              ],
+              "guard_point": [
+                7,
+                -25
+              ]
+            },
+            {
+              "name": "lantern_parry_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                26,
+                29,
+                63,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                8,
+                -26
+              ],
+              "weapon_tip": [
+                17,
+                -15
+              ],
+              "guard_point": [
+                8,
+                -26
+              ]
+            }
+          ],
+          "optional": true
+        },
+        "dead": {
+          "start": 28,
+          "count": 4,
+          "frames": [
+            {
+              "name": "lantern_dead_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                26,
+                55,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "lantern_dead_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                26,
+                59,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "lantern_dead_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                26,
+                63,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "lantern_dead_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                26,
+                67,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        }
+      },
+      "flying": false,
+      "total_frames": 32
+    },
+    "jailer": {
+      "atlas": "jailer_atlas.png",
+      "flash": "jailer_flash.png",
+      "states": {
+        "idle": {
+          "start": 0,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_idle_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                32,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -9
+              ],
+              "guard_point": [
+                12,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_idle_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                23,
+                33,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -8
+              ],
+              "guard_point": [
+                12,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_idle_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                24,
+                32,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -9
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_idle_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                23,
+                32,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -19
+              ],
+              "weapon_tip": [
+                27,
+                -9
+              ],
+              "guard_point": [
+                12,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "run": {
+          "start": 4,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_run_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                24,
+                32,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -9
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_run_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                25,
+                33,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -8
+              ],
+              "guard_point": [
+                14,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_run_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                24,
+                32,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -9
+              ],
+              "guard_point": [
+                13,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_run_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                23,
+                33,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -8
+              ],
+              "guard_point": [
+                12,
+                -18
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "windup": {
+          "start": 8,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_windup_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                32,
+                68,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -19
+              ],
+              "weapon_tip": [
+                23,
+                -28
+              ],
+              "guard_point": [
+                12,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_windup_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                22,
+                33,
+                64,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -18
+              ],
+              "weapon_tip": [
+                19,
+                -38
+              ],
+              "guard_point": [
+                11,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_windup_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                21,
+                28,
+                55,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -17
+              ],
+              "weapon_tip": [
+                8,
+                -44
+              ],
+              "guard_point": [
+                10,
+                -17
+              ]
+            },
+            {
+              "name": "jailer_windup_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                20,
+                30,
+                55,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -17
+              ],
+              "weapon_tip": [
+                1,
+                -42
+              ],
+              "guard_point": [
+                9,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "attack": {
+          "start": 12,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_attack_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                25,
+                33,
+                78,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -18
+              ],
+              "weapon_tip": [
+                33,
+                -20
+              ],
+              "guard_point": [
+                14,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_attack_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                26,
+                32,
+                79,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                15,
+                -19
+              ],
+              "weapon_tip": [
+                34,
+                -17
+              ],
+              "guard_point": [
+                15,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_attack_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                25,
+                33,
+                77,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -18
+              ],
+              "weapon_tip": [
+                32,
+                -12
+              ],
+              "guard_point": [
+                14,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_attack_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                23,
+                34,
+                74,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -17
+              ],
+              "weapon_tip": [
+                29,
+                -8
+              ],
+              "guard_point": [
+                12,
+                -17
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "recover": {
+          "start": 16,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_recover_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                25,
+                34,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                14,
+                -17
+              ],
+              "weapon_tip": [
+                26,
+                -7
+              ],
+              "guard_point": [
+                14,
+                -17
+              ]
+            },
+            {
+              "name": "jailer_recover_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                24,
+                33,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                13,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -8
+              ],
+              "guard_point": [
+                13,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_recover_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                23,
+                32,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -9
+              ],
+              "guard_point": [
+                12,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_recover_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                22,
+                32,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -19
+              ],
+              "weapon_tip": [
+                27,
+                -9
+              ],
+              "guard_point": [
+                11,
+                -19
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "hurt": {
+          "start": 20,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_hurt_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                32,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -19
+              ],
+              "weapon_tip": [
+                26,
+                -9
+              ],
+              "guard_point": [
+                12,
+                -19
+              ]
+            },
+            {
+              "name": "jailer_hurt_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                21,
+                33,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -8
+              ],
+              "guard_point": [
+                10,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_hurt_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                20,
+                34,
+                71,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                9,
+                -17
+              ],
+              "weapon_tip": [
+                26,
+                -7
+              ],
+              "guard_point": [
+                9,
+                -17
+              ]
+            },
+            {
+              "name": "jailer_hurt_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                22,
+                33,
+                72,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -18
+              ],
+              "weapon_tip": [
+                27,
+                -8
+              ],
+              "guard_point": [
+                11,
+                -18
+              ]
+            }
+          ],
+          "optional": false
+        },
+        "parry": {
+          "start": 24,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_parry_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                23,
+                33,
+                60,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                12,
+                -18
+              ],
+              "weapon_tip": [
+                15,
+                -32
+              ],
+              "guard_point": [
+                12,
+                -18
+              ]
+            },
+            {
+              "name": "jailer_parry_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                22,
+                34,
+                58,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -17
+              ],
+              "weapon_tip": [
+                13,
+                -31
+              ],
+              "guard_point": [
+                11,
+                -17
+              ]
+            },
+            {
+              "name": "jailer_parry_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                21,
+                34,
+                56,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                10,
+                -17
+              ],
+              "weapon_tip": [
+                11,
+                -30
+              ],
+              "guard_point": [
+                10,
+                -17
+              ]
+            },
+            {
+              "name": "jailer_parry_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                22,
+                33,
+                55,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": [
+                11,
+                -18
+              ],
+              "weapon_tip": [
+                9,
+                -29
+              ],
+              "guard_point": [
+                11,
+                -18
+              ]
+            }
+          ],
+          "optional": true
+        },
+        "dead": {
+          "start": 28,
+          "count": 4,
+          "frames": [
+            {
+              "name": "jailer_dead_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                22,
+                61,
+                64,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "jailer_dead_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                22,
+                64,
+                64,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "jailer_dead_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                22,
+                66,
+                64,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "jailer_dead_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                22,
+                68,
+                64,
+                77
+              ],
+              "hurt_center": [
+                0,
+                -18
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        }
+      },
+      "flying": false,
+      "total_frames": 32
+    },
+    "bat": {
+      "atlas": "bat_atlas.png",
+      "flash": "bat_flash.png",
+      "states": {
+        "idle": {
+          "start": 0,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_idle_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                13,
+                37,
+                68,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_idle_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                10,
+                42,
+                71,
+                71
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -22
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_idle_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                15,
+                44,
+                68,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                7,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_idle_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                11,
+                45,
+                70,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -19
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        },
+        "run": {
+          "start": 4,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_run_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                14,
+                37,
+                69,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                7,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_run_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                12,
+                42,
+                73,
+                71
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                8,
+                -22
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_run_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                15,
+                44,
+                68,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                7,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_run_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                11,
+                45,
+                70,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -19
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        },
+        "windup": {
+          "start": 8,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_windup_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                18,
+                44,
+                63,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_windup_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                21,
+                41,
+                58,
+                71
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                5,
+                -22
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_windup_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                23,
+                45,
+                54,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                4,
+                -19
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_windup_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                22,
+                44,
+                53,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                3,
+                -18
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        },
+        "attack": {
+          "start": 12,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_attack_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                15,
+                37,
+                70,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                8,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_attack_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                13,
+                42,
+                74,
+                71
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                9,
+                -22
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_attack_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                16,
+                44,
+                69,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                8,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_attack_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                11,
+                46,
+                70,
+                75
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -18
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        },
+        "recover": {
+          "start": 16,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_recover_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                15,
+                38,
+                70,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                8,
+                -19
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_recover_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                11,
+                42,
+                72,
+                71
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                7,
+                -22
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_recover_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                14,
+                44,
+                67,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_recover_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                10,
+                45,
+                69,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                5,
+                -19
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        },
+        "hurt": {
+          "start": 20,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_hurt_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                13,
+                37,
+                68,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_hurt_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                8,
+                42,
+                69,
+                71
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                4,
+                -22
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_hurt_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                11,
+                45,
+                64,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                3,
+                -19
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_hurt_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                10,
+                45,
+                69,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                5,
+                -19
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        },
+        "parry": {
+          "start": 24,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_parry_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                13,
+                37,
+                68,
+                73
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                6,
+                -20
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_parry_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                9,
+                43,
+                70,
+                72
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                5,
+                -21
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_parry_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                12,
+                45,
+                65,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                4,
+                -19
+              ],
+              "guard_point": null
+            },
+            {
+              "name": "bat_parry_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                10,
+                45,
+                69,
+                74
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": [
+                5,
+                -19
+              ],
+              "guard_point": null
+            }
+          ],
+          "optional": true
+        },
+        "dead": {
+          "start": 28,
+          "count": 4,
+          "frames": [
+            {
+              "name": "bat_dead_00",
+              "frame": 0,
+              "progress": 0.0,
+              "body_bbox": [
+                17,
+                65,
+                64,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "bat_dead_01",
+              "frame": 1,
+              "progress": 0.3333333333333333,
+              "body_bbox": [
+                21,
+                67,
+                60,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "bat_dead_02",
+              "frame": 2,
+              "progress": 0.6666666666666666,
+              "body_bbox": [
+                24,
+                67,
+                57,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            },
+            {
+              "name": "bat_dead_03",
+              "frame": 3,
+              "progress": 1.0,
+              "body_bbox": [
+                27,
+                67,
+                54,
+                76
+              ],
+              "hurt_center": [
+                0,
+                -16
+              ],
+              "hand": null,
+              "weapon_tip": null,
+              "guard_point": null
+            }
+          ],
+          "optional": false
+        }
+      },
+      "flying": true,
+      "total_frames": 32
+    }
+  },
+  "states": [
+    "idle",
+    "run",
+    "windup",
+    "attack",
+    "recover",
+    "hurt",
+    "parry",
+    "dead"
+  ],
+  "runtime_states": [
+    "idle",
+    "run",
+    "windup",
+    "attack",
+    "recover",
+    "hurt",
+    "dead"
+  ],
+  "phase_contract": {
+    "windup": "windup",
+    "release": "attack",
+    "recover": "recover"
+  },
+  "constraints": {
+    "alpha": [
+      0,
+      255
+    ],
+    "native_scale": 1,
+    "whole_frame_rotation": false,
+    "filter": "nearest"
+  }
+}

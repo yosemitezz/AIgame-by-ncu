@@ -64,18 +64,17 @@ const ROOMS: Array[Dictionary] = [
 	{"id": "crypt", "rect": Rect2(420, 340, 1420, 260), "title": "淤水墓廊", "hint": "浅水不致伤；沿石沿跨越缺口，寻找回程机关"},
 ]
 const ENEMIES: Array[Dictionary] = [
-	{"kind": "sentry", "at": Vector2(390, 300)},
-	{"kind": "sentry", "at": Vector2(748, 300)},
-	{"kind": "wisp", "at": Vector2(1080, 238)},
-	{"kind": "wisp", "at": Vector2(1512, 238)},
-	{"kind": "sentry", "at": Vector2(1630, 300)},
-	{"kind": "elite", "at": Vector2(2240, 300)},
-	# Appended dungeon encounters leave the existing tutorial and Boss contracts intact.
-	{"kind": "sentry", "at": Vector2(760, 500), "patrol": Rect2(704, 380, 200, 144)},
-	{"kind": "wisp", "at": Vector2(1100, 446), "patrol": Rect2(1056, 350, 320, 174)},
-	{"kind": "sentry", "at": Vector2(1556, 500), "patrol": Rect2(1512, 350, 240, 174)},
-	{"kind": "sentry", "at": Vector2(1480, 48), "patrol": Rect2(1408, -96, 144, 168)},
-	{"kind": "wisp", "at": Vector2(1304, -4), "patrol": Rect2(1208, -100, 140, 168)},
+    {"kind":"sentry","at":Vector2(390,300),"patrol":Rect2(310,190,190,134)},
+    {"kind":"lantern","at":Vector2(748,300),"patrol":Rect2(620,180,280,144)},
+    {"kind":"wisp","at":Vector2(1080,238),"patrol":Rect2(1008,142,320,182)},
+    {"kind":"bat","at":Vector2(1512,238),"patrol":Rect2(1432,146,272,178)},
+    {"kind":"sentry","at":Vector2(1630,300),"patrol":Rect2(1450,180,276,144)},
+    {"kind":"elite","at":Vector2(2240,300),"patrol":Rect2(2090,176,398,148)},
+    {"kind":"lantern","at":Vector2(760,500),"patrol":Rect2(704,380,200,144)},
+    {"kind":"wisp","at":Vector2(1100,446),"patrol":Rect2(1056,350,320,174)},
+    {"kind":"jailer","at":Vector2(1556,500),"patrol":Rect2(1512,350,272,174)},
+    {"kind":"jailer","at":Vector2(1480,48),"patrol":Rect2(1408,-96,144,168)},
+    {"kind":"bat","at":Vector2(1304,-4),"patrol":Rect2(1208,-100,140,168)},
 ]
 const SHARDS: Array[Vector2] = [
 	Vector2(372, 232), Vector2(490, 188), Vector2(648, 144),
