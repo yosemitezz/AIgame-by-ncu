@@ -1,7 +1,7 @@
 # Adapted from yosemitezz/AIgame-by-ncu boss_attack, PR #1 by zjuan-ctrl
 # and final PR #3 (head fff7526a3dc687c9625dece860a79695c00db8d0).
 # MIT source only. See third_party/friend-boss-pr1/LICENSE.
-# No private recording or source chart is loaded by this port.
+# MusicDirector owns recording playback; this port reads configured chart timing only.
 extends RefCounted
 ## Pure chart cursor. MusicDirector remains the only audio/section authority.
 ## The caller invalidates on rest, death, scene reset or attack cancellation.
@@ -19,6 +19,18 @@ func load_document(document: Dictionary, bpm: float = 112.0) -> bool:
     invalidate()
     errors.clear()
     if not chart.parse_text(JSON.stringify(document), bpm, 0.0, 4.0):
+        errors.assign(chart.errors)
+        _schedule.clear()
+        return false
+    _build_schedule()
+    current_chart_time = 0.0
+    return true
+
+func load_source_file(path: String, bpm: float, offset_ms: float = 245.0, fast_threshold: float = 1.1) -> bool:
+    invalidate()
+    errors.clear()
+    chart.fast_interval_threshold_beats = fast_threshold
+    if not chart.parse_file(path, bpm, offset_ms, 4.0):
         errors.assign(chart.errors)
         _schedule.clear()
         return false

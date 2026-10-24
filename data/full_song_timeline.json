@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "mode": "full_song",
+  "audio_path": "res://boss_attack/audio/if_infinity.ogg",
+  "chart_path": "res://boss_attack/data/if_infinity.chart.json",
+  "expected_audio_sha256": "007d002c1a5472af2ef78e62e5027c89b28cfb0f15b4cd5880ce75c6b66547b5",
+  "expected_chart_sha256": "133082afb6234f693576d78db4c228fcb882a6027049df3dd687e0f198df3b27",
+  "bpm": 203.0,
+  "offset_ms": 245.0,
+  "fast_interval_threshold_beats": 1.1,
+  "advance_health_ratio": 0.5,
+  "phrase_beats": 8,
+  "music_volume_db": -8.0,
+  "fixed_end_beat": 200.0,
+  "random_start_beat": 200.0,
+  "random_end_beat": 264.0,
+  "rest_end_beat": 296.0,
+  "stale_action_seconds": 0.2,
+  "minimum_remaining_warning_seconds": 0.15,
+  "provenance": "Uses the existing selected source recording and source chart. They are not claimed as original or MIT assets. Macro gameplay gates and stale-cue safety are configurable main-game adaptations, not friend-authored chart sections."
+}

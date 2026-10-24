@@ -8,4 +8,4 @@ Validation used a temporary selected-source snapshot based on ab62b127, containi
 
 Independent review found and closed the alias-key false double tap. An earlier fixture intermittently checked before synthetic input was delivered; explicit event flushing made injection deterministic, with three bounded 52/0 reruns followed by the selected-source regression. No game playthrough, subjective difficulty approval or full-song sync claim is made.
 
-Still pending outside this input milestone: the heavy-beat falling HUD and its unspecified effects, fixed attack slot 2, full-song local alignment, additional weapons and the final narrative sequence. Main gameplay continues to use the redistributable generated score. The supplied local audio was not copied or uploaded.
+Still pending outside this input milestone: the heavy-beat falling HUD and its unspecified effects, fixed attack slot 2, full-song local alignment, additional weapons and the final narrative sequence. At this input-only milestone, main gameplay used the generated score and no audio was copied or uploaded. The later full-song milestone reuses the already committed selected recording; see full-song-runtime.md.

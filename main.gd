@@ -15,6 +15,7 @@ const Boss = preload("res://combat/boss.gd")
 const Score = preload("res://audio/music_director.gd")
 const Level = preload("res://levels/bellkeep.gd")
 const HUD = preload("res://ui/hud.gd")
+const HeavyLane = preload("res://ui/heavy_lane.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const FxLayer = preload("res://vfx/fx_layer.gd")
 const MotionBlur = preload("res://vfx/motion_blur.gd")
@@ -51,6 +52,7 @@ var boss_started: bool = false
 var _collected: Dictionary = {}
 var _camera: Camera2D
 var _hud: Control
+var _heavy_lane: Control
 var _elite_gate: StaticBody2D
 var _arena_gate: StaticBody2D
 var _particles: Array[Dictionary] = []
@@ -108,7 +110,14 @@ func _ready() -> void:
     music = Score.new()
     music.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(music)
-    music.configure(self)
+    # Reuse the selected recording already committed by the friend subproject.
+    var score_config: String = "res://data/full_song_timeline.json"
+    if OS.get_environment("BELLKEEP_USE_PLACEHOLDER") == "1":
+        score_config = "res://data/music_timeline.json"
+    elif FileAccess.file_exists("res://.local/local_score.json"):
+        score_config = "res://.local/local_score.json"
+    music.configure(self, score_config)
+    music.song_completed.connect(_on_score_completed)
     impact = Impact.new()
     impact.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(impact)
@@ -139,6 +148,12 @@ func _ready() -> void:
     canvas.add_child(_hud)
     _hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     hud_updated.connect(_hud.update_state)
+    var heavy_canvas := CanvasLayer.new()
+    heavy_canvas.layer = 31
+    add_child(heavy_canvas)
+    _heavy_lane = HeavyLane.new()
+    heavy_canvas.add_child(_heavy_lane)
+    _heavy_lane.setup(self)
     announce("Voice: You are awake. Trust your hands; the rest will return.", 5.0)
     _refresh_hud()
 
@@ -494,6 +509,13 @@ func _set_overlay(screen: String) -> void:
     _overlay = screen if screen in ["pause", "map"] else ""
     _paused = _overlay != ""
     get_tree().paused = _paused
+    if is_instance_valid(music):
+        music.set_score_paused(_paused)
+    _refresh_hud()
+
+func _on_score_completed() -> void:
+    # Song completion is safe and retryable; it does not award a Boss victory.
+    announce("曲终。按 R 从检查点重试，或 F5 重新启程。", 60.0)
     _refresh_hud()
 
 func _reload(full: bool) -> void:

@@ -19,7 +19,7 @@
 
 Boss有追击、冲刺换位、近战、扇形、环形和落雨弹幕。固定段的起手只在拍点触发；随机段达到血量门槛后等完整乐句结束再推进，否则继续循环；休息段双方禁伤并清除旧弹与旧攻击；终段才解除最后的血量封印。漏拍从不直接扣血。
 
-`data/music_timeline.json` 可配置 BPM、乐句、段落长度和血量门槛。仓库的音乐是运行时合成的原创占位曲；不包含、也不引用私人选定歌曲。
+主 Boss 默认使用 `data/full_song_timeline.json` 的完整谱面：203 BPM、+245ms，复用已存在的 `boss_attack/audio/if_infinity.ogg`。用户已确认该选定音轨公开使用；歌曲单独归属，不属于项目 MIT 原创素材。`data/music_timeline.json` 保留原创合成曲供开发回归。详见 [全曲与重鼓说明](docs/full-song-runtime.md)。
 
 ## 验证与视觉审查
 
@@ -52,11 +52,13 @@ Controls: A/D or arrows move; Space jumps; W/up and S/down climb; S/down crouche
 
 The newer long-limb hero, infinite air jumps, light wings, angular effects, heavy impact and layered original sounds are preserved. Shared sword envelopes now reach 180/204/228 logical pixels, with swept geometry and world occlusion. The original pixel katana Boss family is integrated with current reaction-state fallbacks. See docs/main-project-migration.md.
 
-Run tools/verify_main.ps1 for bounded migration checks after the normal Godot import. The final friend PR3 action plans now run in the main Boss: four normal, four accelerated, random square/diamond X/+ and four geometric laser formations. The original boss_attack subproject is retained unchanged, and its audio is not used by the main game.
+Run tools/verify_main.ps1 for bounded migration checks after the normal Godot import. The final friend PR3 action plans now run in the main Boss: four normal, four accelerated, random square/diamond X/+ and four geometric laser formations. The original boss_attack subproject is retained unchanged, and the main full-song configuration now reuses its existing selected OGG without adding another copy.
 
 
 ## Authored Boss and enemy cast milestone
 
 The main Boss calls the friend planners through the existing MusicDirector, contact-parry/posture rules and one damage authority. The six enemy kinds are bone sentry, water wisp, armored elite, lantern cleric, chain jailer and winged imp; eleven encounters introduce them across the dungeon, with delayed finite barrages, readable gaps, occlusion and room gates.192 original native-pixel cells and their editable generator are in presentation/enemy_frames and tools/generate_enemy_cast.py.
 
-Validation: the19-check unified migration suite passed, followed by the203BPM configuration3/0, music30/0 and startup checks. Main Boss runtime62/0, authored logic86/0, source-chart audit14/0, enemy cast90/0 and enemy visual859/0. The large visual count mostly checks individual frame bounds and anchors; visual taste and difficulty remain for the user to play. See docs/friend-handoff-compatibility.md for the generated112BPM default, audited203BPM source, pending heavy-beat UI/effects and unchanged standalone audio. No exported package or full-song latency claim is made.
+Validation: the19-check unified migration suite passed, followed by the203BPM configuration3/0, music30/0 and startup checks. Main Boss runtime62/0, authored logic86/0, source-chart audit14/0, enemy cast90/0 and enemy visual859/0. The large visual count mostly checks individual frame bounds and anchors; visual taste and difficulty remain for the user to play. Those checks describe the earlier generated-score milestone. The full-song milestone below replaces that runtime default and adds the heavy-beat lane; see docs/friend-handoff-compatibility.md for the remaining design differences. No exported package or full-song latency claim is made.
+
+Full-song milestone: the main encounter defaults to the existing selected OGG and complete 203 BPM/+245 ms chart. The left heavy lane previews two seconds and judges ±125 ms for feedback only; real defense still requires contact. See docs/full-song-runtime.md and THIRD_PARTY_NOTICES.md.

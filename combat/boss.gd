@@ -23,6 +23,8 @@ const POSTURE_RESET_LOCK: float = 0.45
 
 var friend_director: RefCounted = FriendDirector.new()
 var friend_slots: Node
+var _full_seen_generation: int = -1
+var authored_skipped_actions: int = 0
 var hazard_generation: int = 0
 var _cube_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _cube_launch_count: int = 0
@@ -116,6 +118,8 @@ func configure(p_game: Node, at: Vector2) -> void:
     if is_instance_valid(game.music):
         game.music.beat.connect(_on_beat)
         game.music.section_changed.connect(_on_section)
+        if game.music.has_signal("transport_changed"):
+            game.music.transport_changed.connect(_on_transport_changed)
     _cube_rng.randomize()
     _configure_authored()
 
@@ -157,7 +161,8 @@ func _request_phase_if_ready() -> void:
 
 func _on_section(section: String) -> void:
     phase = section
-    _cancel_all_attacks()
+    if not _uses_full_song() or section == "rest":
+        _cancel_all_attacks()
     _recovery_timer = 0.3
     velocity.x = 0.0
     if section == "rest":
@@ -179,6 +184,9 @@ func _on_section(section: String) -> void:
 
 func _on_beat(index: int) -> void:
     if dead or not _active or game.story_safe or phase == "rest" or not _authored_ready or not bool(game.music.running):
+        return
+    if _uses_full_song():
+        _dispatch_full_chart()
         return
     # This value is the exact event timestamp, not a replacement frame clock.
     # Sub-beat actions/hazards read MusicDirector.get_score_time() exclusively.
@@ -232,6 +240,9 @@ func _physics_process(delta: float) -> void:
             frame = clampi(int(_death_elapsed / 0.6 * 5.999), 0, 5)
             _publish_animation()
         return
+    if _uses_full_song() and _active and not game.story_safe and bool(game.music.running):
+        _dispatch_full_chart()
+        _advance_authored_actions(float(game.music.get_score_time()))
     hurt_flash = maxf(0.0, hurt_flash - delta)
     _posture_lockout = maxf(0.0, _posture_lockout - delta)
     if game.story_safe:
@@ -256,7 +267,10 @@ func _physics_process(delta: float) -> void:
         _death_elapsed += delta
     elif _active and not game.story_safe and _authored_ready and bool(game.music.running) and game.music.has_method("get_score_time"):
         var score: float = float(game.music.get_score_time())
-        _dispatch_authored_clock(maxf(0.0, score - _section_origin_score), false)
+        if _uses_full_song():
+            _dispatch_full_chart()
+        else:
+            _dispatch_authored_clock(maxf(0.0, score - _section_origin_score), false)
         _prepare_upcoming(score)
         _advance_authored_actions(score)
     _hurt_timer = maxf(0.0, _hurt_timer - delta)
@@ -423,18 +437,47 @@ func _try_melee_contact(reach: float, parryable: bool = true, armored: bool = fa
         guard_posture = mini(guard_max, guard_posture + 1)
         hurt_flash = 0.0
         if would_break:
-            _cancel_all_attacks()
+            _cancel_contact_sequence()
             velocity.x = -facing * 44.0
             _start_reaction("guard_break", GUARD_BREAK_TIME, true)
         elif armored:
             # Armor accepts the clash and posture, but retains the later contact.
             _start_reaction("parry_recoil", ARMORED_RECOIL_TIME, false)
         else:
-            _cancel_all_attacks()
+            _cancel_contact_sequence()
             velocity.x = -facing * 70.0
             _start_reaction("parry_recoil", NORMAL_RECOIL_TIME, true)
     else:
         game.damage_player(1, global_position)
+
+func _cancel_contact_sequence() -> void:
+    if not _uses_full_song():
+        _cancel_all_attacks()
+        return
+    var serial: int = int(contact_token / 8)
+    var retained: Array[Dictionary] = []
+    for action: Dictionary in _authored_actions:
+        if int(action["source_serial"]) == serial and str(action["type"]) not in ["ring", "fan", "side_spray"]:
+            _trace_skipped("contact_cancel_" + str(action["type"]), str(action["source_pattern"]), float(game.music.get_score_time()))
+        else:
+            retained.append(action)
+    _authored_actions = retained
+    _authored_dash.clear()
+    _pending_attack = ""
+    _windup_timer = 0.0
+    _charge_timer = 0.0
+    _recovery_timer = 0.0
+    _combo_pending = false
+    _combo_timer = 0.0
+    _contact_resolved = true
+    _warning_geometry.clear()
+    _release_elapsed = -1.0
+    attack_parryable = false
+    attack_armored = false
+
+func _stale_window() -> float:
+    var configured: Variant = game.music.get("timeline")
+    return clampf(float(configured.get("stale_action_seconds", 0.20)), 0.02, 0.50) if configured is Dictionary else 0.20
 
 func _cancel_all_attacks() -> void:
     _invalidate_authored()
@@ -512,8 +555,49 @@ func _configure_authored() -> void:
     add_child(friend_slots)
     _authored_ready = friend_slots.load_config("res://data/authored_boss_moves.json")
     friend_director.event_dispatched.connect(_on_authored_event)
+    if _uses_full_song():
+        var status: Dictionary = game.music.get_full_song_status()
+        _authored_ready = _authored_ready and friend_director.load_source_file(str(status["chart_path"]), float(game.music.bpm), float(status["offset_ms"]))
+
+func _uses_full_song() -> bool:
+    return is_instance_valid(game) and is_instance_valid(game.music) and game.music.has_method("is_full_song") and game.music.is_full_song()
+
+func _on_transport_changed(generation: int, _chart_time: float) -> void:
+    if not _uses_full_song():
+        return
+    _cancel_all_attacks()
+    _full_seen_generation = generation
+    _loop_origin_score = float(game.music.get_score_time()) - float(game.music.get_chart_time())
+    _authored_cycle = maxi(0, generation - 1)
+    if _authored_ready and not dead and phase != "rest":
+        friend_director.restart_at(float(game.music.get_chart_time()))
+
+func _dispatch_full_chart() -> void:
+    if dead or not _active or game.story_safe or phase == "rest" or not _authored_ready:
+        return
+    var generation: int = int(game.music.get_transport_generation())
+    if generation != _full_seen_generation:
+        _on_transport_changed(generation, float(game.music.get_chart_time()))
+    _loop_origin_score = float(game.music.get_score_time()) - float(game.music.get_chart_time())
+    if not friend_director.running:
+        if _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0:
+            return
+        friend_director.restart_at(float(game.music.get_chart_time()))
+    friend_director.advance_to(float(game.music.get_chart_time()))
+
+func _trace_skipped(kind: String, pattern: String, score: float) -> void:
+    authored_trace.append({"pattern": pattern, "type": "skipped_stale_" + kind, "serial": attack_serial, "time": score})
+    if authored_trace.size() > 96:
+        authored_trace.pop_front()
 
 func _load_authored_section(section: String) -> void:
+    if _uses_full_song():
+        _full_seen_generation = int(game.music.get_transport_generation())
+        _loop_origin_score = float(game.music.get_score_time()) - float(game.music.get_chart_time())
+        _authored_cycle = maxi(0, _full_seen_generation - 1)
+        if _authored_ready and section != "rest" and not friend_director.running:
+            friend_director.restart_at(float(game.music.get_chart_time()))
+        return
     _section_origin_beat = int(game.music.total_beats)
     _section_origin_score = float(_section_origin_beat) * game.music.seconds_per_beat()
     _loop_origin_score = _section_origin_score
@@ -550,14 +634,26 @@ func _dispatch_authored_clock(elapsed: float, on_beat: bool) -> void:
         friend_director.advance_to(local)
 
 func _on_authored_event(event: Dictionary, version: int) -> void:
-    if version != friend_director.generation or dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0:
+    if version != friend_director.generation or dead or game.story_safe or (not _uses_full_song() and (_reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0)):
+        return
+    if _uses_full_song() and int(game.music.get_transport_generation()) != _full_seen_generation:
         return
     var payload: Dictionary = event["payload"]
     match str(event["type"]):
         "action_phrase":
-            if phase == "random" or phase == "final":
+            if _uses_full_song() or phase == "random" or phase == "final":
                 var pattern: Dictionary = _pattern_for_phrase(payload)
                 var key: int = int(payload["index"])
+                if _uses_full_song():
+                    var actions: Array = (pattern.get("parameters", {}) as Dictionary).get("actions", pattern.get("actions", []))
+                    var last_beat: float = 0.0
+                    for action: Dictionary in actions:
+                        last_beat = maxf(last_beat, float(action.get("beat", 0.0)))
+                    if float(game.music.get_chart_time()) > float(payload["start_time"]) + last_beat * game.music.seconds_per_beat() + _stale_window():
+                        _prepared_plans.erase(key)
+                        authored_skipped_actions += 1
+                        _trace_skipped("phrase", str(pattern.get("pattern_id", "")), float(game.music.get_score_time()))
+                        return
                 var prepared: Dictionary = _prepared_plans.get(key, {})
                 _prepared_plans.erase(key)
                 _begin_authored_pattern(pattern, _loop_origin_score + float(payload["start_time"]), Vector2.INF, prepared)
@@ -568,14 +664,14 @@ func _on_authored_event(event: Dictionary, version: int) -> void:
 
 func _pattern_for_phrase(phrase: Dictionary) -> Dictionary:
     var sequence: int = int(phrase["sequence_index"])
-    if phase == "final":
+    if (str(phrase.get("mode", "basic")) == "fast" if _uses_full_song() else phase == "final"):
         var pattern: Dictionary = friend_slots.get_fast_pattern(sequence)
         pattern["pattern_id"] = friend_slots.fast_cycle[posmod(sequence, friend_slots.fast_cycle.size())]
         return pattern
     return friend_slots.get_normal_pattern(sequence)
 
 func _prepare_upcoming(score: float) -> void:
-    if phase not in ["random", "final"] or _reaction_blocks_attacks or _posture_lockout > 0.0:
+    if (not _uses_full_song() and phase not in ["random", "final"]) or phase == "rest" or _reaction_blocks_attacks or _posture_lockout > 0.0:
         return
     for phrase: Dictionary in friend_director.chart.action_phrases:
         var start: float = _loop_origin_score + float(phrase["start_time"])
@@ -591,7 +687,7 @@ func _prepare_upcoming(score: float) -> void:
         _warning_geometry = {"kind": "authored_path", "pattern": str(pattern.get("pattern_id", "")), "from": global_position, "to": target, "locked_target": target, "start_time": score, "damage_time": start}
 
 func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locked_target: Vector2 = Vector2.INF, prepared: Dictionary = {}) -> bool:
-    if dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0 or pattern.is_empty() or (pattern.has("enabled") and not bool(pattern["enabled"])):
+    if dead or game.story_safe or (not _uses_full_song() and (_reaction_blocks_attacks or _posture_lockout > 0.0)) or pattern.is_empty() or (pattern.has("enabled") and not bool(pattern["enabled"])):
         return false
     var target: Vector2 = game.player.global_position if not locked_target.is_finite() else locked_target
     var plan: Dictionary = prepared.duplicate(true) if not prepared.is_empty() else FriendPlanner.build_plan(pattern, start_score_time, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
@@ -610,6 +706,14 @@ func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locke
     # shared boundary an old ring@4 sorts before the next teleport@0.
     for index: int in (plan["actions"] as Array).size():
         var action: Dictionary = plan["actions"][index].duplicate(true)
+        if str(action.get("type", "")) == "aim":
+            var aim_duration: float = game.music.seconds_per_beat() * 2.0
+            for next_index: int in range(index + 1, (plan["actions"] as Array).size()):
+                var next_action: Dictionary = plan["actions"][next_index]
+                if str(next_action.get("type", "")) == "dash":
+                    aim_duration = maxf(0.001, float(next_action["time"]) - float(action["time"]))
+                    break
+            action["telegraph_duration"] = aim_duration
         action["source_serial"] = attack_serial
         action["source_pattern"] = authored_last_pattern
         action["source_index"] = index
@@ -617,6 +721,9 @@ func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locke
         action["generation"] = hazard_generation
         if _authored_actions.size() < 96:
             _authored_actions.append(action)
+        else:
+            authored_skipped_actions += 1
+            _trace_skipped("queue_capacity", authored_last_pattern, float(game.music.get_score_time()))
     _authored_actions.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
         if is_equal_approx(float(a["time"]), float(b["time"])):
             if int(a["source_serial"]) == int(b["source_serial"]):
@@ -627,8 +734,12 @@ func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locke
     return true
 
 func _advance_authored_actions(score: float) -> void:
-    if _reaction_blocks_attacks or _posture_lockout > 0.0 or game.story_safe or dead:
+    if game.story_safe or dead:
         return
+    var blocked: bool = _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0
+    if blocked and not _uses_full_song():
+        return
+    var deferred: Array[Dictionary] = []
     var attempts: int = 0
     var version: int = hazard_generation
     while not _authored_actions.is_empty() and attempts < 24 and version == hazard_generation:
@@ -639,10 +750,22 @@ func _advance_authored_actions(score: float) -> void:
         attempts += 1
         if int(action["generation"]) != version:
             continue
-        # A suspended render frame cannot unleash several seconds of old hits.
-        if score - float(action["time"]) > 0.20:
+        if score - float(action["time"]) > _stale_window():
+            authored_skipped_actions += 1
+            _trace_skipped("action_" + str(action["type"]), str(action["source_pattern"]), score)
+            continue
+        if blocked and str(action["type"]) not in ["ring", "fan", "side_spray"]:
+            deferred.append(action)
             continue
         _execute_authored_action(action, score)
+    _authored_actions.append_array(deferred)
+    if not deferred.is_empty():
+        _authored_actions.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+            if is_equal_approx(float(a["time"]), float(b["time"])):
+                if int(a["source_serial"]) == int(b["source_serial"]):
+                    return int(a["source_index"]) < int(b["source_index"])
+                return int(a["source_serial"]) < int(b["source_serial"])
+            return float(a["time"]) < float(b["time"]))
 
 func _execute_authored_action(action: Dictionary, score: float) -> void:
     var kind: String = str(action["type"])
@@ -656,9 +779,9 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
     match kind:
         "aim":
             _warning_elapsed = 0.0
-            _warning_duration = game.music.seconds_per_beat() * (1.0 if phase == "final" else 2.0)
-            _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + game.music.seconds_per_beat() * (1.0 if phase == "final" else 2.0)}
-            _set_authored_pose("draw", game.music.seconds_per_beat() * (1.0 if phase == "final" else 2.0))
+            _warning_duration = float(action.get("telegraph_duration", game.music.seconds_per_beat() * 2.0))
+            _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + _warning_duration}
+            _set_authored_pose("draw", _warning_duration)
         "teleport", "center":
             var old: Vector2 = global_position
             var x: float = PLAN_ARENA.get_center().x if kind == "center" else target.x
@@ -688,6 +811,8 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
                 if is_instance_valid(projectile):
                     projectile.set("lifetime", float(shot["ttl_seconds"]))
                     projectile.set_meta("boss_source", get_instance_id())
+                else:
+                    _trace_skipped("projectile_capacity", pattern, score)
             _set_authored_pose("cast", 0.24)
 
 func _advance_authored_dash(score: float) -> void:
@@ -711,6 +836,9 @@ func _spawn_authored_cube(event: Dictionary) -> void:
     _cube_launch_count += 1
     var diamond: bool = _cube_rng.randi_range(0, 1) == 1
     var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(event["time"]), game.music.seconds_per_beat(), global_position + Vector2(0, -30), LASER_ARENA, occurrence, diamond)
+    if _uses_full_song() and float(plan["damage_time"]) - float(game.music.get_score_time()) < float(game.music.timeline.get("minimum_remaining_warning_seconds", 0.15)):
+        _trace_skipped("cube", "fixed_1", float(game.music.get_score_time()))
+        return
     var hazard: Node2D = BossHazard.new()
     hazard.configure_cube(game, self, plan, LASER_ARENA, hazard_generation)
     if game.spawn_boss_hazard(hazard):
@@ -718,19 +846,36 @@ func _spawn_authored_cube(event: Dictionary) -> void:
         authored_last_pattern = "cube_plus" if bool(plan["diamond"]) else "cube_x"
         authored_pattern_count += 1
         _set_authored_pose("cast", game.music.seconds_per_beat() * 0.8)
+    else:
+        _trace_skipped("hazard_capacity", "fixed_1", float(game.music.get_score_time()))
 
 func _spawn_authored_formation(event: Dictionary) -> void:
     if not game.has_method("spawn_boss_hazard"):
         return
     var formation: Dictionary = event.duplicate(true)
-    formation["occurrence"] = int(event.get("occurrence", 0)) + _authored_cycle * maxi(1, int(ceil(float(friend_director.chart.laser_formations.size()) / 4.0)))
+    formation["occurrence"] = int(event.get("occurrence", 0)) + _authored_cycle * (1 if _uses_full_song() else maxi(1, int(ceil(float(friend_director.chart.laser_formations.size()) / 4.0))))
     var lines: Array[Dictionary] = FriendLasers.build_lines(formation, friend_slots.get_laser_formations(), LASER_ARENA)
     for line: Dictionary in lines:
         for key: String in ["warning_time", "damage_time", "active_until"]:
             line[key] = float(line[key]) + _loop_origin_score
+    if _uses_full_song():
+        var future: Array[Dictionary] = []
+        for line: Dictionary in lines:
+            var now: float = float(game.music.get_score_time())
+            var warning_lateness: float = now - float(line["warning_time"])
+            # Source-authored short warnings remain intact at normal cadence.
+            # The minimum remaining lead is only a stale-frame recovery policy.
+            if warning_lateness <= _stale_window() or float(line["damage_time"]) - now >= float(game.music.timeline.get("minimum_remaining_warning_seconds", 0.15)):
+                future.append(line)
+            else:
+                _trace_skipped("laser_line", str(formation["pattern"]), float(game.music.get_score_time()))
+        lines = future
+        if lines.is_empty():
+            return
     var hazard: Node2D = BossHazard.new()
     hazard.configure_lines(game, self, lines, LASER_ARENA, hazard_generation, str(formation["pattern"]))
-    game.spawn_boss_hazard(hazard)
+    if not game.spawn_boss_hazard(hazard):
+        _trace_skipped("hazard_capacity", str(formation["pattern"]), float(game.music.get_score_time()))
 
 func _invalidate_authored() -> void:
     hazard_generation += 1
@@ -750,7 +895,7 @@ func _set_authored_pose(state: String, duration: float) -> void:
     _authored_pose_duration = maxf(0.001, duration)
 
 func get_authored_status() -> Dictionary:
-    return {"section": phase, "pattern": authored_last_pattern, "serial": attack_serial, "queued_actions": _authored_actions.size(), "dash_active": not _authored_dash.is_empty(), "cycle": _authored_cycle, "hazard_generation": hazard_generation, "pattern_count": authored_pattern_count, "action_count": authored_action_count, "trace": authored_trace.duplicate(true)}
+    return {"section": phase, "pattern": authored_last_pattern, "serial": attack_serial, "queued_actions": _authored_actions.size(), "dash_active": not _authored_dash.is_empty(), "cycle": _authored_cycle, "hazard_generation": hazard_generation, "pattern_count": authored_pattern_count, "action_count": authored_action_count, "skipped_actions": authored_skipped_actions, "full_song": _uses_full_song(), "transport_generation": _full_seen_generation, "trace": authored_trace.duplicate(true)}
 
 func get_warning_geometry(kind: String = "") -> Dictionary:
     if _warning_geometry.is_empty() or (not kind.is_empty() and str(_warning_geometry.get("kind", "")) != kind):
