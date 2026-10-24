@@ -1,0 +1,47 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/boss_controller.gd" id="2_boss"]
+[ext_resource type="Script" path="res://scripts/player_combat.gd" id="3_player"]
+[ext_resource type="Script" path="res://scripts/projectile_system.gd" id="4_projectiles"]
+[ext_resource type="Script" path="res://scripts/battle_director.gd" id="5_director"]
+[ext_resource type="Script" path="res://scripts/boss_move_slots.gd" id="6_slots"]
+[ext_resource type="Script" path="res://ui/rhythm_hud.gd" id="7_hud"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Boss" type="Node2D" parent="."]
+position = Vector2(320, 108)
+script = ExtResource("2_boss")
+
+[node name="Sprite2D" type="Sprite2D" parent="Boss"]
+visible = false
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(320, 286)
+script = ExtResource("3_player")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+visible = false
+
+[node name="Projectiles" type="Node2D" parent="."]
+script = ExtResource("4_projectiles")
+
+[node name="BattleDirector" type="Node" parent="."]
+script = ExtResource("5_director")
+
+[node name="BossMoveSlots" type="Node" parent="."]
+script = ExtResource("6_slots")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="RhythmHUD" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_hud")

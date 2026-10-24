@@ -1,0 +1,6 @@
+*.flac binary
+*.png binary
+*.json text eol=lf
+*.gd text eol=lf
+*.tscn text eol=lf
+

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "build_stage": "contract-implementation",
+  "chart_path": "res://data/if_infinity.chart.json",
+  "music_path": "res://audio/if_infinity.ogg",
+  "bpm": 203.0,
+  "offset_ms": 245.0,
+  "phase_gap_beats": 4.0,
+  "song_duration_seconds": 418.516,
+  "heavy_window_seconds": 0.125,
+  "heavy_lead_seconds": 2.0,
+  "double_tap_seconds": 0.25,
+  "arena": {
+    "left": 84.0,
+    "top": 38.0,
+    "right": 626.0,
+    "bottom": 348.0
+  },
+  "combat": {
+    "player_max_health": 100.0,
+    "boss_max_health": 3200.0,
+    "normal_attack_damage": 6.0,
+    "health_regen_per_second": 0.5,
+    "hurt_knockback": 35.0,
+    "sword_damage": 105.0,
+    "sword_windup_seconds": 0.34,
+    "sword_active_seconds": 0.13,
+    "sword_recovery_seconds": 0.24,
+    "sword_range": 62.0,
+    "dash_seconds": 0.17,
+    "dash_cooldown_seconds": 0.42,
+    "dash_speed": 620.0,
+    "dash_invulnerability_seconds": 0.23,
+    "move_speed": 118.0
+  },
+  "training_preview": {
+    "enabled": true,
+    "warning": "Temporary generic aim shot only. It is not bound to a final move slot.",
+    "shot_cooldown_seconds": 0.42,
+    "projectile_speed": 330.0,
+    "projectile_ttl_seconds": 0.89,
+    "projectile_radius": 5.0,
+    "laser_enabled": true,
+    "laser_direction": "horizontal",
+    "laser_lane_ratio": 0.52,
+    "laser_hold_seconds": 0.55,
+    "laser_dimensions": 12.0
+  }
+}
+
