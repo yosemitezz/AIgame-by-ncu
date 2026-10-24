@@ -37,3 +37,7 @@ Palette constants are in the level script. Environmental animation is limited to
 ## Verification and limits
 
 Required gap and ascending ledge metrics were computed against the controller contract. Script parsing and integration checks are delegated to lead using the installed Godot binary; user playtesting remains necessary for feel, accessibility and difficulty. Do not claim the geometry was manually played. Final visual art is intentionally left to Cursor; the original procedural scene is a functional, replaceable foundation.
+
+## Elite gallery (added on cursor/gameplay-vfx)
+
+Three optional one-way ledges over the elite court (x 2110-2488, rises of 44 px, gaps 44/42 px) with three extra shards (indices 12-14, appended so saved indices stay valid). Not required for progression. 	ests/level_layout_test.gd checks chained-jump reachability, overlaps, shard and enemy placement and zone order arithmetically; it is not a playthrough.

@@ -67,3 +67,36 @@ Baseline b262ed4 on feat/combat-feel-20261024. Cursor remote still a2c857b; its 
 - Reviewer: independent read only after implementation.
 
 Root on_parry_contact(defender,source,contact,kind) dispatches exactly one VFX/sound/local hold for genuine accepted contact. No perfect-parry mechanic is added. Projectile reflection and melee clashes are distinct. No Engine.time_scale writes; music remains independent. Same play.cmd entry, bounded tests and static keyframes only.
+
+## Selective combat fusion
+
+Pinned sources: our contact/posture/HUD milestone 63017fc7b4fcac87892dca68b066210ec610e592; user-preferred VFX branch 206f0b77c6e68ab803b41829ab61dab759f190e5; common ancestor a2c857b. Both histories are retained in this merge. Source gameplay-vfx checkout has an uncommitted vfx/fx_layer.gd edit; only committed source is used and that checkout is untouched.
+
+Static comparison: source branch adds vfx/fx_layer.gd (layered swept crescents, flowing hue ramps, additive highlights, larger frame snapshots/body ribbons and projectile tails); its actor attack scripts are unchanged from the ancestor. Adopt that visual layer as the single VFX owner; retain current phase-driven sprites, contact/parry/posture logic, local impact service, music and pixel HUD. Retain the source's compatible optional elite gallery and append-only shard indices.
+
+- Fusion VFX owner: vfx/fx_layer.gd, tests/fused_fx_test.gd. Adapt to actual phase/serial, current parry/armor events, rest cleanup and snapshot metadata; fix projectile cache typing; no damage/time/camera/audio writes. It is the only instantiated effect layer. Legacy presentation/combat_vfx.gd remains an uninstantiated historical source.
+- Cadence owner: actors/player.gd, tests/combat_feel_test.gd, tests/fused_cadence_test.gd. Target original preferred branch total cut times .27/.29/.37, keeping windup/active/recover and genuine contact windows. Input/parry/rest behavior retained.
+- Lead: main.gd wiring, combat/impact_feedback.gd, tests/impact_feedback_test.gd, tools/verify.ps1, fixed capture/validation/docs, merge commit and push.
+- Independent reviewer: read-only final diff and source safety check.
+
+Single authorities: actor owns input/attack serial; root hero_attack owns accepted damage/deduplication; on_parry_contact owns accepted parry dispatch; ImpactFeedback owns sound/local hold/camera; FxLayer listens once to presentation signals. No parallel old/new effect nodes, no global time-scale writes. Cursor source worktrees and main/default branch are not edited.
+
+## Fused gradient presentation milestone
+
+The fusion keeps the preferred `integrate/vfx-primary` presentation at commit
+`205b8e74f151c845c7279e69a90e0b23c415f839`, including six slash personalities,
+four hit looks and running ribbons. This commit descends from `cursor/gameplay-vfx`
+`6e189a954c84e2b76f3dd5127933416a7fae90bb` and retains the stable gameplay history
+`63017fc7b4fcac87892dca68b066210ec610e592`. Source working directories are read only.
+
+Runtime authority: player owns input/attack phases, root owns hit deduplication,
+ImpactFeedback owns local hold/camera/audio, FxLayer owns all active effect drawing,
+and MusicDirector owns its independent score clock. The former CombatVFX script is
+retained as source history and is not instantiated. Projectile nodes draw only their
+hit-readable cores. Attack VFX follow the real phase/serial and never apply damage.
+
+Fusion file owners: motion agent `vfx/fx_layer.gd`, `tests/fused_fx_test.gd`;
+combat agent `actors/player.gd`, cadence tests; lead wiring/tests/docs/Git;
+independent reviewer reads only. Future dungeon work uses separate level, traversal,
+and mob owners. Boss design remains with the user's collaborator; only required
+compatibility fixes are in scope. Do not edit other working directories or main.

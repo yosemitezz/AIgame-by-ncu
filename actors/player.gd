@@ -18,11 +18,11 @@ const PARRY_RECOIL: float = 0.06
 const PARRY_RECOVER: float = 0.10
 const PARRY_COUNTER_DELAY: float = 0.035
 const PARRY_RECOIL_SPEED: float = 55.0
-const ATTACK_STARTUP: float = 0.065
-const COMBO_WINDUP: Array[float] = [0.065, 0.080, 0.110]
-const COMBO_ACTIVE: Array[float] = [0.105, 0.120, 0.150]
-const COMBO_RECOVER: Array[float] = [0.140, 0.160, 0.230]
-const COMBO_LENGTHS: Array[float] = [0.310, 0.360, 0.490]
+const ATTACK_STARTUP: float = 0.045
+const COMBO_WINDUP: Array[float] = [0.045, 0.055, 0.075]
+const COMBO_ACTIVE: Array[float] = [0.095, 0.105, 0.125]
+const COMBO_RECOVER: Array[float] = [0.130, 0.130, 0.170]
+const COMBO_LENGTHS: Array[float] = [0.270, 0.290, 0.370]
 const RECOVER_CANCEL_DELAY: float = 0.055
 const CONFIRM_CANCEL_DELAY: float = 0.050
 

@@ -16,7 +16,7 @@ const Level = preload("res://levels/bellkeep.gd")
 const HUD = preload("res://ui/hud.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const Impact = preload("res://combat/impact_feedback.gd")
-const CombatVFX = preload("res://presentation/combat_vfx.gd")
+const FxLayer = preload("res://vfx/fx_layer.gd")
 
 var player: CharacterBody2D
 var boss: CharacterBody2D
@@ -91,10 +91,11 @@ func _ready() -> void:
     impact.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(impact)
     impact.configure(self)
-    effects = CombatVFX.new()
+    effects = FxLayer.new()
+    effects.name = "FxLayer"
     effects.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(effects)
-    effects.configure(self)
+    effects.setup(self)
     for entry: Dictionary in Level.ENEMIES:
         if entry["kind"] == "elite" and elite_defeated:
             continue
@@ -330,8 +331,6 @@ func _record_warning(kind: String, at: Vector2, duration: float) -> void:
 
 func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power: float = 1.0) -> void:
     vfx_requested.emit(kind, at, direction, power)
-    if is_instance_valid(effects):
-        effects.emit_effect(kind, at, direction, power)
     if is_instance_valid(impact):
         if kind == "slash":
             impact.play_action("swing")

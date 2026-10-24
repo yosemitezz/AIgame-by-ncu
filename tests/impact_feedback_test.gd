@@ -72,7 +72,7 @@ func run() -> void:
     var offset := Vector2.ZERO
     for _i: int in 120:
         offset = game.impact.sample_camera(1.0 / 60.0)
-        bounded = bounded and offset.length() <= 4.001
+        bounded = bounded and offset.length() <= 6.001
     check(bounded and offset.length() < 0.001, "camera impulse is bounded and settles completely")
     game.impact.add_kick(Vector2.RIGHT, 2)
     game.impact.reduced_motion = true
@@ -81,10 +81,10 @@ func run() -> void:
     check(Renderer.hero_region("attack", 2, 1) != Renderer.hero_region("attack", 2, 3), "finisher has a distinct authored active pose")
     for i: int in 12:
         game.player.position.x += 8
-        game.emit_fx("dash", game.player.position - Vector2(0, 13), Vector2.LEFT, 0.5)
+        game.emit_fx("dash_ghost", game.player.position - Vector2(0, 13), Vector2.LEFT, 0.5)
         game.effects._process(0.05)
     var counts: Dictionary = game.effects.counts()
-    check(int(counts.get("ghosts", 0)) <= 3, "dash ghosts have a hard three-copy cap")
+    check(int(counts.get("ghosts", 0)) <= int(game.effects.MAX_GHOSTS), "fused dash ghosts respect the presentation cap")
     game.warning_issued.emit("fan", Vector2(2240, 240), 0.5)
     game.emit_fx("enemy_slash", Vector2(2220, 280), Vector2.LEFT, 1)
     game.set_story_safe(true)

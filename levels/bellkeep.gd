@@ -24,9 +24,14 @@ const PLATFORMS: Array[Rect2] = [
 	Rect2(1040, 230, 110, 12),
 	Rect2(1200, 248, 100, 12),
 	Rect2(1532, 252, 108, 12),
+	# Optional gallery over the elite court: three one-way steps (rise 44, gaps 44/42) that give
+	# the player an aerial option against the elite. Never required; all return to the same floor.
+	Rect2(2110, 256, 96, 12),
+	Rect2(2250, 212, 100, 12),
+	Rect2(2392, 256, 96, 12),
 	# The arena has optional height for aerial interception, never a mandatory wall.
 	Rect2(2690, 252, 94, 12),
-	Rect2(2862, 210, 104, 12),
+	Rect2(2834, 210, 104, 12),
 	Rect2(3124, 252, 100, 12),
 ]
 const ENEMIES: Array[Dictionary] = [
@@ -42,6 +47,8 @@ const SHARDS: Array[Vector2] = [
 	Vector2(816, 120), Vector2(956, 164), Vector2(1092, 206),
 	Vector2(1248, 224), Vector2(1460, 276), Vector2(1584, 228),
 	Vector2(1970, 276), Vector2(2392, 276), Vector2(2914, 186),
+	# Appended, never reordered: collected shards are stored by index for the running session.
+	Vector2(2158, 232), Vector2(2300, 188), Vector2(2440, 232),
 ]
 const ZONES: Array[Dictionary] = [
 	{"x": 0.0, "title": "THE WAKING NAVE", "hint": "A/D move  /  SPACE jump  /  Follow the cyan light"},

@@ -100,8 +100,8 @@ func run() -> void:
 	player._start_attack()
 	var first_serial: int = player.attack_serial
 	check(player.attack_phase == "windup" and player.animation_state == "windup" and player.frame == 0, "attack begins in its actual windup pose")
-	ticks(5)
-	check(arena.strikes.is_empty(), "windup has no damaging query")
+	player._physics_process(Player.COMBO_WINDUP[0] * 0.8)
+	check(player.attack_phase == "windup" and arena.strikes.is_empty(), "windup has no damaging query")
 	check(to_phase("active"), "windup advances to active in bounded time")
 	check(arena.strikes.is_empty() and player.frame == 0, "raised active pose precedes the first blade contact")
 	var first_active_count: int = arena.strikes.size()

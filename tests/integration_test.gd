@@ -30,7 +30,7 @@ func run() -> void:
     freeze(game)
     check(game.player.health == 8, "scene starts with full health")
     check(get_nodes_in_group("enemies").size() == 6, "complete authored enemy roster loaded")
-    check(game.level.get_child_count() == 16, "all 16 platform bodies built")
+    check(game.level.get_child_count() == game.level.PLATFORMS.size(), "every authored platform body is built")
     check(InputMap.has_action("parry") and InputMap.has_action("dash"), "input mappings installed")
     var floors: Array[Rect2] = []
     for rectangle: Rect2 in game.level.PLATFORMS:

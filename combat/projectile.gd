@@ -130,11 +130,7 @@ func clear() -> void:
 
 func _draw() -> void:
 	var ink: Color = Color("73f6df") if friendly else Color("ffd47c")
-	for index in range(_trail.size() - 1, -1, -1):
-		var local: Vector2 = (_trail[index] - global_position).round()
-		var tail: Color = ink
-		tail.a = 0.40 * (1.0 - float(index) / 6.0)
-		draw_rect(Rect2(local - Vector2.ONE, Vector2(3.0, 3.0)), tail)
+	# Tail ownership belongs to the one scene FxLayer; this node draws only its hit-readable core.
 	draw_rect(Rect2(-2.0, -4.0, 4.0, 8.0), ink)
 	draw_rect(Rect2(-4.0, -2.0, 8.0, 4.0), ink)
 	draw_rect(Rect2(-1.0, -2.0, 2.0, 4.0), Color("f3ffea"))

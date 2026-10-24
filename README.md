@@ -42,3 +42,5 @@ Cursor负责最终 `assets/art/`、`assets/vfx/`、`ui/` 外观；战斗和音�
 当前战斗修订已整合到同一个 play.cmd 入口：三连阶段逐帧动作、命中确认取消、角色局部停顿、像素刀弧与限量残影。F2 可关闭镜头冲击。验证记录见 docs/combat-feel-validation.md；开源改编来源见 THIRD_PARTY_NOTICES.md。
 
 弹刀/Boss反馈修订已接同一入口：K 架刀，真实交刃触发反震和渐变流光，三点架势破架；紫色标记霸体招可弹但续段继续，珊瑚 X 冲刺需闪避。普通命中/弹刀/破架分级震屏，F2 可关闭。黑底白边像素中英状态栏仅显示已实现状态。详见 docs/parry-validation.md。
+
+融合版保留彩色渐变刀弧、奔跑流光和六种攻击外观，并接入真实弹刀/Boss架势反馈。唯一入口仍为 play.cmd；F2切换震屏。来源与验证限制见 [融合交接](docs/fusion-validation.md)。
