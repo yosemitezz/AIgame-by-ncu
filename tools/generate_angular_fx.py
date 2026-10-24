@@ -31,7 +31,7 @@ def shard(d, c, ang, length, width, fill, edge=None):
     d.line([pt(*tail), pt(*tip)], fill=edge or P['white'], width=1)
 
 
-def crescent(combo, f):
+def crescent(combo, f, smooth=False):
     """Blade-shaped crescent built from four straight facets with sharp tips and crystal creases."""
     im = Image.new('RGBA', (96, 96))
     d = ImageDraw.Draw(im)
@@ -40,7 +40,7 @@ def crescent(combo, f):
     flip = -1 if combo == 2 else 1
     r_out = 8 + 22
     span = max(0.4, min(1.0, height / 40.0)) * math.radians(136)
-    steps = 4
+    steps = 14 if smooth else 4   # smooth = round blade crescent, otherwise four straight facets
     thick = r_out * (0.34 + 0.2 * (height / 40.0))
     outer, inner = [], []
     for i in range(steps + 1):
@@ -52,8 +52,12 @@ def crescent(combo, f):
     d.polygon([pt(*p) for p in outer + inner[::-1]], fill=P['body'])
     # Crystal creases: a line across every facet, alternating light and dark panels.
     for i in range(1, steps):
+        if smooth:
+            break
         d.line([pt(*inner[i]), pt(*outer[i])], fill=P['fold'] if i % 2 else P['deep'], width=1)
     for i in range(steps):
+        if smooth:
+            break
         mid_o = ((outer[i][0] + outer[i + 1][0]) / 2, (outer[i][1] + outer[i + 1][1]) / 2)
         mid_i = ((inner[i][0] + inner[i + 1][0]) / 2, (inner[i][1] + inner[i + 1][1]) / 2)
         d.polygon([pt(*outer[i]), pt(*outer[i + 1]), pt(*mid_i)], fill=P['fold'] if i % 2 == 0 else P['deep'])
@@ -121,6 +125,11 @@ def hit(f):
         pts = [pt(c + math.cos(spin + math.pi / 2 + tri * math.pi / 3 + i * 2 * math.pi / 3) * radius,
                   c + math.sin(spin + math.pi / 2 + tri * math.pi / 3 + i * 2 * math.pi / 3) * radius) for i in range(3)]
         d.line(pts + [pts[0]], fill=P['gold'] if tri == 0 else P['pale'], width=width)
+    if f >= 1:
+        rr = min(radius + 1, 21)
+        d.ellipse((c - rr, c - rr, c + rr, c + rr), outline=P['cyan'] if f < 3 else P['gold'], width=1)
+        dd = max(3, radius - 3)
+        d.line([pt(c, c - dd), pt(c + dd, c), pt(c, c + dd), pt(c - dd, c), pt(c, c - dd)], fill=P['white'], width=1)
     # Six crystal arms between the star points.
     if f >= 1:
         for k in range(6):
@@ -130,10 +139,11 @@ def hit(f):
 
 
 def main():
+    # Light cut: round crescent. Second cut: faceted crescent. Finisher: crystal lance. Hit: hexagram inside a round shock.
     for combo in (1, 2):
         sheet = Image.new('RGBA', (96 * 5, 96))
         for f in range(5):
-            sheet.alpha_composite(crescent(combo, f), (96 * f, 0))
+            sheet.alpha_composite(crescent(combo, f, smooth=(combo == 1)), (96 * f, 0))
         sheet.save(OUT / f'slash_{combo}.png')
     sheet = Image.new('RGBA', (96 * 5, 96))
     for f in range(5):

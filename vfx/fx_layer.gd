@@ -263,25 +263,29 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 					_shape("arc", at, 0.32 + 0.05 * c3, "rainbow", {"d": d, "r": 23.0 + 6.0 * c3, "w": 3.0, "flip": combo == 2, "half": 1.3 if combo < 3 else 1.9})
 					_shape("arc", at, 0.26 + 0.05 * c3, "cool", {"d": d, "r": 15.0 + 4.0 * c3, "w": 2.0, "flip": combo == 2, "half": 1.1 if combo < 3 else 1.6})
 					_sparks(tip, Vector2(d, 0.0), 14 + combo * 6, "flow", 220.0, 0.6)
+					_shape("ring", tip, 0.3, "cool", {"r0": 3.0, "r1": 22.0 + 6.0 * c3, "w": 3.0, "ry": 1.0, "sides": 4, "twist": 1.4})
 				1:   # Double slash: two thin crossing arcs, one up one down.
 					_shape("arc", at, 0.34, "rainbow", {"d": d, "r": 34.0 + 6.0 * c3, "w": 3.0, "flip": false, "half": 1.4, "sweep": true})
-					_shape("arc", at, 0.34, "flow", {"d": d, "r": 30.0 + 6.0 * c3, "w": 3.0, "flip": true, "half": 1.4, "sweep": true})
+					_shape("arc", at, 0.34, "flow", {"d": d, "r": 30.0 + 6.0 * c3, "w": 3.0, "flip": true, "half": 1.4, "sweep": true, "facets": 5})
 					_shape("crystal", tip, 0.34, "cool", {"r": 16.0 + 4.0 * c3, "rot": _rng.randf() * TAU, "spin": 0.8})
 					_sparks(tip, Vector2(d, 0.0), 16 + combo * 5, "rainbow", 240.0, 0.6, "streak", 1.0)
 				2:   # Thrust: a long needle of streaks and a star at the tip.
 					_shape("streaks", at + Vector2(d * 6.0, 0.0), 0.34, "rainbow", {"d": d, "len": 70.0 + 14.0 * c3, "n": 3 + combo})
 					_shape("streaks", at + Vector2(d * 6.0, 0.0), 0.28, "flow", {"d": d, "len": 52.0 + 10.0 * c3, "n": 3})
 					_shape("hexagram", at + Vector2(d * (36.0 + 6.0 * c3), 0.0), 0.34, "flow", {"r": 13.0 + 3.0 * c3, "spin": 2.4})
+					_shape("ring", at + Vector2(d * (36.0 + 6.0 * c3), 0.0), 0.3, "rainbow", {"r0": 3.0, "r1": 20.0 + 4.0 * c3, "w": 3.0, "ry": 1.0})
 					_sparks(at + Vector2(d * 34.0, 0.0), Vector2(d, 0.0), 20 + combo * 6, "flow", 300.0, 0.55, "streak", 0.5)
 				3:   # Spin: big full ring of petals around the hero.
 					_shape("arc", at, 0.42, "rainbow", {"d": d, "r": 34.0 + 6.0 * c3, "w": 5.0, "flip": false, "half": 2.6, "sweep": true})
 					_shape("ring", at, 0.4, "flow", {"r0": 8.0, "r1": 46.0 + 8.0 * c3, "w": 4.0, "ry": 0.85})
+					_shape("ring", at, 0.42, "rainbow", {"r0": 6.0, "r1": 40.0 + 7.0 * c3, "w": 3.0, "ry": 0.85, "sides": 4, "twist": -1.6})
 					_shape("hexagram", at, 0.46, "flow", {"r": 34.0 + 7.0 * c3, "spin": 3.0})
 					_shape("hexagram", at, 0.38, "rainbow", {"r": 22.0 + 5.0 * c3, "spin": -3.6, "rot": 0.5})
 					_shape("rays", at, 0.4, "rainbow", {"n": 12 + combo * 2, "r1": 38.0 + 8.0 * c3, "rot": 1.8})
 					_sparks(at, Vector2.ZERO, 22 + combo * 6, "flow", 200.0, 0.6, "twinkle", PI)
 				4:   # Shatter: the cut bursts into tumbling colour shards.
-					_shape("arc", at, 0.3 + 0.05 * c3, "flow", {"d": d, "r": 28.0 + 8.0 * c3, "w": 4.0, "flip": combo == 2, "half": 1.4, "sweep": true})
+					_shape("arc", at, 0.3 + 0.05 * c3, "flow", {"d": d, "r": 28.0 + 8.0 * c3, "w": 4.0, "flip": combo == 2, "half": 1.4, "sweep": true, "facets": 5})
+					_shape("ring", tip, 0.3, "cool", {"r0": 3.0, "r1": 24.0 + 4.0 * c3, "w": 3.0, "ry": 1.0})
 					_sparks(tip, Vector2(d, -0.2), 18 + combo * 6, "rainbow", 280.0, 0.9, "shard", 1.2)
 					_sparks(tip, Vector2(d, 0.2), 10 + combo * 4, "flow", 200.0, 0.7, "shard", 1.4)
 					_shape("flash", tip, 0.1, "cool", {"r": 18.0 + 4.0 * c3})
@@ -290,13 +294,14 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 					_shape("arc", at, 0.45, "flow", {"d": d, "r": 36.0 + 8.0 * c3, "w": 7.0, "flip": combo != 2, "half": 1.7, "sweep": true})
 					_shape("streaks", at, 0.4, "rainbow", {"d": d, "len": 56.0, "n": 5, "both": true})
 					_sparks(tip, Vector2(d, 0.0), 24 + combo * 6, "rainbow", 260.0, 0.7, "streak", 0.9)
+					_shape("ring", tip, 0.34, "flow", {"r0": 3.0, "r1": 26.0 + 5.0 * c3, "w": 3.0, "ry": 1.0, "sides": 4, "twist": 0.9})
 			_shape("hexagram" if combo >= 2 else "crystal", at + Vector2(d * 24.0, 0.0), 0.3, "flow", {"r": 10.0 + 4.0 * c3, "spin": 2.0 * d, "rot": _rng.randf() * TAU})
 			# Every swing also throws a few rising twinkles, so the air keeps glittering after it.
 			_sparks(tip, Vector2.UP, 5 + combo * 2, "rainbow", 90.0, 0.9, "twinkle", 1.4)
 			if combo == 3:
 				_shape("hexagram", at + Vector2(d * 12.0, 0.0), 0.55, "rainbow", {"r": 44.0, "spin": 2.6 * d})
 				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.5, "flow", {"r0": 6.0, "r1": 52.0, "w": 5.0, "ry": 0.75})
-				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.4, "rainbow", {"r0": 4.0, "r1": 36.0, "w": 3.0, "ry": 0.75})
+				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.4, "rainbow", {"r0": 4.0, "r1": 36.0, "w": 3.0, "ry": 0.75, "sides": 4, "twist": 1.3})
 				_sparks(at + Vector2(d * 22.0, 0.0), Vector2(d, 0.0), 26, "rainbow", 300.0, 0.9, "twinkle", 1.3)
 		"enemy_slash":
 			_shape("arc", at, 0.28, "warm", {"d": d, "r": 18.0 + 8.0 * power, "w": 3.0, "flip": false, "half": 1.3})
@@ -309,6 +314,7 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			var hv: float = clampf(power, 0.6, 2.0)
 			var ncount: int = int(hv * 14.0)
 			_shape("flash", at, 0.1, "warm", {"r": 22.0 + 8.0 * power})
+			_shape("ring", at, 0.18, "rainbow", {"r0": 2.0, "r1": 12.0 + 4.0 * power, "w": 3.0, "ry": 1.0})
 			_shape("slash_mark", at, 0.22, "flow", {"ang": _rng.randf_range(-0.9, 0.9) + (0.0 if dir.x >= 0.0 else PI), "len": 34.0 * hv})
 			_sparks(at, dir, 26 + ncount, "warm", 280.0, 0.65, "streak", 1.2)
 			_sparks(at, dir, 10 + ncount / 2, "rainbow", 180.0, 0.9, "shard", 1.6)
@@ -320,15 +326,18 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 					_shape("hexagram", at, 0.34, "warm", {"r": 22.0 + 6.0 * power, "spin": 2.2})
 					_shape("star", at, 0.26, "warm", {"r": 14.0 + 4.0 * power})
 					_shape("rays", at, 0.36, "rainbow", {"n": 14, "r1": 30.0 + 8.0 * power, "rot": 0.0})
+					_shape("ring", at, 0.3, "warm", {"r0": 2.0, "r1": 26.0 + 6.0 * power, "w": 3.0, "ry": 1.0})
 				1:   # Shock ring
 					_shape("ring", at, 0.34, "warm", {"r0": 2.0, "r1": 30.0 + 8.0 * power, "w": 4.0, "ry": 1.0})
-					_shape("ring", at, 0.26, "rainbow", {"r0": 2.0, "r1": 18.0 + 4.0 * power, "w": 2.0, "ry": 1.0})
+					_shape("ring", at, 0.3, "rainbow", {"r0": 2.0, "r1": 24.0 + 5.0 * power, "w": 3.0, "ry": 1.0, "sides": 4, "twist": 1.0})
 				2:   # Fountain
 					_sparks(at, Vector2.UP, 16 + ncount, "rainbow", 220.0, 1.0, "twinkle", 0.9)
 					_shape("crystal", at, 0.4, "cool", {"r": 22.0 + 6.0 * power, "rot": _rng.randf() * TAU, "spin": 0.5})
+					_shape("ring", at, 0.32, "rainbow", {"r0": 3.0, "r1": 22.0 + 5.0 * power, "w": 3.0, "ry": 1.0})
 				_:   # Spiral rays
 					_shape("hexagram", at, 0.5, "rainbow", {"r": 26.0 + 7.0 * power, "spin": -3.0, "rot": 0.4})
 					_shape("rays", at, 0.5, "rainbow", {"n": 10, "r1": 34.0 + 8.0 * power, "rot": 3.2})
+					_shape("ring", at, 0.36, "warm", {"r0": 3.0, "r1": 28.0 + 6.0 * power, "w": 3.0, "ry": 1.0, "sides": 4, "twist": -1.2})
 					_shape("star", at, 0.24, "warm", {"r": 12.0 + 4.0 * power})
 		"hurt":
 			_shape("ring", at, 0.36, "hurt", {"r0": 3.0, "r1": 26.0, "w": 4.0, "ry": 1.0})
@@ -698,7 +707,7 @@ func _arc(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	var ys: float = -1.0 if bool(s["flip"]) else 1.0
 	var head: float = clampf(t / 0.4, 0.0, 1.0) * 1.2
 	var tail: float = clampf((t - 0.25) / 0.75, 0.0, 1.0) * 1.2
-	var n: int = 6   # few facets: the crescent reads as cut crystal, not as a smooth curve
+	var n: int = int(s.get("facets", 22))   # 22 = smooth round crescent, 5-6 = cut-crystal crescent
 	var outer: Array[Vector2] = []
 	var inner: Array[Vector2] = []
 	var cols_o: Array[Color] = []
@@ -745,10 +754,10 @@ func _ring(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	var r: float = lerpf(float(s["r0"]), float(s["r1"]), ease_out)
 	var ry: float = float(s.get("ry", 1.0))
 	var w: float = maxf(1.0, roundf(float(s["w"]) * (1.0 - t)))
-	var n: int = int(s.get("sides", 6))   # hexagon by default; every shockwave is angular
+	var n: int = int(s.get("sides", 32))   # 32 = round shockwave, 6 = hexagon, 4 = square diamond
 	var pts := PackedVector2Array()
 	var cols := PackedColorArray()
-	var twist: float = float(s.get("twist", 0.0)) * t + PI / 6.0
+	var twist: float = float(s.get("twist", 0.0)) * t + (PI / 6.0 if n == 6 else (PI / 4.0 if n == 4 else 0.0))
 	for i: int in range(n + 1):
 		var a: float = TAU * float(i) / float(n) + twist
 		pts.append((at + Vector2(cos(a) * r, sin(a) * r * ry)).round())

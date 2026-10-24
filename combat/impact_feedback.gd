@@ -7,8 +7,11 @@ const Sounds = preload("res://audio/impact_sfx.gd")
 var game: Node
 var sounds: Node
 ## Camera limits in native pixels (the game renders at 640x360). Raised from 3.4 / 4 for heavier hits.
-const MAX_KICK: float = 8.0
-const MAX_OFFSET: float = 10.0
+const MAX_KICK: float = 11.0
+const MAX_OFFSET: float = 13.0
+## Camera zoom punch: every blow pushes the frame in a little, then it eases back. Heavy hits push harder.
+const MAX_PUNCH: float = 0.075
+var _punch: float = 0.0
 var reduced_motion: bool = false
 var _kick: Vector2 = Vector2.ZERO
 var _trauma: float = 0.0
@@ -23,7 +26,7 @@ func configure(owner_game: Node) -> void:
 func request(source: Node, target: Node, heavy: bool = false, parry: bool = false, variant: String = "") -> void:
     if is_instance_valid(game) and bool(game.story_safe):
         return
-    var duration: float = 0.07 if variant == "break" else (0.045 if variant == "reflect" else (0.06 if parry else (0.055 if heavy else 0.035)))
+    var duration: float = 0.1 if variant == "break" else (0.06 if variant == "reflect" else (0.08 if parry else (0.115 if heavy else 0.058)))
     if is_instance_valid(source) and source.has_method("set_impact_freeze"):
         source.set_impact_freeze(duration)
     if is_instance_valid(target) and target != source and target.has_method("set_impact_freeze"):
@@ -33,8 +36,9 @@ func request(source: Node, target: Node, heavy: bool = false, parry: bool = fals
         direction = (target.global_position - source.global_position).normalized()
     elif is_instance_valid(source) and source.get("facing") != null:
         direction = Vector2(float(source.get("facing")), 0)
-    add_kick(direction, 8.0 if variant == "break" else (3.4 if variant == "reflect" else (5.6 if parry else (4.2 if heavy else 2.4))))
-    _trauma = clampf(_trauma + (0.95 if variant == "break" else (0.7 if parry else (0.42 if heavy else 0.3))), 0, 1.0)
+    add_kick(direction, 10.0 if variant == "break" else (4.4 if variant == "reflect" else (7.0 if parry else (7.5 if heavy else 3.6))))
+    _punch = minf(MAX_PUNCH, _punch + (0.06 if variant == "break" else (0.03 if variant == "reflect" else (0.045 if parry else (0.07 if heavy else 0.026)))))
+    _trauma = clampf(_trauma + (1.0 if variant == "break" else (0.75 if parry else (0.6 if heavy else 0.4))), 0, 1.0)
     impact_count += 1
     if is_instance_valid(sounds):
         sounds.play_impact("break" if variant == "break" else ("reflect" if variant == "reflect" else ("parry" if parry else ("heavy" if heavy else "light"))))
@@ -53,6 +57,11 @@ func sample_camera(delta: float) -> Vector2:
     var offset: Vector2 = _kick + Vector2(_noise(_time * 42, 1), _noise(_time * 42, 13)) * 11.0 * shake
     return Vector2.ZERO if reduced_motion else offset.limit_length(MAX_OFFSET)
 
+func sample_zoom(delta: float) -> float:
+    ## Zoom factor for the camera (1.0 = none). Decays fast so it reads as a punch, not a zoom.
+    _punch = maxf(_punch - (0.45 * delta + _punch * 7.0 * delta), 0.0)
+    return 1.0 if reduced_motion else 1.0 + _punch
+
 func _noise(t: float, seed_offset: float) -> float:
     return sin(t + seed_offset) * cos(t * 0.7 + seed_offset * 2.0)
 
@@ -62,4 +71,5 @@ func play_action(kind: String) -> void:
 
 func clear() -> void:
     _kick = Vector2.ZERO
+    _punch = 0.0
     _trauma = 0

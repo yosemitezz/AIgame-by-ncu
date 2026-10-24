@@ -217,6 +217,7 @@ func _process(delta: float) -> void:
         var wanted: float = clampf(player.position.x + float(player.facing) * 45.0, 320, Level.LEVEL_END - 320)
         _camera.position.x = roundf(lerpf(_camera.position.x, wanted, 1.0 - exp(-delta * 5.0)))
         _camera.offset = impact.sample_camera(delta) if is_instance_valid(impact) else Vector2.ZERO
+        _camera.zoom = Vector2.ONE * (impact.sample_zoom(delta) if is_instance_valid(impact) else 1.0)
     if outcome == "victory":
         _ending_clock += delta
     _hud_clock += delta
