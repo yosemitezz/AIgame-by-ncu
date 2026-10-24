@@ -14,7 +14,22 @@
       "parry_recover": 2
     },
     "frames_per_state": 4,
-    "unique_frames": 12
+    "unique_frames": 12,
+    "weapons": {
+      "light": {
+        "parry": "hero_parry.png",
+        "flash": "hero_flash.png"
+      },
+      "heavy": {
+        "parry": "hero_parry_heavy.png",
+        "flash": "hero_flash_heavy.png"
+      },
+      "great": {
+        "parry": "hero_parry_great.png",
+        "flash": "hero_flash_great.png"
+      }
+    },
+    "source": "Dark-fantasy knight joint rig in tools/hero_rig.py (bascinet, pauldron, crimson cape and tabard, three swords: light, heavy, great), re-rasterised per frame at 4x then reduced with NEAREST."
   },
   "boss": {
     "canvas": [

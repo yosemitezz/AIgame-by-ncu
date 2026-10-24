@@ -22,11 +22,11 @@ const HINT_SECONDS: float = 7.0
 const STRINGS: Array[String] = [
     "旅人", "HP", "碎片", "攻击 J", "格挡 左SHIFT", "闪避 双击WASD", "地图 TAB", "* ", "架势", "执刃钟守", "破架 / 可反击",
     "定拍", "游离", "休止 / 双方禁伤", "终章", "刀刃交锋", "星火回返", "破架 / 反击窗口",
-    "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  ESC 暂停", "歇息片刻", "ESC 继续冒险", "TAB 查看地图", "R 返回检查点", "F5 重新启程",
+    "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  Q/1-3 换剑  ESC 暂停", "歇息片刻", "ESC 继续冒险", "TAB 查看地图", "R 返回检查点", "F5 重新启程",
     "F2 震屏：", "M 声音：", "F3 速度感：", "关闭", "开启", "静音", "标准", "强", "左SHIFT格挡 / 双击WASD闪避 / E交互",
     "游戏结束", "保持决心……", "R 从检查点重试   F5 重新启程", "钟声之后", "声音仍在。记忆却止于此处。", "第一章结束", "F5 重新启程   R 重试",
     "钟堡 / 路线图", "悬链书库  ·  破碎回廊  ·  淤水墓廊", "红心 你的位置    青线 铁链    蓝线 浅水    黄色 门 / 检查点", "TAB 或 ESC 返回冒险", "低血!",
-    "未知", "当前：", "红心 你的位置    青方块 检查点    红块 钟守    紫点 碎片    黄色 门"]
+    "轻剑", "重剑", "双手剑", "未知", "当前：", "红心 你的位置    青方块 检查点    红块 钟守    紫点 碎片    黄色 门"]
 var state: Dictionary = {}
 var font: Font
 var _clock: float = 0.0
@@ -177,12 +177,13 @@ func _draw_hud(layout: Dictionary, has_boss: bool) -> void:
     draw_rect(Rect2(zone_x + 1, y + 5, roundf((zone_w - 2) * clampf(float(state.get("progress", 0)), 0.0, 1.0)), 3), YELLOW)
     _draw_buttons(layout["buttons"])
     var controls: Rect2 = layout["controls"]
-    text(controls.position + Vector2(0, 11), "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  ESC 暂停", 12, GRAY, controls.size.x)
+    text(controls.position + Vector2(0, 11), "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  Q/1-3 换剑  ESC 暂停", 12, GRAY, controls.size.x)
 
 ## Four orange command buttons in the FIGHT / ACT / ITEM / MERCY spot. They list the real combat keys; the one that is in use
 ## turns yellow and shows the soul.
 func _draw_buttons(row: Rect2) -> void:
-    var labels: Array[String] = ["攻击 J", "格挡 左SHIFT", "闪避 双击WASD", "地图 TAB"]
+    var weapon_name: String = {"light": "轻剑", "heavy": "重剑", "great": "双手剑"}.get(str(state.get("weapon", "light")), "轻剑")
+    var labels: Array[String] = [weapon_name + " J", "格挡 左SHIFT", "闪避 双击WASD", "地图 TAB"]
     var active: Array[bool] = [
         false,
         str(state.get("parry_notice", "")) != "" or str(state.get("reaction", "")) == "guard_break",

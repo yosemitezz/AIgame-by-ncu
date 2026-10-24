@@ -138,7 +138,7 @@ func _snapshot_ghost() -> void:
     _last_ghost_clock = _clock
     _last_ghost_at = position_now
     var region: Rect2 = ActorRenderer.hero_region(str(actor.animation_state), int(actor.frame), int(actor.combo), ActorRenderer.is_airborne(actor))
-    _ghosts.append({"at": actor.global_position.round(), "region": region, "facing": int(actor.facing), "age": 0.0, "duration": 0.15})
+    _ghosts.append({"weapon": ActorRenderer.weapon_of(actor), "at": actor.global_position.round(), "region": region, "facing": int(actor.facing), "age": 0.0, "duration": 0.15})
     while _ghosts.size() > MAX_GHOSTS:
         _ghosts.pop_front()
 
@@ -171,7 +171,7 @@ func _start_trail(serial: int) -> void:
 func _update_trail(actor: Node2D) -> void:
     if _current_trail < 0 or _current_trail >= _trails.size():
         return
-    var local_tip: Vector2 = ActorRenderer.weapon_tip_local(int(actor.combo), int(actor.frame), ActorRenderer.is_airborne(actor))
+    var local_tip: Vector2 = ActorRenderer.weapon_tip_local(int(actor.combo), int(actor.frame), ActorRenderer.is_airborne(actor), ActorRenderer.weapon_of(actor))
     local_tip.x *= int(actor.facing)
     var tip: Vector2 = (actor.global_position + local_tip).round()
     var points: Array = _trails[_current_trail]["points"]
@@ -244,7 +244,7 @@ func _draw() -> void:
         var t: float = float(ghost["age"]) / float(ghost["duration"])
         var at: Vector2 = Vector2(ghost["at"]) + Vector2(int(ghost["facing"]) * roundf(6 * t), 0)
         draw_set_transform(at, 0, Vector2(float(ghost["facing"]), 1))
-        draw_texture_rect_region(ActorRenderer.silhouette_texture(), Rect2(-ActorRenderer.HERO_ANCHOR, ActorRenderer.HERO_SIZE), ghost["region"], Color(0.6, 1, 1, (1 - t) * 0.24))
+        draw_texture_rect_region(ActorRenderer.silhouette_texture_for(str(ghost.get("weapon", "light"))), Rect2(-ActorRenderer.HERO_ANCHOR, ActorRenderer.HERO_SIZE), ghost["region"], Color(0.6, 1, 1, (1 - t) * 0.24))
         draw_set_transform(Vector2.ZERO)
     for warning: Dictionary in _warnings:
         var at: Vector2 = warning["at"]
