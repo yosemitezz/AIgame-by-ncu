@@ -17,10 +17,10 @@ func configure(owner_game: Node) -> void:
     sounds = Sounds.new()
     add_child(sounds)
 
-func request(source: Node, target: Node, heavy: bool = false, parry: bool = false) -> void:
+func request(source: Node, target: Node, heavy: bool = false, parry: bool = false, variant: String = "") -> void:
     if is_instance_valid(game) and bool(game.story_safe):
         return
-    var duration: float = 0.065 if parry else (0.055 if heavy else 0.035)
+    var duration: float = 0.07 if variant == "break" else (0.045 if variant == "reflect" else (0.06 if parry else (0.055 if heavy else 0.035)))
     if is_instance_valid(source) and source.has_method("set_impact_freeze"):
         source.set_impact_freeze(duration)
     if is_instance_valid(target) and target != source and target.has_method("set_impact_freeze"):
@@ -30,24 +30,24 @@ func request(source: Node, target: Node, heavy: bool = false, parry: bool = fals
         direction = (target.global_position - source.global_position).normalized()
     elif is_instance_valid(source) and source.get("facing") != null:
         direction = Vector2(float(source.get("facing")), 0)
-    add_kick(direction, 1.45 if parry else (1.05 if heavy else 0.6))
-    _trauma = clampf(_trauma + (0.24 if parry else 0.14), 0, 0.45)
+    add_kick(direction, 3.4 if variant == "break" else (1.3 if variant == "reflect" else (2.2 if parry else (1.7 if heavy else 0.95))))
+    _trauma = clampf(_trauma + (0.46 if variant == "break" else (0.30 if parry else 0.18)), 0, 0.55)
     impact_count += 1
     if is_instance_valid(sounds):
-        sounds.play_impact("parry" if parry else ("heavy" if heavy else "light"))
+        sounds.play_impact("break" if variant == "break" else ("reflect" if variant == "reflect" else ("parry" if parry else ("heavy" if heavy else "light"))))
 
 func add_kick(direction: Vector2, amount: float) -> void:
     if direction.length() > 0.001:
-        _kick = (_kick + direction.normalized() * amount).limit_length(1.65)
+        _kick = (_kick + direction.normalized() * amount).limit_length(3.4)
 
 func sample_camera(delta: float) -> Vector2:
-    # Adapted decay/noise from PlayerCamera; capped to 2 native pixels, no roll/zoom.
+    # Adapted decay/noise from PlayerCamera; capped to 4 native pixels, no roll/zoom.
     _kick = _kick.move_toward(Vector2.ZERO, _kick.length() * 12.0 * delta + 4.0 * delta)
     _time += delta
     _trauma = maxf(_trauma - 2.3 * delta, 0.0)
     var shake: float = _trauma * _trauma
-    var offset: Vector2 = _kick + Vector2(_noise(_time * 30, 1), _noise(_time * 30, 13)) * 2.0 * shake
-    return Vector2.ZERO if reduced_motion else offset.limit_length(2.0)
+    var offset: Vector2 = _kick + Vector2(_noise(_time * 30, 1), _noise(_time * 30, 13)) * 4.0 * shake
+    return Vector2.ZERO if reduced_motion else offset.limit_length(4.0)
 
 func _noise(t: float, seed_offset: float) -> float:
     return sin(t + seed_offset) * cos(t * 0.7 + seed_offset * 2.0)

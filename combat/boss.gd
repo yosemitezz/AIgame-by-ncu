@@ -4,6 +4,14 @@ extends CharacterBody2D
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const ARENA_LEFT: float = 2660.0
 const ARENA_RIGHT: float = 3330.0
+# Original tuning starting points, not measurements taken from reference footage.
+const NORMAL_RECOIL_TIME: float = 0.12
+const NORMAL_RECOVER_TIME: float = 0.12
+const ARMORED_RECOIL_TIME: float = 0.12
+const ARMORED_CHAIN_GAP: float = 0.42
+const GUARD_BREAK_TIME: float = 0.90
+const GUARD_RECOVER_TIME: float = 0.18
+const POSTURE_RESET_LOCK: float = 0.45
 
 var game: Node
 var max_health: int = 48
@@ -14,6 +22,19 @@ var facing: int = -1
 var animation_state: String = "idle"
 var frame: int = 0
 var combat_freeze: float = 0.0
+var attack_serial: int = 0
+var contact_token: int = 0
+var attack_parryable: bool = true
+var attack_armored: bool = false
+var guard_posture: int = 0
+var guard_max: int = 3
+var reaction_state: String = "none"
+var reaction_progress: float = 0.0
+# Rendering reads this before the hit-cooldown fallback. Counter-hit flashes must
+# not obscure the open guard or weapon rebound poses.
+var impact_flash: float:
+    get:
+        return hurt_flash if reaction_state == "none" else 0.0
 var hurt_flash: float = 0.0
 var _last_pattern: String = ""
 var _active: bool = false
@@ -32,6 +53,13 @@ var _aim: Vector2 = Vector2.LEFT
 var _last_state: String = ""
 var _last_frame: int = -1
 var _last_facing: int = 0
+var _reaction_elapsed: float = 0.0
+var _reaction_duration: float = 0.0
+var _reaction_blocks_attacks: bool = false
+var _posture_lockout: float = 0.0
+var _combo_pending: bool = false
+var _combo_timer: float = 0.0
+var _resolved_contacts: Dictionary = {}
 
 func configure(p_game: Node, at: Vector2) -> void:
     game = p_game
@@ -88,15 +116,16 @@ func _request_phase_if_ready() -> void:
 
 func _on_section(section: String) -> void:
     phase = section
-    if section == "rest":
-        combat_freeze = 0
-        hurt_flash = 0
-    _pending_attack = ""
-    _windup_timer = 0.0
-    _charge_timer = 0.0
+    _cancel_all_attacks()
     _recovery_timer = 0.3
-    _contact_resolved = true
     velocity.x = 0.0
+    if section == "rest":
+        combat_freeze = 0.0
+        hurt_flash = 0.0
+        _stagger_timer = 0.0
+        guard_posture = 0
+        _posture_lockout = 0.0
+        _clear_reaction()
     game.on_boss_phase(section)
     match section:
         "random":
@@ -107,9 +136,9 @@ func _on_section(section: String) -> void:
             game.announce("The seal is open. Keep moving; turn its light against it.", 3.0)
 
 func _on_beat(index: int) -> void:
-    if dead or not _active or game.story_safe or _stagger_timer > 0.0:
+    if dead or not _active or game.story_safe or _stagger_timer > 0.0 or _reaction_blocks_attacks or _posture_lockout > 0.0:
         return
-    if _windup_timer > 0.0 or _charge_timer > 0.0 or _recovery_timer > 0.0:
+    if _windup_timer > 0.0 or _charge_timer > 0.0 or _recovery_timer > 0.0 or _combo_pending:
         return
     if index % 2 != 0:
         return
@@ -125,12 +154,23 @@ func _on_beat(index: int) -> void:
                 choices.append(candidate)
         attack = choices[randi_range(0, choices.size() - 1)]
     else:
-        attack = patterns[_attack_count % patterns.size()]
+        var final_patterns: Array[String] = ["armored_slash", "fan", "charge", "rain", "ring"]
+        attack = final_patterns[_attack_count % final_patterns.size()]
     _last_pattern = attack
     _attack_count += 1
     _begin_attack(attack)
 
 func _begin_attack(attack: String) -> void:
+    if dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
+        return
+    attack_serial += 1
+    contact_token = attack_serial * 8
+    attack_parryable = attack in ["slash", "armored_slash"]
+    # Armor and parryability are independent: the armored double cut can be
+    # parried; the charging armor cannot. Neither changes projectile reflection.
+    attack_armored = attack in ["armored_slash", "charge"]
+    _combo_pending = false
+    _combo_timer = 0.0
     _pending_attack = attack
     _windup_timer = game.music.seconds_per_beat() * 0.8
     var toward: Vector2 = game.player.global_position + Vector2(0, -14) - global_position - Vector2(0, -25)
@@ -140,31 +180,48 @@ func _begin_attack(attack: String) -> void:
     var warning_at: Vector2 = global_position + Vector2(facing * 35, -22)
     if attack == "rain":
         warning_at = Vector2(game.player.global_position.x, 120)
+    var warning_kind: String = "unblockable_charge" if attack == "charge" else attack
     if game.has_signal("warning_issued"):
-        game.emit_signal("warning_issued", attack, warning_at, _windup_timer)
-    game.emit_fx("telegraph", warning_at, Vector2(facing, 0), 1.0)
+        game.emit_signal("warning_issued", warning_kind, warning_at, _windup_timer)
+    game.emit_fx("unblockable_charge" if attack == "charge" else "telegraph", warning_at, Vector2(facing, 0), 1.0)
 
 func set_impact_freeze(seconds: float) -> void:
     combat_freeze = maxf(combat_freeze, clampf(seconds, 0, 0.07))
 
 func _physics_process(delta: float) -> void:
-    hurt_flash = maxf(0, hurt_flash - delta)
+    hurt_flash = maxf(0.0, hurt_flash - delta)
+    _posture_lockout = maxf(0.0, _posture_lockout - delta)
     if game.story_safe:
-        combat_freeze = 0
-    elif combat_freeze > 0 and not dead:
-        combat_freeze = maxf(0, combat_freeze - delta)
+        # Safety takes priority over local hit-stop and every delayed contact.
+        _cancel_all_attacks()
+        _clear_reaction()
+        guard_posture = 0
+        _posture_lockout = 0.0
+        _stagger_timer = 0.0
+        hurt_flash = 0.0
+        combat_freeze = 0.0
+    elif combat_freeze > 0.0 and not dead:
+        combat_freeze = maxf(0.0, combat_freeze - delta)
         queue_redraw()
         return
     _animation_clock += delta
     _hurt_timer = maxf(0.0, _hurt_timer - delta)
     _stagger_timer = maxf(0.0, _stagger_timer - delta)
     _recovery_timer = maxf(0.0, _recovery_timer - delta)
+    _advance_reaction(delta)
+    if _combo_pending and not _reaction_blocks_attacks and not dead and not game.story_safe:
+        _combo_timer = maxf(0.0, _combo_timer - delta)
+        if _combo_timer <= 0.0:
+            _release_combo_contact()
     if dead:
         velocity.x = move_toward(velocity.x, 0.0, delta * 500.0)
         animation_state = "dead"
     elif not _active or game.story_safe:
         velocity.x = 0.0
         animation_state = "idle"
+    elif _reaction_blocks_attacks:
+        velocity.x = move_toward(velocity.x, 0.0, delta * 400.0)
+        animation_state = reaction_state
     elif _stagger_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
         animation_state = "hurt"
@@ -178,14 +235,16 @@ func _physics_process(delta: float) -> void:
         _charge_timer = maxf(0.0, _charge_timer - delta)
         velocity.x = facing * 430.0
         animation_state = "dash"
-        _try_melee_contact(50.0)
+        _try_melee_contact(50.0, false, true, contact_token)
+    elif _combo_pending:
+        velocity.x = 0.0
+        animation_state = "windup"
     elif _recovery_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 800.0)
         animation_state = "attack"
     else:
         var distance: float = game.player.global_position.x - global_position.x
         facing = 1 if distance >= 0.0 else -1
-        # Pursuit keeps the fight mobile; a brief jump crosses player and arena platforms.
         velocity.x = facing * (85.0 if phase == "final" else 62.0) if absf(distance) > 54.0 else 0.0
         if is_on_wall() and is_on_floor():
             velocity.y = -290.0
@@ -194,9 +253,16 @@ func _physics_process(delta: float) -> void:
         velocity.y = minf(velocity.y + 950.0 * delta, 650.0)
     move_and_slide()
     global_position.x = clampf(global_position.x, ARENA_LEFT, ARENA_RIGHT)
-    if _hurt_timer > 0.0 and not dead:
-        animation_state = "hurt"
-    frame = int(_animation_clock * 12.0) % 6
+    if reaction_state != "none" and not dead:
+        animation_state = reaction_state
+        frame = clampi(int(reaction_progress * 3.999), 0, 3)
+    else:
+        if _hurt_timer > 0.0 and not dead:
+            animation_state = "hurt"
+        frame = int(_animation_clock * 12.0) % 6
+    _publish_animation()
+
+func _publish_animation() -> void:
     if is_instance_valid(game) and game.has_signal("animation_event") and (animation_state != _last_state or frame != _last_frame or facing != _last_facing):
         _last_state = animation_state
         _last_frame = frame
@@ -205,17 +271,30 @@ func _physics_process(delta: float) -> void:
     queue_redraw()
 
 func _release_attack() -> void:
-    if dead or game.story_safe or _stagger_timer > 0.0:
-        _pending_attack = ""
+    if dead or game.story_safe or _stagger_timer > 0.0 or _reaction_blocks_attacks or _posture_lockout > 0.0:
+        _cancel_all_attacks()
         return
     var source: Vector2 = global_position + Vector2(0, -26)
     var attack: String = _pending_attack
     _pending_attack = ""
+    _windup_timer = 0.0
+    if attack.is_empty():
+        return
     _recovery_timer = 0.24
     match attack:
         "slash":
-            _try_melee_contact(78.0)
-            game.emit_fx("enemy_slash", source + Vector2(facing * 20, 0), Vector2(facing, 0), 1.4)
+            _try_melee_contact(78.0, true, false, contact_token)
+            if not _reaction_blocks_attacks:
+                game.emit_fx("enemy_slash", source + Vector2(facing * 20, 0), Vector2(facing, 0), 1.4)
+        "armored_slash":
+            # Schedule before contact, so a third parry can cancel the whole chain.
+            _combo_pending = true
+            _combo_timer = ARMORED_CHAIN_GAP
+            _try_melee_contact(78.0, true, true, contact_token)
+            if _combo_pending and game.has_signal("warning_issued"):
+                game.emit_signal("warning_issued", "armored_slash", source + Vector2(facing * 35, 0), ARMORED_CHAIN_GAP)
+            if not _reaction_blocks_attacks:
+                game.emit_fx("enemy_slash", source + Vector2(facing * 20, 0), Vector2(facing, 0), 1.5)
         "charge":
             _charge_timer = 0.30
             velocity.y = -95.0
@@ -242,43 +321,123 @@ func _release_attack() -> void:
                     continue
                 game.spawn_projectile(Vector2(middle + offset, 112), Vector2(-facing * 12.0, 130.0))
 
-func _try_melee_contact(reach: float) -> void:
-    if _contact_resolved or game.story_safe or dead:
+func _release_combo_contact() -> void:
+    if not _combo_pending or dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
+        return
+    _combo_pending = false
+    _combo_timer = 0.0
+    contact_token = attack_serial * 8 + 1
+    _contact_resolved = false
+    _recovery_timer = 0.24
+    _try_melee_contact(78.0, true, true, contact_token)
+    if not _reaction_blocks_attacks:
+        game.emit_fx("enemy_slash", global_position + Vector2(facing * 20, -26), Vector2(facing, 0), 1.5)
+
+func _try_melee_contact(reach: float, parryable: bool = true, armored: bool = false, token: int = -1) -> void:
+    if _contact_resolved or game.story_safe or dead or _reaction_blocks_attacks or _posture_lockout > 0.0:
+        return
+    var actual_token: int = contact_token if token < 0 else token
+    if actual_token != contact_token or _resolved_contacts.has(actual_token):
         return
     var difference: Vector2 = game.player.global_position + Vector2(0, -14) - (global_position + Vector2(0, -24))
     if absf(difference.x) > reach or absf(difference.y) > 43.0 or difference.x * facing < -22.0:
         return
     _contact_resolved = true
-    if game.player.parry_timer > 0.0:
-        game.player.parry_success(self)
-        _stagger_timer = 0.7
-        _charge_timer = 0.0
-        _pending_attack = ""
-        _windup_timer = 0.0
-        velocity.x = -facing * 100.0
-        receive_hit(3, game.player.global_position)
+    _resolved_contacts[actual_token] = true
+    # The weapon reaches the player's front edge. The defender independently
+    # verifies its facing and current input window before awarding any success.
+    var contact_side: float = signf(global_position.x - game.player.global_position.x)
+    if is_zero_approx(contact_side):
+        contact_side = float(-facing)
+    var contact: Vector2 = game.player.global_position + Vector2(contact_side * minf(18.0, absf(difference.x) * 0.5), -18)
+    var would_break: bool = guard_posture + 1 >= guard_max
+    var accepted: bool = false
+    if parryable and game.player.parry_timer > 0.0:
+        accepted = game.player.parry_success(self, contact, "guard_break" if would_break else "melee", actual_token)
+    if accepted:
+        guard_posture = mini(guard_max, guard_posture + 1)
+        hurt_flash = 0.0
+        if would_break:
+            _cancel_all_attacks()
+            velocity.x = -facing * 44.0
+            _start_reaction("guard_break", GUARD_BREAK_TIME, true)
+        elif armored:
+            # Armor accepts the clash and posture, but retains the later contact.
+            _start_reaction("parry_recoil", ARMORED_RECOIL_TIME, false)
+        else:
+            _cancel_all_attacks()
+            velocity.x = -facing * 70.0
+            _start_reaction("parry_recoil", NORMAL_RECOIL_TIME, true)
     else:
         game.damage_player(1, global_position)
+
+func _cancel_all_attacks() -> void:
+    _pending_attack = ""
+    _windup_timer = 0.0
+    _charge_timer = 0.0
+    _recovery_timer = 0.0
+    _combo_pending = false
+    _combo_timer = 0.0
+    _contact_resolved = true
+    attack_parryable = false
+    attack_armored = false
+
+func _start_reaction(state: String, duration: float, blocks_attacks: bool) -> void:
+    reaction_state = state
+    reaction_progress = 0.0
+    _reaction_elapsed = 0.0
+    _reaction_duration = duration
+    _reaction_blocks_attacks = blocks_attacks
+    animation_state = state
+    frame = 0
+    _publish_animation()
+
+func _clear_reaction() -> void:
+    reaction_state = "none"
+    reaction_progress = 0.0
+    _reaction_elapsed = 0.0
+    _reaction_duration = 0.0
+    _reaction_blocks_attacks = false
+
+func _advance_reaction(delta: float) -> void:
+    var remaining: float = maxf(0.0, delta)
+    while remaining > 0.000001 and reaction_state != "none":
+        var consumed: float = minf(remaining, maxf(0.0, _reaction_duration - _reaction_elapsed))
+        _reaction_elapsed += consumed
+        remaining -= consumed
+        reaction_progress = clampf(_reaction_elapsed / maxf(0.001, _reaction_duration), 0.0, 1.0)
+        if _reaction_elapsed < _reaction_duration - 0.000001:
+            break
+        if reaction_state == "guard_break":
+            guard_posture = 0
+            _posture_lockout = POSTURE_RESET_LOCK
+            _start_reaction("guard_recover", GUARD_RECOVER_TIME, true)
+        elif reaction_state == "parry_recoil" and _reaction_blocks_attacks:
+            _start_reaction("parry_recover", NORMAL_RECOVER_TIME, true)
+        else:
+            _clear_reaction()
 
 func _die() -> void:
     if dead:
         return
     dead = true
     _active = false
-    _pending_attack = ""
-    _windup_timer = 0.0
-    _charge_timer = 0.0
+    _cancel_all_attacks()
+    _clear_reaction()
+    guard_posture = 0
     game.music.stop_score()
     game.emit_fx("boss_defeat", global_position + Vector2(0, -28), Vector2.ZERO, 2.0)
     game.on_boss_defeated()
 
 func _draw() -> void:
     Pixels.paint(self, "boss", animation_state, frame, facing)
-    if _windup_timer > 0.0:
-        var gold := Color("ffd779")
+    if _windup_timer > 0.0 or _combo_pending:
+        var gold := Color("ff967f") if not attack_parryable and _pending_attack == "charge" else Color("ffd779")
         var direction: int = facing
         for i: int in 5:
             draw_rect(Rect2(Vector2(direction * (26 + i * 6), -25), Vector2(3, 3)), gold)
         draw_rect(Rect2(-24, -65, 48, 2), Color("72554c"))
-        var progress: float = 1.0 - _windup_timer / maxf(0.01, game.music.seconds_per_beat() * 0.8)
+        var remaining: float = _combo_timer if _combo_pending else _windup_timer
+        var duration: float = ARMORED_CHAIN_GAP if _combo_pending else game.music.seconds_per_beat() * 0.8
+        var progress: float = 1.0 - remaining / maxf(0.01, duration)
         draw_rect(Rect2(-24, -65, 48.0 * progress, 2), gold)

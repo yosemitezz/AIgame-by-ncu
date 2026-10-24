@@ -22,6 +22,7 @@ var combat_freeze: float = 0.0
 var _hurt_elapsed: float = 0.0
 var _death_time: float = 0.0
 var _attack_facing: int = -1
+var attack_serial: int = 0
 var _attack_target: Vector2
 var _shot: bool = false
 var _last_state: String = ""
@@ -175,6 +176,7 @@ func _floor_ahead(direction: int) -> bool:
 	return not hit.is_empty()
 
 func _begin_attack() -> void:
+	attack_serial += 1
 	_windup = 0.66 if kind == "wisp" else (0.48 if kind == "elite" else 0.58)
 	_cooldown = 1.55 if kind == "wisp" else (1.12 if kind == "elite" else 1.45)
 	_attack_facing = facing
@@ -200,8 +202,11 @@ func _execute_attack() -> void:
 	game.emit_fx("enemy_slash", global_position + Vector2(_attack_facing * 22.0, -17.0), Vector2(_attack_facing, 0.0), 0.8 if kind == "elite" else 0.5)
 	if absf(offset.x) > reach or absf(offset.y) > 32.0 or offset.x * _attack_facing < -8.0:
 		return
-	if float(player.parry_timer) > 0.0 and (global_position.x - player.global_position.x) * int(player.facing) >= -8.0:
-		player.parry_success(self)
+	var blade_root: Vector2 = global_position + Vector2(_attack_facing * 8.0, -17.0)
+	var blade_tip: Vector2 = global_position + Vector2(_attack_facing * reach, -17.0)
+	var guard_point: Vector2 = player.global_position + Vector2(int(player.facing) * 18.0, -18.0)
+	var contact: Vector2 = Geometry2D.get_closest_point_to_segment(guard_point, blade_root, blade_tip)
+	if player.parry_success(self, contact, "melee", attack_serial):
 		_stagger = 0.55
 		_cooldown = 1.1
 		receive_hit(1, player.global_position)

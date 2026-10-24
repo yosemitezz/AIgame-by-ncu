@@ -5,6 +5,7 @@ signal boss_phase_changed(phase: String)
 signal warning_issued(kind: String, at: Vector2, duration: float)
 signal vfx_requested(kind: String, at: Vector2, direction: Vector2, power: float)
 signal animation_event(actor: Node, state: String, frame: int, facing: int)
+signal parry_contacted(defender: Node, source: Node, contact: Vector2, kind: String)
 
 const Player = preload("res://actors/player.gd")
 const Enemy = preload("res://actors/enemy.gd")
@@ -24,6 +25,12 @@ var level: Node2D
 var impact: Node
 var effects: Node2D
 var _attack_hits: Dictionary = {}
+var parry_feedback_count: int = 0
+var last_parry_kind: String = ""
+var last_parry_contact: Vector2 = Vector2.ZERO
+var _parry_notice_time: float = 0.0
+var _parry_event_frame: int = -1
+var _parry_event_sources: Dictionary = {}
 var checkpoint: Vector2 = Level.SPAWN
 var score: int = 0
 var story_safe: bool = false
@@ -185,6 +192,7 @@ func _process(delta: float) -> void:
     if _paused:
         return
     _clock += delta
+    _parry_notice_time = maxf(0, _parry_notice_time - delta)
     _announcement_time = maxf(0, _announcement_time - delta)
     if is_instance_valid(player):
         var wanted: float = clampf(player.position.x + float(player.facing) * 45.0, 320, Level.LEVEL_END - 320)
@@ -255,6 +263,11 @@ func set_story_safe(value: bool) -> void:
             player.combat_freeze = 0
         if is_instance_valid(boss):
             boss.combat_freeze = 0
+        _parry_notice_time = 0
+        last_parry_kind = ""
+        _parry_event_sources.clear()
+        if is_instance_valid(_camera):
+            _camera.offset = Vector2.ZERO
         _warnings.clear()
         _strokes.clear()
 
@@ -325,6 +338,28 @@ func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power
         elif kind in ["dash_start", "enemy_dash"]:
             impact.play_action("dash")
 
+func on_parry_contact(defender: Node, source: Node, contact: Vector2, kind: String) -> void:
+    if story_safe or _paused or get_tree().paused or outcome != "" or not is_instance_valid(defender) or not is_instance_valid(source):
+        return
+    var physics_frame: int = Engine.get_physics_frames()
+    if physics_frame != _parry_event_frame:
+        _parry_event_frame = physics_frame
+        _parry_event_sources.clear()
+    var key: String = "%d:%d" % [defender.get_instance_id(), source.get_instance_id()]
+    if _parry_event_sources.has(key):
+        return
+    _parry_event_sources[key] = true
+    parry_feedback_count += 1
+    last_parry_kind = kind
+    last_parry_contact = contact
+    _parry_notice_time = 0.7 if kind == "guard_break" else 0.4
+    var direction := Vector2(float(defender.facing), 0)
+    var effect_kind: String = "guard_break" if kind == "guard_break" else ("projectile_parry" if kind == "projectile" else "blade_parry")
+    emit_fx(effect_kind, contact, direction, 1.5 if kind == "guard_break" else 1.0)
+    if is_instance_valid(impact):
+        impact.request(defender, source, kind == "guard_break", true, "break" if kind == "guard_break" else ("reflect" if kind == "projectile" else ""))
+    parry_contacted.emit(defender, source, contact, kind)
+
 func request_impact(source: Node, target: Node, heavy: bool = false, parry: bool = false) -> void:
     if is_instance_valid(impact):
         impact.request(source, target, heavy, parry)
@@ -333,7 +368,7 @@ func _refresh_hud() -> void:
     if not is_instance_valid(player):
         return
     var zone: Dictionary = Level.ZONES[_zone]
-    hud_updated.emit({"hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END})
+    hud_updated.emit({"hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
 
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo:

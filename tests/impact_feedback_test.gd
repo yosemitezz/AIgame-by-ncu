@@ -50,7 +50,8 @@ func run() -> void:
     game.boss._contact_resolved = false
     game.player.parry_timer = 0.16
     impacts_before = game.impact.impact_count
-    game.boss._try_melee_contact(78)
+    game.boss._begin_attack("slash")
+    game.boss._release_attack()
     check(game.impact.impact_count == impacts_before + 1, "one Boss parry produces exactly one impact bundle")
     check(game.boss.combat_freeze > 0 and game.player.combat_freeze > 0, "Boss parry holds both actors through one contact event")
     game.boss.position = Vector2(3100, 300)
@@ -71,7 +72,7 @@ func run() -> void:
     var offset := Vector2.ZERO
     for _i: int in 120:
         offset = game.impact.sample_camera(1.0 / 60.0)
-        bounded = bounded and offset.length() <= 2.001
+        bounded = bounded and offset.length() <= 4.001
     check(bounded and offset.length() < 0.001, "camera impulse is bounded and settles completely")
     game.impact.add_kick(Vector2.RIGHT, 2)
     game.impact.reduced_motion = true

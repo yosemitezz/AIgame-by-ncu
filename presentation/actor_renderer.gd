@@ -50,6 +50,53 @@ static func weapon_tip_local(combo: int, frame: int) -> Vector2:
 static func silhouette_texture() -> Texture2D:
     return _texture("res://presentation/feel_frames/hero_silhouette.png")
 
+
+static func parry_region(kind: String, state: String, progress: float) -> Rect2:
+    var size: Vector2 = HERO_SIZE if kind == "hero" else Vector2(80, 80)
+    var row: int = 0
+    var p: float = clampf(progress, 0, 1)
+    if kind == "hero":
+        row = {"parry_ready": 0, "parry_recoil": 1, "parry_recover": 2}.get(state, 0)
+    else:
+        row = {"parry_recoil": 0, "parry_recover": 0, "guard_break": 1, "guard_recover": 2}.get(state, 0)
+        if state == "parry_recover":
+            p = 1.0 - p
+        elif state == "guard_break":
+            # Collapse near the start of the real break window, then hold the knee.
+            p = minf(1.0, p * 4.0)
+    var index: int = clampi(int(p * 4), 0, 3)
+    return Rect2(Vector2(index * size.x, row * size.y), size)
+
+static func _parry_pose(actor: Object, kind: String, state: String, frame: int) -> Dictionary:
+    var key: String = ""
+    var progress: float = float(clampi(frame, 0, 3)) / 3.0
+    if kind == "hero":
+        var phase: Variant = actor.get("parry_phase")
+        if phase != null and str(phase) in ["ready", "recoil", "recover"]:
+            key = {"ready": "parry_ready", "recoil": "parry_recoil", "recover": "parry_recover"}[str(phase)]
+            if actor.has_method("get_parry_progress"):
+                progress = float(actor.call("get_parry_progress"))
+        elif state in ["parry", "parry_ready", "parry_recoil", "parry_recover"]:
+            key = "parry_ready" if state == "parry" else state
+    elif kind == "boss":
+        var reaction: Variant = actor.get("reaction_state")
+        if reaction != null and str(reaction) not in ["", "none"]:
+            key = str(reaction)
+            var value: Variant = actor.get("reaction_progress")
+            if value != null:
+                progress = float(value)
+        elif state in ["parry_recoil", "parry_recover", "guard_break", "guard_recover"]:
+            key = state
+        if key == "recoil":
+            key = "parry_recoil"
+        elif key == "recover":
+            key = "parry_recover"
+    if key == "":
+        return {}
+    if kind == "boss" and key not in ["parry_recoil", "parry_recover", "guard_break", "guard_recover"]:
+        return {}
+    return {"state": key, "progress": progress}
+
 static func paint(canvas: Node2D, kind: String, state: String, frame: int, facing: int) -> void:
     var region: Rect2
     var anchor: Vector2
@@ -61,7 +108,14 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
     if flash == null:
         flash = canvas.get("_hurt_timer")
     var flashing: bool = flash != null and float(flash) > 0.055
-    if kind == "hero":
+    var parry_pose: Dictionary = _parry_pose(canvas, kind, state, frame)
+    if not parry_pose.is_empty():
+        var key: String = "hero" if kind == "hero" else "boss"
+        texture = _texture("res://presentation/parry_frames/%s_%s.png" % [key, "flash" if flashing else "parry"])
+        frame_size = HERO_SIZE if kind == "hero" else Vector2(80, 80)
+        anchor = HERO_ANCHOR if kind == "hero" else Vector2(40, 76)
+        region = parry_region(kind, parry_pose["state"], float(parry_pose["progress"]))
+    elif kind == "hero":
         texture = _texture("res://presentation/feel_frames/hero_flash.png" if flashing else "res://presentation/feel_frames/hero_atlas.png")
         frame_size = HERO_SIZE
         anchor = HERO_ANCHOR

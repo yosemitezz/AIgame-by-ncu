@@ -15,7 +15,7 @@ func _ready() -> void:
         AudioServer.add_bus()
         bus = AudioServer.bus_count - 1
         AudioServer.set_bus_name(bus, "SFX")
-    for kind: String in ["light", "heavy", "parry", "swing", "dash", "hurt"]:
+    for kind: String in ["light", "heavy", "parry", "reflect", "break", "swing", "dash", "hurt"]:
         _streams[kind] = _synth(kind)
     for i: int in 6:
         var voice := AudioStreamPlayer.new()
@@ -45,7 +45,7 @@ func play_impact(kind: String) -> void:
 
 func _synth(kind: String) -> AudioStreamWAV:
     var rate: int = 22050
-    var length: float = 0.18 if kind == "parry" else (0.14 if kind == "heavy" else 0.08)
+    var length: float = 0.18 if kind in ["parry", "break"] else (0.14 if kind == "heavy" else 0.08)
     var pcm := PackedByteArray()
     var count: int = int(length * rate)
     pcm.resize(count * 2)
@@ -55,6 +55,8 @@ func _synth(kind: String) -> AudioStreamWAV:
         var noise: float = sin(float(i) * 1.932) * cos(float(i) * 0.7341)
         var sample: float
         match kind:
+            "reflect": sample = sin(TAU * 1760 * t) * 0.24 + noise * exp(-t * 95) * 0.07
+            "break": sample = sin(TAU * (190 * t - 310 * t * t)) * 0.32 + sin(TAU * 880 * t) * exp(-t * 28) * 0.15 + noise * exp(-t * 25) * 0.20
             "parry": sample = (sin(TAU * 1320 * t) + sin(TAU * 1980 * t) * 0.3) * 0.24 + noise * exp(-t * 100) * 0.15
             "heavy": sample = sin(TAU * (130 * t - 190 * t * t)) * 0.32 + noise * exp(-t * 32) * 0.30
             "swing": sample = noise * sin(PI * float(i) / count) * 0.28

@@ -14,6 +14,10 @@ const DASH_SPEED: float = 420.0
 const COYOTE_TIME: float = 0.10
 const JUMP_BUFFER: float = 0.12
 const PARRY_WINDOW: float = 0.16
+const PARRY_RECOIL: float = 0.06
+const PARRY_RECOVER: float = 0.10
+const PARRY_COUNTER_DELAY: float = 0.035
+const PARRY_RECOIL_SPEED: float = 55.0
 const ATTACK_STARTUP: float = 0.065
 const COMBO_WINDUP: Array[float] = [0.065, 0.080, 0.110]
 const COMBO_ACTIVE: Array[float] = [0.105, 0.120, 0.150]
@@ -28,6 +32,7 @@ var health: int = 8
 var max_health: int = 8
 var invuln: float = 0.0
 var parry_timer: float = 0.0
+var parry_phase: String = "none"
 var dash_timer: float = 0.0
 var attack_timer: float = 0.0
 var attack_phase: String = "none"
@@ -47,6 +52,8 @@ var _dash_cooldown: float = 0.0
 var _dash_buffer: float = 0.0
 var _parry_cooldown: float = 0.0
 var _parry_buffer: float = 0.0
+var _parry_elapsed: float = 0.0
+var _parry_seen: Dictionary = {}
 var _move_axis: float = 0.0
 var _combo_grace: float = 0.0
 var _attack_elapsed: float = 0.0
@@ -94,15 +101,24 @@ func _capture_input() -> void:
 		_parry_buffer = 0.12
 
 func _physics_process(delta: float) -> void:
+	if _parry_paused():
+		return
 	_capture_input()
 	impact_flash = maxf(0.0, impact_flash - delta)
 	# Defensive windows and cooldowns use real physics delta, even in local freeze.
 	invuln = maxf(0.0, invuln - delta)
 	parry_timer = maxf(0.0, parry_timer - delta)
+	if parry_timer <= 0.0:
+		_parry_seen.clear()
+		if parry_phase == "ready":
+			_clear_parry()
+	elif parry_phase == "none":
+		parry_phase = "ready"
 	_dash_cooldown = maxf(0.0, _dash_cooldown - delta)
 	_parry_cooldown = maxf(0.0, _parry_cooldown - delta)
 	var safe: bool = is_instance_valid(game) and bool(game.story_safe)
 	if safe:
+		_clear_parry()
 		_cancel_attack()
 		combat_freeze = 0.0
 		parry_timer = 0.0
@@ -111,6 +127,7 @@ func _physics_process(delta: float) -> void:
 		_parry_buffer = 0.0
 		_hurt_lock = 0.0
 	if dead:
+		_clear_parry()
 		_cancel_attack()
 		velocity = Vector2.ZERO
 		if combat_freeze > 0.0:
@@ -128,7 +145,7 @@ func _physics_process(delta: float) -> void:
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	_dash_buffer = maxf(0.0, _dash_buffer - delta)
 	_parry_buffer = maxf(0.0, _parry_buffer - delta)
-	if _move_axis != 0.0 and dash_timer <= 0.0 and attack_phase == "none":
+	if _move_axis != 0.0 and dash_timer <= 0.0 and attack_phase == "none" and parry_phase == "none":
 		facing = 1 if _move_axis > 0.0 else -1
 	if is_on_floor():
 		_coyote = COYOTE_TIME
@@ -137,13 +154,9 @@ func _physics_process(delta: float) -> void:
 		_coyote = maxf(0.0, _coyote - delta)
 	if _dash_buffer > 0.0 and _start_dash(_move_axis):
 		_dash_buffer = 0.0
-	elif not safe and _parry_buffer > 0.0 and _parry_cooldown <= 0.0 and dash_timer <= 0.0 and _hurt_lock <= 0.0 and can_cancel_attack():
-		_cancel_attack()
-		parry_timer = PARRY_WINDOW
-		_parry_cooldown = 0.38
-		_parry_buffer = 0.0
-		_fx("parry_ready", global_position + Vector2(facing * 14.0, -17.0), Vector2(facing, 0.0), 0.35)
-	if queued_attack and attack_phase == "none" and dash_timer <= 0.0 and parry_timer <= 0.0 and _hurt_lock <= 0.0 and not safe:
+	elif not safe and _parry_buffer > 0.0:
+		_start_parry()
+	if queued_attack and attack_phase == "none" and dash_timer <= 0.0 and not _parry_blocks_attack() and _hurt_lock <= 0.0 and not safe:
 		_start_attack()
 	if dash_timer > 0.0:
 		dash_timer = maxf(0.0, dash_timer - delta)
@@ -161,7 +174,7 @@ func _physics_process(delta: float) -> void:
 				desired *= 0.32 if attack_phase == "windup" else 0.70
 				if _lunge_timer > 0.0 and attack_phase == "active":
 					desired = facing * (150.0 if combo == 3 else (108.0 if combo == 2 else 88.0))
-			velocity.x = move_toward(velocity.x, desired, (1800.0 if is_on_floor() else 1250.0) * delta)
+			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, (1800.0 if is_on_floor() else 1250.0) * delta)
 		if _jump_buffer > 0.0 and _hurt_lock <= 0.0:
 			if _coyote > 0.0:
 				_jump(false)
@@ -176,6 +189,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if not was_grounded and is_on_floor():
 		_fx("land", global_position, Vector2.ZERO, 0.4)
+	_advance_parry(delta)
 	if attack_phase != "none":
 		_advance_attack(delta)
 	_refresh_animation(delta)
@@ -200,11 +214,12 @@ func can_cancel_attack() -> bool:
 	return false
 
 func _start_dash(move_axis: float) -> bool:
-	if dead or _dash_cooldown > 0.0 or _hurt_lock > 0.0 or combat_freeze > 0.0 or not can_cancel_attack() or (is_instance_valid(game) and bool(game.story_safe)):
+	if dead or _dash_cooldown > 0.0 or _hurt_lock > 0.0 or combat_freeze > 0.0 or parry_phase == "recoil" or not can_cancel_attack() or (is_instance_valid(game) and bool(game.story_safe)):
 		return false
 	if move_axis != 0.0:
 		facing = 1 if move_axis > 0.0 else -1
 	_cancel_attack()
+	_clear_parry()
 	dash_timer = 0.16
 	_dash_cooldown = 0.48
 	invuln = maxf(invuln, 0.15)
@@ -225,8 +240,9 @@ func _start_attack() -> void:
 	if attack_phase != "none" or combat_freeze > 0.0:
 		queued_attack = true
 		return
-	if _hurt_lock > 0.0 or dash_timer > 0.0 or parry_timer > 0.0:
+	if _hurt_lock > 0.0 or dash_timer > 0.0 or _parry_blocks_attack():
 		return
+	_clear_parry()
 	if _move_axis != 0.0:
 		facing = 1 if _move_axis > 0.0 else -1
 	combo = combo % 3 + 1 if _combo_grace > 0.0 else 1
@@ -317,6 +333,7 @@ func receive_hit(amount: int, origin: Vector2) -> bool:
 	impact_flash = 0.11
 	invuln = 0.80
 	_hurt_lock = 0.18
+	_clear_parry()
 	_cancel_attack()
 	parry_timer = 0.0
 	dash_timer = 0.0
@@ -332,16 +349,109 @@ func receive_hit(amount: int, origin: Vector2) -> bool:
 	_refresh_animation(0.0)
 	return true
 
-func parry_success(target: Node = null) -> void:
+func _parry_paused() -> bool:
+	if is_inside_tree() and get_tree().paused:
+		return true
+	return is_instance_valid(game) and game.get("_paused") == true
+
+func _start_parry() -> bool:
+	if dead or _parry_paused() or not is_instance_valid(game) or bool(game.story_safe) or _parry_cooldown > 0.0 or dash_timer > 0.0 or _hurt_lock > 0.0 or parry_phase == "recoil" or not can_cancel_attack():
+		return false
+	_cancel_attack()
+	_clear_parry()
+	if _move_axis != 0.0:
+		facing = 1 if _move_axis > 0.0 else -1
+	parry_timer = PARRY_WINDOW
+	parry_phase = "ready"
+	_parry_cooldown = 0.38
+	_set_animation("parry", 0.0)
+	_fx("parry_ready", global_position + Vector2(facing * 14.0, -17.0), Vector2(facing, 0.0), 0.35)
+	return true
+
+func parry_success(target: Node = null, contact: Vector2 = Vector2.INF, kind: String = "melee", token: int = -1) -> bool:
 	if dead or (is_instance_valid(game) and bool(game.story_safe)):
-		return
+		_clear_parry()
+		return false
+	if not is_instance_valid(game) or _parry_paused() or parry_timer <= 0.0:
+		return false
+	if kind not in ["melee", "projectile", "guard_break"]:
+		return false
+	# Default contact/token are a compatibility path for minimal old mocks.
+	# Every actual enemy/Boss/projectile supplies its real contact and serial.
+	var legacy: bool = contact == Vector2.INF and token < 0 and not game.has_method("on_parry_contact")
+	if game.has_method("on_parry_contact") and token < 0:
+		return false
+	if legacy:
+		contact = global_position + Vector2(facing * 18.0, -16.0)
+	if not contact.is_finite():
+		return false
+	var relative: Vector2 = contact - (global_position + Vector2(0.0, -16.0))
+	if relative.x * facing < 0.0 or absf(relative.x) > 64.0 or absf(relative.y) > 42.0:
+		return false
+	if kind != "projectile" and target is Node2D and (target.global_position.x - global_position.x) * facing < 0.0:
+		return false
+	if token >= 0:
+		if not is_instance_valid(target):
+			return false
+		var key: String = "%d:%d" % [target.get_instance_id(), token]
+		if _parry_seen.has(key):
+			return false
+		_parry_seen[key] = true
+	var counter_intent: bool = queued_attack
+	_cancel_attack()
+	queued_attack = counter_intent
+	dash_timer = 0.0
+	parry_phase = "recoil"
+	_parry_elapsed = 0.0
+	velocity.x = -facing * PARRY_RECOIL_SPEED
 	invuln = maxf(invuln, 0.18)
 	_dash_cooldown = 0.0
-	# The success reward never extends the real 0.16s contact window.
-	_fx("parry", global_position + Vector2(facing * 14.0, -16.0), Vector2(facing, 0.0), 1.4)
+	_set_animation("parry_recoil", 0.0)
+	# Never extend the original real-time contact window on a successful clash.
 	parried.emit()
-	if is_instance_valid(game) and game.has_method("request_impact"):
-		game.request_impact(self, target, false, true)
+	if game.has_method("on_parry_contact"):
+		game.on_parry_contact(self, target, contact, kind)
+	else:
+		_fx("parry", contact, Vector2(facing, 0.0), 1.4)
+		if game.has_method("request_impact"):
+			game.request_impact(self, target, false, true)
+	return true
+
+func get_parry_progress() -> float:
+	match parry_phase:
+		"ready": return clampf(1.0 - parry_timer / PARRY_WINDOW, 0.0, 1.0)
+		"recoil": return clampf(_parry_elapsed / PARRY_RECOIL, 0.0, 1.0)
+		"recover": return clampf(_parry_elapsed / PARRY_RECOVER, 0.0, 1.0)
+	return 0.0
+
+func _parry_blocks_attack() -> bool:
+	if parry_phase == "recoil":
+		return true
+	if parry_phase == "recover":
+		return _parry_elapsed < PARRY_COUNTER_DELAY
+	return parry_timer > 0.0 or parry_phase == "ready"
+
+func _advance_parry(delta: float) -> void:
+	var remaining: float = maxf(0.0, delta)
+	while remaining > 0.000001 and parry_phase in ["recoil", "recover"]:
+		var duration: float = PARRY_RECOIL if parry_phase == "recoil" else PARRY_RECOVER
+		var step: float = minf(remaining, maxf(0.0, duration - _parry_elapsed))
+		_parry_elapsed += step
+		remaining -= step
+		if _parry_elapsed >= duration - 0.000001:
+			if parry_phase == "recoil":
+				parry_phase = "recover"
+				_parry_elapsed = 0.0
+				_set_animation("parry_recover", 0.0)
+			else:
+				_clear_parry()
+
+func _clear_parry() -> void:
+	parry_timer = 0.0
+	parry_phase = "none"
+	_parry_elapsed = 0.0
+	_parry_buffer = 0.0
+	_parry_seen.clear()
 
 func revive(at: Vector2) -> void:
 	global_position = at
@@ -351,6 +461,7 @@ func revive(at: Vector2) -> void:
 	invuln = 1.0
 	combat_freeze = 0.0
 	impact_flash = 0.0
+	_clear_parry()
 	_cancel_attack()
 	parry_timer = 0.0
 	dash_timer = 0.0
@@ -374,6 +485,10 @@ func _refresh_animation(delta: float) -> void:
 		_set_animation("hurt", delta)
 	elif dash_timer > 0.0:
 		_set_animation("dash", delta)
+	elif parry_phase == "recoil":
+		_set_animation("parry_recoil", delta)
+	elif parry_phase == "recover":
+		_set_animation("parry_recover", delta)
 	elif parry_timer > 0.0:
 		_set_animation("parry", delta)
 	elif attack_phase != "none":
@@ -393,6 +508,8 @@ func _set_animation(state: String, delta: float) -> void:
 		_state_clock += delta
 	if state in ["windup", "attack", "recover"] and attack_phase != "none":
 		frame = clampi(int(4.0 * get_attack_progress() + 0.000001), 0, 3)
+	elif state in ["parry", "parry_recoil", "parry_recover"] and parry_phase != "none":
+		frame = clampi(int(4.0 * get_parry_progress() + 0.000001), 0, 3)
 	elif state == "run":
 		frame = int(_state_clock * 12.0) % 6
 	elif state == "idle":

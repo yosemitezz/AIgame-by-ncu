@@ -37,7 +37,8 @@ func configure(p_game: Node) -> void:
 
 func _texture(name: String) -> Texture2D:
     if not _texture_cache.has(name):
-        _texture_cache[name] = load("res://presentation/feel_frames/%s.png" % name)
+        var path: String = "res://presentation/parry_frames/%s.png" % name.trim_prefix("parry/") if name.begins_with("parry/") else "res://presentation/feel_frames/%s.png" % name
+        _texture_cache[name] = load(path)
     return _texture_cache[name]
 
 func emit_effect(kind: String, at: Vector2, direction: Vector2, power: float = 1.0) -> void:
@@ -54,6 +55,14 @@ func emit_effect(kind: String, at: Vector2, direction: Vector2, power: float = 1
                 effect["serial"] = int(game.player.attack_serial)
                 effect["owner_offset"] = at - game.player.global_position
                 effect["progress"] = 0.0
+        "blade_parry", "projectile_parry", "guard_break":
+            if _recent(kind, at, 0.025):
+                return
+            var size: int = 40 if kind == "projectile_parry" else (96 if kind == "guard_break" else 80)
+            var duration: float = 0.14 if kind == "projectile_parry" else (0.25 if kind == "guard_break" else 0.16)
+            _add_effect(kind, at, sign_x, duration, "parry/" + kind, size)
+            _effects.back()["frames"] = 6
+            _contact_sparks(at, direction, 4 if kind == "projectile_parry" else (10 if kind == "guard_break" else 8), kind == "guard_break")
         "parry":
             if _recent("parry", at, 0.035):
                 return
@@ -105,6 +114,17 @@ func _scatter(at: Vector2, direction: Vector2, amount: int, cyan: bool, force: f
         var spread: float = _rng.randf_range(-1.3, 1.3)
         var speed: float = _rng.randf_range(35, 95) * force
         _chips.append({"at": at.round(), "motion": normal.rotated(spread) * speed, "age": 0.0, "duration": _rng.randf_range(0.16, 0.31), "cyan": cyan, "size": 2 if i % 3 else 3})
+    while _chips.size() > MAX_CHIPS:
+        _chips.pop_front()
+
+func _contact_sparks(at: Vector2, direction: Vector2, amount: int, heavy: bool) -> void:
+    var normal: Vector2 = direction.normalized() if direction.length_squared() > 0.01 else Vector2.RIGHT
+    for i: int in amount:
+        # Short orange/gold fan: deliberately distinct from the colored outer ribbon.
+        var spread: float = lerpf(-0.95, 0.95, float(i) / maxf(1, amount - 1))
+        var speed: float = _rng.randf_range(60, 130) * (1.15 if heavy else 1.0)
+        var color: Color = Color("ffd27b") if i % 3 == 0 else Color("f0a150")
+        _chips.append({"at": at.round(), "motion": normal.rotated(spread) * speed, "age": 0.0, "duration": _rng.randf_range(0.10, 0.18), "cyan": false, "size": 2 if i % 3 == 0 else 1, "color": color, "trail_len": 5.0 if heavy else 4.0})
     while _chips.size() > MAX_CHIPS:
         _chips.pop_front()
 
@@ -229,7 +249,7 @@ func _draw() -> void:
     for warning: Dictionary in _warnings:
         var at: Vector2 = warning["at"]
         var t: float = float(warning["age"]) / float(warning["duration"])
-        var gold := Color("e9bb68")
+        var gold := Color("ef8580") if warning["kind"] == "unblockable_charge" else Color("e9bb68")
         if warning["kind"] == "rain":
             for x: int in [-96, -48, 48, 96]:
                 for y: int in range(133, 293, 16):
@@ -238,8 +258,17 @@ func _draw() -> void:
         else:
             draw_line(at + Vector2(-15, 8), at + Vector2(15, 8), gold, 1, false)
             draw_rect(Rect2(at + Vector2(-15, 11), Vector2(30 * t, 2)), gold)
-            draw_line(at + Vector2(0, -12), at + Vector2(0, -6), gold, 2, false)
-            draw_rect(Rect2(at + Vector2(-1, -3), Vector2(2, 2)), gold)
+            if warning["kind"] == "unblockable_charge":
+                draw_line(at + Vector2(-5, -13), at + Vector2(5, -3), gold, 2, false)
+                draw_line(at + Vector2(5, -13), at + Vector2(-5, -3), gold, 2, false)
+            elif warning["kind"] == "armored_slash":
+                draw_line(at + Vector2(-12, -13), at + Vector2(-12, -5), gold, 1, false)
+                draw_line(at + Vector2(12, -13), at + Vector2(12, -5), gold, 1, false)
+                for i: int in 3:
+                    draw_rect(Rect2(at + Vector2(-7 + i * 6, -11), Vector2(3, 3)), Color("b08ae5"))
+            else:
+                draw_line(at + Vector2(0, -12), at + Vector2(0, -6), gold, 2, false)
+                draw_rect(Rect2(at + Vector2(-1, -3), Vector2(2, 2)), gold)
     for trail: Dictionary in _trails:
         var points: Array = trail["points"]
         var fade: float = 1.0 - float(trail["age"]) / TRAIL_FADE if bool(trail["ended"]) else 1.0
@@ -251,8 +280,9 @@ func _draw() -> void:
         var t: float = float(effect.get("progress", float(effect["age"]) / float(effect["duration"])))
         if effect["image"] != "":
             var size: int = effect["size"]
-            var frame: int = mini(4, int(t * 5))
-            var tint := Color(1, 1, 1, 1.0 if frame < 3 else (1 - t) * 2.0)
+            var frame_count: int = int(effect.get("frames", 5))
+            var frame: int = mini(frame_count - 1, int(t * frame_count))
+            var tint := Color(1, 1, 1, 1.0 if t < 0.5 else (1 - t) * 2.0)
             if bool(effect["hostile"]):
                 tint = Color(1.25, 0.85, 0.36, tint.a)
             draw_set_transform(at, 0, Vector2(float(effect["facing"]), 1))
@@ -278,9 +308,9 @@ func _draw() -> void:
     for chip: Dictionary in _chips:
         var at: Vector2 = Vector2(chip["at"]).round()
         var t: float = float(chip["age"]) / float(chip["duration"])
-        var ink := Color("72c6c7") if bool(chip["cyan"]) else Color("bcaa7b")
+        var ink: Color = chip.get("color", Color("72c6c7") if bool(chip["cyan"]) else Color("bcaa7b"))
         ink.a = minf(1, (1 - t) * 1.5)
         var velocity: Vector2 = chip["motion"]
         if t < 0.45:
-            draw_line(at, (at - velocity.normalized() * 4).round(), ink, 1, false)
+            draw_line(at, (at - velocity.normalized() * float(chip.get("trail_len", 4))).round(), ink, 1, false)
         draw_rect(Rect2(at, Vector2.ONE * int(chip["size"])), ink)

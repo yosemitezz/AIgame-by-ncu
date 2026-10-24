@@ -9,7 +9,7 @@ $env:TMP = $env:TEMP
 $env:APPDATA = Join-Path $projectRoot '.local/appdata'
 $env:LOCALAPPDATA = $env:APPDATA
 $env:XDG_CACHE_HOME = Join-Path $projectRoot '.local/cache'
-$checks = @(@('import','--editor','--import','--quit'),@('integration','--script','res://tests/integration_test.gd'),@('music-contract','--script','res://tests/music_contract_test.gd'),@('combat-feel','--script','res://tests/combat_feel_test.gd'),@('impact-feedback','--script','res://tests/impact_feedback_test.gd'),@('startup','--quit-after','60'))
+$checks = @(@('import','--editor','--import','--quit'),@('integration','--script','res://tests/integration_test.gd'),@('music-contract','--script','res://tests/music_contract_test.gd'),@('combat-feel','--script','res://tests/combat_feel_test.gd'),@('impact-feedback','--script','res://tests/impact_feedback_test.gd'),@('parry-controller','--script','res://tests/parry_controller_test.gd'),@('boss-parry','--script','res://tests/boss_parry_test.gd'),@('parry-integration','--script','res://tests/parry_integration_test.gd'),@('font-glyph','--script','res://tools/font_glyph_check.gd'),@('startup','--quit-after','60'))
 foreach ($check in $checks) {
     $name = $check[0]
     $log = Join-Path $projectRoot ('artifacts/'+$name+'.log')
@@ -22,7 +22,7 @@ foreach ($check in $checks) {
     $output = (Get-Content -LiteralPath $stdout -Raw) + (Get-Content -LiteralPath $stderr -Raw)
     $bad = $output | Select-String -Pattern 'SCRIPT ERROR:|ERROR:|Parse Error|FAIL |leaked|still in use at exit'
     if ($code -ne 0 -or $bad) { throw ($name+' failed (exit '+$code+'): '+($bad -join '; ')) }
-    if ($name -in @('integration','music-contract','combat-feel','impact-feedback') -and $output -notmatch '0 failed') { throw ($name+' did not finish its assertions') }
+    if ($name -in @('integration','music-contract','combat-feel','impact-feedback','parry-controller','boss-parry','parry-integration') -and $output -notmatch '0 failed') { throw ($name+' did not finish its assertions') }
     Write-Output ($name+' PASS (exit 0, no engine/script errors)')
 }
 exit 0
