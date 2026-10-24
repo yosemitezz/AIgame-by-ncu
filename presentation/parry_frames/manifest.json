@@ -1,12 +1,12 @@
 {
   "hero": {
     "canvas": [
-      64,
-      64
+      144,
+      128
     ],
     "anchor": [
-      28,
-      58
+      66,
+      108
     ],
     "states": {
       "parry_ready": 0,

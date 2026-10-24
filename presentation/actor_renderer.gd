@@ -1,8 +1,8 @@
 extends RefCounted
 ## Sprite presentation only; phase and facing come from gameplay.
 ## New integer-grid poses retain a stable feet anchor. No gameplay transforms.
-const HERO_ANCHOR := Vector2(28, 58)
-const HERO_SIZE := Vector2(64, 64)
+const HERO_ANCHOR := Vector2(66, 108)
+const HERO_SIZE := Vector2(144, 128)
 const ORIGINAL_STATES := ["idle", "run", "jump", "fall", "dash", "attack", "parry", "hurt", "dead", "windup"]
 static var _textures: Dictionary = {}
 static var _manifest: Dictionary = {}
@@ -21,16 +21,19 @@ static func _data() -> Dictionary:
                 _manifest = parsed
     return _manifest
 
+static func is_airborne(actor: Object) -> bool:
+    return actor is CharacterBody2D and not (actor as CharacterBody2D).is_on_floor()
+
 static func _combo(actor: Object) -> int:
     var value: Variant = actor.get("combo")
     return clampi(int(value), 1, 3) if value != null else 1
 
-static func hero_region(state: String, frame: int, combo: int = 1) -> Rect2:
+static func hero_region(state: String, frame: int, combo: int = 1, airborne: bool = false) -> Rect2:
     var data: Dictionary = _data()
     var states: Dictionary = data.get("hero", {}).get("states", {})
     var key: String = state
     if state in ["windup", "attack", "recover"]:
-        key = "cut_%d_%s" % [clampi(combo, 1, 3), state]
+        key = "%scut_%d_%s" % ["air_" if airborne else "", clampi(combo, 1, 3), state]
     elif state == "death":
         key = "dead"
     if not states.has(key):
@@ -39,10 +42,10 @@ static func hero_region(state: String, frame: int, combo: int = 1) -> Rect2:
     var index: int = int(descriptor["start"]) + posmod(frame, int(descriptor["count"]))
     return Rect2(Vector2(index % 8, index / 8) * HERO_SIZE, HERO_SIZE)
 
-static func weapon_tip_local(combo: int, frame: int) -> Vector2:
+static func weapon_tip_local(combo: int, frame: int, airborne: bool = false) -> Vector2:
     var data: Dictionary = _data()
     var tips: Dictionary = data.get("hero", {}).get("weapon_tips", {})
-    var key: String = "cut_%d_attack" % clampi(combo, 1, 3)
+    var key: String = "%scut_%d_attack" % ["air_" if airborne else "", clampi(combo, 1, 3)]
     var points: Array = tips.get(key, [[20, -24]])
     var point: Array = points[clampi(frame, 0, points.size() - 1)]
     return Vector2(float(point[0]), float(point[1]))
@@ -119,7 +122,7 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
         texture = _texture("res://presentation/feel_frames/hero_flash.png" if flashing else "res://presentation/feel_frames/hero_atlas.png")
         frame_size = HERO_SIZE
         anchor = HERO_ANCHOR
-        region = hero_region(state, frame, _combo(canvas))
+        region = hero_region(state, frame, _combo(canvas), is_airborne(canvas))
     else:
         var key: String = kind if kind in ["sentry", "elite", "wisp", "boss"] else "sentry"
         texture = _texture("res://presentation/feel_frames/%s_flash.png" % key if flashing else "res://assets/art/placeholder_%s.png" % key)
@@ -131,6 +134,12 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
         region = Rect2(Vector2(posmod(frame, 6) * frame_size.x, row * frame_size.y), frame_size)
     if texture == null:
         return
-    canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2(float(facing), 1))
+    # Optional squash and stretch about the feet; the hero sets it for take-off, landing and the cut itself.
+    var squash: Vector2 = Vector2.ONE
+    if kind == "hero":
+        var squash_value: Variant = canvas.get("visual_scale")
+        if squash_value is Vector2:
+            squash = squash_value
+    canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2(float(facing) * squash.x, squash.y))
     canvas.draw_texture_rect_region(texture, Rect2(-anchor, frame_size), region)
     canvas.draw_set_transform(Vector2.ZERO)

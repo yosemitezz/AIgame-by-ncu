@@ -137,7 +137,7 @@ func _snapshot_ghost() -> void:
         return
     _last_ghost_clock = _clock
     _last_ghost_at = position_now
-    var region: Rect2 = ActorRenderer.hero_region(str(actor.animation_state), int(actor.frame), int(actor.combo))
+    var region: Rect2 = ActorRenderer.hero_region(str(actor.animation_state), int(actor.frame), int(actor.combo), ActorRenderer.is_airborne(actor))
     _ghosts.append({"at": actor.global_position.round(), "region": region, "facing": int(actor.facing), "age": 0.0, "duration": 0.15})
     while _ghosts.size() > MAX_GHOSTS:
         _ghosts.pop_front()
@@ -171,7 +171,7 @@ func _start_trail(serial: int) -> void:
 func _update_trail(actor: Node2D) -> void:
     if _current_trail < 0 or _current_trail >= _trails.size():
         return
-    var local_tip: Vector2 = ActorRenderer.weapon_tip_local(int(actor.combo), int(actor.frame))
+    var local_tip: Vector2 = ActorRenderer.weapon_tip_local(int(actor.combo), int(actor.frame), ActorRenderer.is_airborne(actor))
     local_tip.x *= int(actor.facing)
     var tip: Vector2 = (actor.global_position + local_tip).round()
     var points: Array = _trails[_current_trail]["points"]

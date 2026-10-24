@@ -4,7 +4,7 @@
 
 `tools/generate_parry_frames.py` authors 24 integer-pixel actor poses: hero ready/recoil/recover (four frames each), Boss recoil/guard break/guard recovery (four frames each). Arms, sword/halberd angle, hood/helm, torso, knees and cloak are redrawn from pose coordinates. No whole-body image translation/rotation is used as a substitute for animation. Existing feel frames and Cursor source images are unchanged.
 
-Hero canvas/feet anchor stay 64x64/(28,58); Boss stay 80x80/(40,76). Hero parry phases use `parry_phase` and `get_parry_progress()`. Boss uses `reaction_state` and `reaction_progress`: ordinary `parry_recoil` then `parry_recover` returns the deflected weapon without kneeling; only `guard_break` lowers the body into a knee, followed by `guard_recover`. Collapse occurs near the beginning of the actual break stage and then holds, rather than waiting until the counter window is nearly over.
+Hero canvas/feet anchor are 144x128/(66,108) (see `docs/feel-frames.md`); Boss stay 80x80/(40,76). Hero parry phases use `parry_phase` and `get_parry_progress()`. Boss uses `reaction_state` and `reaction_progress`: ordinary `parry_recoil` then `parry_recover` returns the deflected weapon without kneeling; only `guard_break` lowers the body into a knee, followed by `guard_recover`. Collapse occurs near the beginning of the actual break stage and then holds, rather than waiting until the counter window is nearly over.
 
 The renderer never owns these timers and does not advance actor poses from an unrelated visual age. Pauses/local actor holds preserve the corresponding real stage progress.
 

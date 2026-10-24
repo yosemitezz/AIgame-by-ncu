@@ -16,6 +16,9 @@ var _cooldown: float = 0.8
 var _windup: float = 0.0
 var _recovery: float = 0.0
 var _stagger: float = 0.0
+## Hit reaction: "" | "knockback" | "stun" | "launch". Launch tumbles through the air, stun leaves the enemy dizzy.
+var reaction: String = ""
+var _stun: float = 0.0
 var _hurt_flash: float = 0.0
 var hurt_flash: float = 0.0
 var combat_freeze: float = 0.0
@@ -76,6 +79,9 @@ func _physics_process(delta: float) -> void:
 	hurt_flash = _hurt_flash
 	modulate = Color(2.5, 2.1, 1.7, 1.0) if hurt_flash > 0.065 else Color.WHITE
 	_stagger = maxf(0.0, _stagger - delta)
+	_stun = maxf(0.0, _stun - delta)
+	if _stagger <= 0.0 and _stun <= 0.0:
+		reaction = ""
 	_cooldown = maxf(0.0, _cooldown - delta)
 	_recovery = maxf(0.0, _recovery - delta)
 	if dead:
@@ -237,6 +243,37 @@ func receive_hit(amount: int, origin: Vector2) -> void:
 	if health <= 0:
 		_die()
 
+## Extra reaction on top of receive_hit: "knockback" shoves, "stun" leaves the enemy dizzy, "launch" throws it up.
+## Elites resist: shorter stun, lower launch. Wisps drift instead of falling.
+func react(kind: String, origin: Vector2) -> void:
+	if dead or kind == "" or (is_instance_valid(game) and bool(game.story_safe)):
+		return
+	var away: float = 1.0 if global_position.x >= origin.x else -1.0
+	var tough: float = 0.55 if kind_is_elite() else 1.0
+	reaction = kind
+	match kind:
+		"knockback":
+			velocity.x = away * 260.0 * tough
+			_stagger = maxf(_stagger, 0.3)
+		"stun":
+			_stun = 1.0 * tough
+			_stagger = maxf(_stagger, _stun)
+			_cooldown = maxf(_cooldown, _stagger + 0.3)
+			velocity.x = away * 40.0
+			if is_instance_valid(game):
+				game.emit_fx("stun", global_position + Vector2(0.0, -32.0 if kind_is_elite() else -28.0), Vector2.UP, 1.0)
+		"launch":
+			velocity = Vector2(away * 210.0 * tough, -330.0 * tough)
+			_stagger = maxf(_stagger, 0.7 * tough)
+			_cooldown = maxf(_cooldown, _stagger + 0.3)
+			if kind != "wisp" and is_instance_valid(game):
+				game.emit_fx("launch", global_position + Vector2(0.0, -6.0), Vector2(away, -1.0), 1.0)
+	animation_state = "hurt"
+	_publish_animation()
+
+func kind_is_elite() -> bool:
+	return kind == "elite"
+
 func _die() -> void:
 	if dead:
 		return
@@ -256,6 +293,12 @@ func _draw() -> void:
 	if _windup > 0.0:
 		draw_rect(Rect2(-2.0, -41.0, 4.0, 8.0), Color("ffd77c"))
 		draw_rect(Rect2(-2.0, -31.0, 4.0, 3.0), Color("fff1bd"))
+	if _stun > 0.0 and not dead:
+		# Dizzy halo: three small diamonds orbiting the head.
+		for i: int in 3:
+			var a: float = _clock * 7.0 + TAU * float(i) / 3.0
+			var p: Vector2 = Vector2(cos(a) * 9.0, -36.0 + sin(a) * 3.0).round()
+			draw_colored_polygon(PackedVector2Array([p + Vector2(0, -3), p + Vector2(3, 0), p + Vector2(0, 3), p + Vector2(-3, 0)]), Color("fff1bd"))
 	if health < max_health and not dead:
 		draw_rect(Rect2(-14.0, -45.0, 28.0, 3.0), Color("161829"))
 		draw_rect(Rect2(-14.0, -45.0, 28.0 * health / max_health, 3.0), Color("f07873"))

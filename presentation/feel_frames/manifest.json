@@ -4,85 +4,145 @@
   "license": "MIT",
   "hero": {
     "canvas": [
-      64,
-      64
+      144,
+      128
     ],
     "anchor": [
-      28,
-      58
+      66,
+      108
     ],
     "columns": 8,
     "states": {
       "idle": {
         "start": 0,
-        "count": 4
-      },
-      "run": {
-        "start": 4,
         "count": 6
       },
+      "run": {
+        "start": 6,
+        "count": 8
+      },
       "jump": {
-        "start": 10,
-        "count": 4
+        "start": 14,
+        "count": 3
+      },
+      "apex": {
+        "start": 17,
+        "count": 2
       },
       "fall": {
-        "start": 14,
-        "count": 4
+        "start": 19,
+        "count": 3
       },
-      "dash": {
-        "start": 18,
-        "count": 4
-      },
-      "parry": {
+      "land": {
         "start": 22,
-        "count": 4
+        "count": 3
       },
-      "hurt": {
-        "start": 26,
-        "count": 4
+      "air_jump": {
+        "start": 25,
+        "count": 6
       },
-      "dead": {
-        "start": 30,
-        "count": 4
+      "crouch_in": {
+        "start": 31,
+        "count": 3
       },
-      "cut_1_windup": {
+      "crouch": {
         "start": 34,
         "count": 4
       },
-      "cut_1_attack": {
+      "crouch_out": {
         "start": 38,
+        "count": 3
+      },
+      "crouch_walk": {
+        "start": 41,
+        "count": 6
+      },
+      "dash": {
+        "start": 47,
+        "count": 4
+      },
+      "hurt": {
+        "start": 51,
+        "count": 4
+      },
+      "dead": {
+        "start": 55,
+        "count": 4
+      },
+      "cut_1_windup": {
+        "start": 59,
+        "count": 4
+      },
+      "cut_1_attack": {
+        "start": 63,
         "count": 4
       },
       "cut_1_recover": {
-        "start": 42,
+        "start": 67,
         "count": 4
       },
       "cut_2_windup": {
-        "start": 46,
+        "start": 71,
         "count": 4
       },
       "cut_2_attack": {
-        "start": 50,
+        "start": 75,
         "count": 4
       },
       "cut_2_recover": {
-        "start": 54,
+        "start": 79,
         "count": 4
       },
       "cut_3_windup": {
-        "start": 58,
+        "start": 83,
         "count": 4
       },
       "cut_3_attack": {
-        "start": 62,
+        "start": 87,
         "count": 4
       },
       "cut_3_recover": {
-        "start": 66,
+        "start": 91,
+        "count": 4
+      },
+      "air_cut_1_windup": {
+        "start": 95,
+        "count": 4
+      },
+      "air_cut_1_attack": {
+        "start": 99,
+        "count": 4
+      },
+      "air_cut_1_recover": {
+        "start": 103,
+        "count": 4
+      },
+      "air_cut_2_windup": {
+        "start": 107,
+        "count": 4
+      },
+      "air_cut_2_attack": {
+        "start": 111,
+        "count": 4
+      },
+      "air_cut_2_recover": {
+        "start": 115,
+        "count": 4
+      },
+      "air_cut_3_windup": {
+        "start": 119,
+        "count": 4
+      },
+      "air_cut_3_attack": {
+        "start": 123,
+        "count": 4
+      },
+      "air_cut_3_recover": {
+        "start": 127,
         "count": 4
       }
     },
-    "total_frames": 70,
+    "total_frames": 131,
     "palette_rgb": [
       "#101626",
       "#24354e",
@@ -101,167 +161,330 @@
     "weapon_tips": {
       "cut_1_windup": [
         [
-          11,
-          -54
+          -35,
+          -63
         ],
         [
-          -5,
-          -56
+          -46,
+          -48
         ],
         [
-          -18,
-          -53
+          -51,
+          -38
         ],
         [
-          -23,
-          -50
+          -53,
+          -33
         ]
       ],
       "cut_1_attack": [
         [
-          14,
-          -55
+          -14,
+          -80
         ],
         [
-          31,
-          -38
+          48,
+          -66
         ],
         [
-          31,
-          -17
+          65,
+          -12
         ],
         [
-          16,
-          -2
+          59,
+          -1
         ]
       ],
       "cut_1_recover": [
         [
-          14,
-          -3
+          55,
+          -1
         ],
         [
-          20,
+          51,
+          -1
+        ],
+        [
+          44,
+          -1
+        ],
+        [
+          42,
           -8
-        ],
-        [
-          25,
-          -17
-        ],
-        [
-          28,
-          -23
         ]
       ],
       "cut_2_windup": [
         [
-          24,
-          -12
+          37,
+          -1
         ],
         [
-          15,
-          -4
+          -17,
+          -1
         ],
         [
-          8,
-          -2
+          -21,
+          -1
         ],
         [
-          1,
+          -23,
           -1
         ]
       ],
       "cut_2_attack": [
         [
-          25,
-          -9
+          -12,
+          -1
+        ],
+        [
+          60,
+          -16
         ],
         [
           33,
-          -31
+          -74
         ],
         [
-          19,
-          -52
-        ],
-        [
-          -7,
-          -57
+          -28,
+          -73
         ]
       ],
       "cut_2_recover": [
         [
-          0,
-          -57
+          -40,
+          -64
         ],
         [
-          12,
-          -53
+          -24,
+          -74
         ],
         [
-          24,
-          -41
+          3,
+          -80
         ],
         [
-          28,
-          -23
+          27,
+          -72
         ]
       ],
       "cut_3_windup": [
         [
-          -2,
-          -57
+          -46,
+          -47
         ],
         [
-          -15,
-          -54
+          -53,
+          -32
         ],
         [
-          -22,
-          -50
+          -56,
+          -20
         ],
         [
-          -24,
-          -49
+          -56,
+          -14
         ]
       ],
       "cut_3_attack": [
         [
-          15,
-          -54
+          -30,
+          -69
         ],
         [
-          33,
-          -34
+          47,
+          -63
         ],
         [
-          34,
-          -26
+          68,
+          -6
         ],
         [
-          34,
-          -22
+          65,
+          -1
         ]
       ],
       "cut_3_recover": [
         [
-          31,
-          -18
+          65,
+          -1
         ],
         [
-          28,
+          62,
+          -1
+        ],
+        [
+          58,
+          -1
+        ],
+        [
+          51,
+          -1
+        ]
+      ],
+      "air_cut_1_windup": [
+        [
+          -35,
+          -69
+        ],
+        [
+          -44,
+          -55
+        ],
+        [
+          -49,
+          -47
+        ],
+        [
+          -50,
+          -42
+        ]
+      ],
+      "air_cut_1_attack": [
+        [
+          -15,
+          -87
+        ],
+        [
+          45,
+          -75
+        ],
+        [
+          61,
+          -21
+        ],
+        [
+          48,
+          -1
+        ]
+      ],
+      "air_cut_1_recover": [
+        [
+          44,
+          -1
+        ],
+        [
+          39,
+          -1
+        ],
+        [
+          39,
+          -7
+        ],
+        [
+          40,
           -14
+        ]
+      ],
+      "air_cut_2_windup": [
+        [
+          27,
+          -1
+        ],
+        [
+          -10,
+          -1
+        ],
+        [
+          -13,
+          -1
+        ],
+        [
+          -16,
+          -2
+        ]
+      ],
+      "air_cut_2_attack": [
+        [
+          -9,
+          -1
+        ],
+        [
+          56,
+          -25
+        ],
+        [
+          30,
+          -83
+        ],
+        [
+          -29,
+          -81
+        ]
+      ],
+      "air_cut_2_recover": [
+        [
+          -40,
+          -72
+        ],
+        [
+          -25,
+          -82
+        ],
+        [
+          2,
+          -87
         ],
         [
           27,
-          -16
+          -78
+        ]
+      ],
+      "air_cut_3_windup": [
+        [
+          -45,
+          -55
         ],
         [
-          29,
-          -23
+          -51,
+          -42
+        ],
+        [
+          -53,
+          -32
+        ],
+        [
+          -53,
+          -27
+        ]
+      ],
+      "air_cut_3_attack": [
+        [
+          -30,
+          -80
+        ],
+        [
+          44,
+          -74
+        ],
+        [
+          62,
+          -17
+        ],
+        [
+          52,
+          -1
+        ]
+      ],
+      "air_cut_3_recover": [
+        [
+          52,
+          -1
+        ],
+        [
+          48,
+          -1
+        ],
+        [
+          44,
+          -2
+        ],
+        [
+          43,
+          -6
         ]
       ]
-    }
+    },
+    "source": "Joint rig in tools/hero_rig.py, re-rasterised per frame at 4x then reduced with NEAREST."
   },
   "vfx": {
     "slash_1": {

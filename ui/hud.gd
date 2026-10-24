@@ -59,7 +59,7 @@ func _draw() -> void:
     frame_box(Rect2(8, 312, 624, 48))
     text(Vector2(16, 327), str(state.get("hint", "")), 12, Color.WHITE, 606)
     text(Vector2(16, 349), "A/D 移动 · 空格 跳跃 · J 攻击 · K 弹刀")
-    text(Vector2(391, 349), "SHIFT 冲刺 · R 重试 · ESC 暂停", 12, Color("b6b6b6"))
+    text(Vector2(391, 349), "S 蹲下 · SHIFT 冲刺 · R 重试 · ESC 暂停", 12, Color("b6b6b6"))
     var narration: String = str(state.get("narration", ""))
     if narration != "":
         frame_box(Rect2(16, 105, 608, 27))

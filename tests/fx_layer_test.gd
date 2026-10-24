@@ -2,7 +2,7 @@ extends SceneTree
 ## VFX safety checks: every effect kind spawns and expires, caps hold, rest sections draw no telegraph,
 ## and effects never change gameplay state. It does not judge how the effects look.
 
-const KINDS: Array[String] = ["slash", "enemy_slash", "parry", "parry_ready", "hit", "hurt", "dash", "jump", "air_jump", "land",
+const KINDS: Array[String] = ["slash", "enemy_slash", "parry", "parry_ready", "hit", "hurt", "dash", "jump", "air_jump", "land", "stun", "launch",
 	"pickup", "checkpoint", "death", "burst", "boss_defeat", "spark", "warning", "telegraph", "unknown_kind"]
 var passed: int = 0
 var failed: int = 0

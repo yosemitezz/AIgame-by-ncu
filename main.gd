@@ -138,6 +138,7 @@ func _setup_input() -> void:
     _bind("dash", [KEY_SHIFT, KEY_L])
     _bind("attack", [KEY_J, KEY_Z])
     _bind("parry", [KEY_K, KEY_X])
+    _bind("crouch", [KEY_S, KEY_DOWN])
     var mouse := InputEventMouseButton.new()
     mouse.button_index = MOUSE_BUTTON_LEFT
     InputMap.action_add_event("attack", mouse)
@@ -247,6 +248,9 @@ func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) ->
                 if source.has_method("confirm_attack_hit"):
                     source.confirm_attack_hit()
                 request_impact(source, enemy, combo_index == 3)
+                if enemy != boss and enemy.has_method("react") and not bool(enemy.dead):
+                    # Light cut shoves, second cut stuns, finisher (or any airborne cut) launches.
+                    enemy.react("launch" if combo_index == 3 else ("stun" if combo_index == 2 else "knockback"), source.global_position)
             elif enemy == boss:
                 # A sealed phase can clang once per swing without repeated contact spam.
                 hits[enemy.get_instance_id()] = true

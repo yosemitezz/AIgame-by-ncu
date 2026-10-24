@@ -7,10 +7,23 @@ signal state_changed(state: String, frame: int, direction: int)
 signal parried
 
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
+const LightWings = preload("res://vfx/light_wings.gd")
+## Air jumps are unlimited: every press in the air jumps again. Wings open at WING_OPEN_RATE per second and fold over WING_FOLD_TIME.
+const INFINITE_AIR_JUMPS: bool = true
+const WING_OPEN_RATE: float = 9.0
+const WING_FOLD_TIME: float = 0.9
 const RUN_SPEED: float = 180.0
 const JUMP_SPEED: float = -340.0
 const GRAVITY: float = 900.0
 const DASH_SPEED: float = 420.0
+## Crouch walk speed factor, crouch blend time, landing squat, air-jump flip and apex window.
+const CROUCH_SPEED: float = 0.45
+const CROUCH_BLEND: float = 0.12
+const LAND_TIME: float = 0.16
+const LAND_MIN_SPEED: float = 230.0
+const AIR_FLIP_TIME: float = 0.34
+const AIR_APEX_SPEED: float = 60.0
+const RUN_FRAME_RATE: float = 14.0
 const COYOTE_TIME: float = 0.10
 const JUMP_BUFFER: float = 0.12
 const PARRY_WINDOW: float = 0.16
@@ -48,10 +61,21 @@ var animation_state: String = "idle"
 var frame: int = 0
 var combo: int = 0
 var dead: bool = false
+## Held crouch: visual pose plus a slower walk. Collider and attack timing are untouched.
+var crouching: bool = false
+var _crouch_held: bool = false
+var _crouch_out: float = 0.0
+var _land_timer: float = 0.0
+var _air_flip: float = 0.0
 var _coyote: float = 0.0
 var _jump_buffer: float = 0.0
 var _jump_cut_requested: bool = false
 var _air_jumps: int = 1
+## Wings of light: open on an air jump, stay out while airborne and fold slowly after landing.
+var wing_amount: float = 0.0
+var wing_flap: float = 0.0
+var _wings_out: bool = false
+var wings: Node2D
 var _dash_cooldown: float = 0.0
 var _dash_buffer: float = 0.0
 var _parry_cooldown: float = 0.0
@@ -86,6 +110,9 @@ func _ready() -> void:
 	collider.position = Vector2(0.0, -13.0)
 	add_child(collider)
 	add_to_group("player")
+	wings = LightWings.new()
+	wings.name = "LightWings"
+	add_child(wings)
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	health_changed.emit(health, max_health)
 
@@ -103,6 +130,7 @@ func _capture_input() -> void:
 		_dash_buffer = 0.16
 	if Input.is_action_just_pressed("parry"):
 		_parry_buffer = 0.12
+	_crouch_held = InputMap.has_action("crouch") and Input.is_action_pressed("crouch")
 
 func _physics_process(delta: float) -> void:
 	if _parry_paused():
@@ -145,6 +173,10 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 		return
 	_hurt_lock = maxf(0.0, _hurt_lock - delta)
+	_land_timer = maxf(0.0, _land_timer - delta)
+	_air_flip = maxf(0.0, _air_flip - delta)
+	_crouch_out = maxf(0.0, _crouch_out - delta)
+	_update_crouch(delta)
 	_combo_grace = maxf(0.0, _combo_grace - delta)
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	_dash_buffer = maxf(0.0, _dash_buffer - delta)
@@ -173,7 +205,7 @@ func _physics_process(delta: float) -> void:
 		if not is_on_floor():
 			velocity.y = minf(velocity.y + GRAVITY * delta, 620.0)
 		if _hurt_lock <= 0.0:
-			var desired: float = _move_axis * RUN_SPEED
+			var desired: float = _move_axis * RUN_SPEED * (CROUCH_SPEED if crouching else 1.0)
 			if is_on_floor() and attack_phase != "none":
 				desired *= 0.32 if attack_phase == "windup" else 0.70
 				if _lunge_timer > 0.0 and attack_phase == "active":
@@ -184,17 +216,22 @@ func _physics_process(delta: float) -> void:
 		if _jump_buffer > 0.0 and _hurt_lock <= 0.0:
 			if _coyote > 0.0:
 				_jump(false)
-			elif _air_jumps > 0:
-				_air_jumps -= 1
+			elif INFINITE_AIR_JUMPS or _air_jumps > 0:
+				_air_jumps = maxi(0, _air_jumps - 1)
 				_jump(true)
 		if _jump_cut_requested and velocity.y < -120.0:
 			velocity.y *= 0.48
 		_jump_cut_requested = false
 	_lunge_timer = maxf(0.0, _lunge_timer - delta)
 	var was_grounded: bool = is_on_floor()
+	var fall_speed: float = velocity.y
 	move_and_slide()
 	if not was_grounded and is_on_floor():
 		_fx("land", global_position, Vector2.ZERO, 0.4)
+		if fall_speed > LAND_MIN_SPEED and attack_phase == "none" and dash_timer <= 0.0:
+			_land_timer = LAND_TIME
+			_air_flip = 0.0
+	_update_wings(delta)
 	_advance_parry(delta)
 	if attack_phase != "none":
 		_advance_attack(delta)
@@ -234,10 +271,25 @@ func _start_dash(move_axis: float) -> bool:
 	_fx("dash_start", global_position + Vector2(0.0, -13.0), Vector2(facing, 0.0), 0.5)
 	return true
 
+func _update_wings(delta: float) -> void:
+	if is_on_floor():
+		_wings_out = false
+	if _wings_out:
+		wing_amount = minf(1.0, wing_amount + delta * WING_OPEN_RATE)
+	else:
+		wing_amount = maxf(0.0, wing_amount - delta / WING_FOLD_TIME)
+	wing_flap = maxf(0.0, wing_flap - delta * 2.2)
+
 func _jump(airborne: bool) -> void:
+	if airborne:
+		_wings_out = true
+		wing_flap = 1.0
 	velocity.y = JUMP_SPEED * (0.92 if airborne else 1.0)
 	_jump_buffer = 0.0
 	_coyote = 0.0
+	_crouch_out = 0.0
+	_land_timer = 0.0
+	_air_flip = AIR_FLIP_TIME if airborne else 0.0
 	_fx("air_jump" if airborne else "jump", global_position, Vector2.UP, 0.6)
 
 func _start_attack() -> void:
@@ -482,6 +534,14 @@ func revive(at: Vector2) -> void:
 	_air_jumps = 1
 	_coyote = 0.0
 	_move_axis = 0.0
+	_wings_out = false
+	wing_amount = 0.0
+	wing_flap = 0.0
+	crouching = false
+	_crouch_held = false
+	_crouch_out = 0.0
+	_land_timer = 0.0
+	_air_flip = 0.0
 	_set_animation("idle", 0.0)
 	health_changed.emit(health, max_health)
 
@@ -501,7 +561,20 @@ func _refresh_animation(delta: float) -> void:
 	elif attack_phase != "none":
 		_set_animation("attack" if attack_phase == "active" else attack_phase, delta)
 	elif not is_on_floor():
-		_set_animation("jump" if velocity.y < 0.0 else "fall", delta)
+		_set_animation(_air_state(), delta)
+	elif _land_timer > 0.0:
+		_set_animation("land", delta)
+	elif crouching:
+		if absf(velocity.x) > 8.0:
+			_set_animation("crouch_walk", delta)
+		elif animation_state == "crouch_in" and _state_clock < CROUCH_BLEND:
+			_set_animation("crouch_in", delta)
+		elif animation_state in ["crouch_in", "crouch_walk", "crouch"]:
+			_set_animation("crouch", delta)
+		else:
+			_set_animation("crouch_in", delta)
+	elif _crouch_out > 0.0:
+		_set_animation("crouch_out", delta)
 	elif absf(velocity.x) > 8.0:
 		_set_animation("run", delta)
 	else:
@@ -518,9 +591,29 @@ func _set_animation(state: String, delta: float) -> void:
 	elif state in ["parry", "parry_recoil", "parry_recover"] and parry_phase != "none":
 		frame = clampi(int(4.0 * get_parry_progress() + 0.000001), 0, 3)
 	elif state == "run":
-		frame = int(_state_clock * 12.0) % 6
+		frame = int(_state_clock * RUN_FRAME_RATE) % 8
 	elif state == "idle":
+		frame = int(_state_clock * 6.0) % 6
+	elif state == "jump":
+		frame = clampi(int((1.0 - (-velocity.y) / absf(JUMP_SPEED)) * 3.0), 0, 2)
+	elif state == "apex":
+		frame = int(_state_clock * 9.0) % 2
+	elif state == "fall":
+		frame = clampi(int(velocity.y / 170.0), 0, 2)
+	elif state == "land":
+		frame = clampi(int((1.0 - _land_timer / LAND_TIME) * 3.0), 0, 2)
+	elif state == "air_jump":
+		frame = clampi(int((1.0 - _air_flip / AIR_FLIP_TIME) * 6.0), 0, 5)
+	elif state == "crouch_in":
+		frame = clampi(int(_state_clock / CROUCH_BLEND * 3.0), 0, 2)
+	elif state == "crouch_out":
+		frame = clampi(int((1.0 - _crouch_out / CROUCH_BLEND) * 3.0), 0, 2)
+	elif state == "crouch":
 		frame = int(_state_clock * 5.0) % 4
+	elif state == "crouch_walk":
+		frame = int(_state_clock * 11.0) % 6
+	elif state == "dead" or state == "hurt":
+		frame = mini(3, int(_state_clock * 10.0))
 	else:
 		frame = int(_state_clock * 12.0) % 4
 	if frame != _last_frame or state != _last_state or facing != _last_facing:
@@ -531,6 +624,23 @@ func _set_animation(state: String, delta: float) -> void:
 		if is_instance_valid(game) and game.has_signal("animation_event"):
 			game.emit_signal("animation_event", self, state, frame, facing)
 	queue_redraw()
+
+func _air_state() -> String:
+	if _air_flip > 0.0:
+		return "air_jump"
+	if velocity.y < -AIR_APEX_SPEED:
+		return "jump"
+	if velocity.y > AIR_APEX_SPEED:
+		return "fall"
+	return "apex"
+
+func _update_crouch(_delta: float) -> void:
+	var want: bool = _crouch_held and is_on_floor() and attack_phase == "none" and dash_timer <= 0.0 and parry_phase == "none" and parry_timer <= 0.0 and _hurt_lock <= 0.0 and not dead and not (is_instance_valid(game) and bool(game.story_safe))
+	if crouching and not want:
+		_crouch_out = CROUCH_BLEND
+	elif want and not crouching:
+		_crouch_out = 0.0
+	crouching = want
 
 func _fx(kind: String, at: Vector2, direction: Vector2, power: float) -> void:
 	if is_instance_valid(game):
