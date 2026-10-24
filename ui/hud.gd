@@ -2,6 +2,8 @@ extends Control
 ## Functional HUD only. Cursor may replace appearance while preserving update_state.
 var state: Dictionary = {}
 var font: Font
+var hp_chrome: Texture2D = preload("res://assets/ui/chrome/hp_bar.png")
+var boss_chrome: Texture2D = preload("res://assets/ui/chrome/boss_bar.png")
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -21,6 +23,7 @@ func _draw() -> void:
     draw_rect(Rect2(0, 0, 640, 46), Color(0.025, 0.035, 0.075, 0.94))
     draw_line(Vector2(12, 45), Vector2(628, 45), Color("39475a"))
     text(Vector2(14, 17), "BELLKEEP", 13, Color("e9bb68"))
+    draw_texture_rect(hp_chrome, Rect2(12, 21, 112, 17), false)
     for i: int in int(state.get("max_hp", 8)):
         var at := Vector2(15 + i * 13, 29)
         var ink := Color("72ece2") if i < int(state.get("hp", 0)) else Color("2b3850")
@@ -33,6 +36,7 @@ func _draw() -> void:
         text(Vector2(18, 63), "THE BELLKEEPER", 12, Color("e9bb68"))
         var section: String = str(state.get("section", ""))
         text(Vector2(373, 63), section.to_upper() + (" / NO DAMAGE" if state.get("safe", false) else " / CONTACT PARRY"), 11, Color("72ece2") if section == "rest" else Color("a9b6c8"))
+        draw_texture_rect(boss_chrome, Rect2(14, 66, 612, 14), false)
         draw_rect(Rect2(18, 70, 604, 5), Color("263149"))
         var maximum: float = maxf(1, float(state.get("boss_max", 1)))
         draw_rect(Rect2(18, 70, 604 * float(state.get("boss_hp", 0)) / maximum, 5), Color("c47c65"))

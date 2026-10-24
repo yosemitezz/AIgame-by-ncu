@@ -13,6 +13,9 @@ var dead: bool = false
 var facing: int = -1
 var animation_state: String = "idle"
 var frame: int = 0
+var combat_freeze: float = 0.0
+var hurt_flash: float = 0.0
+var _last_pattern: String = ""
 var _active: bool = false
 var _animation_clock: float = 0.0
 var _hurt_timer: float = 0.0
@@ -69,6 +72,7 @@ func receive_hit(amount: int, origin: Vector2) -> void:
     else:
         health = next_health
     _hurt_timer = 0.09
+    hurt_flash = 0.11
     game.emit_fx("hit", global_position + Vector2(0, -28), (global_position - origin).normalized(), 1.1)
     _request_phase_if_ready()
     if health <= 0:
@@ -84,6 +88,9 @@ func _request_phase_if_ready() -> void:
 
 func _on_section(section: String) -> void:
     phase = section
+    if section == "rest":
+        combat_freeze = 0
+        hurt_flash = 0
     _pending_attack = ""
     _windup_timer = 0.0
     _charge_timer = 0.0
@@ -112,9 +119,14 @@ func _on_beat(index: int) -> void:
     if phase == "fixed":
         attack = fixed_patterns[_attack_count % fixed_patterns.size()]
     elif phase == "random":
-        attack = patterns[randi_range(0, patterns.size() - 1)]
+        var choices: Array[String] = []
+        for candidate: String in patterns:
+            if candidate != _last_pattern:
+                choices.append(candidate)
+        attack = choices[randi_range(0, choices.size() - 1)]
     else:
         attack = patterns[_attack_count % patterns.size()]
+    _last_pattern = attack
     _attack_count += 1
     _begin_attack(attack)
 
@@ -132,7 +144,17 @@ func _begin_attack(attack: String) -> void:
         game.emit_signal("warning_issued", attack, warning_at, _windup_timer)
     game.emit_fx("telegraph", warning_at, Vector2(facing, 0), 1.0)
 
+func set_impact_freeze(seconds: float) -> void:
+    combat_freeze = maxf(combat_freeze, clampf(seconds, 0, 0.07))
+
 func _physics_process(delta: float) -> void:
+    hurt_flash = maxf(0, hurt_flash - delta)
+    if game.story_safe:
+        combat_freeze = 0
+    elif combat_freeze > 0 and not dead:
+        combat_freeze = maxf(0, combat_freeze - delta)
+        queue_redraw()
+        return
     _animation_clock += delta
     _hurt_timer = maxf(0.0, _hurt_timer - delta)
     _stagger_timer = maxf(0.0, _stagger_timer - delta)
@@ -193,11 +215,11 @@ func _release_attack() -> void:
     match attack:
         "slash":
             _try_melee_contact(78.0)
-            game.emit_fx("slash", source + Vector2(facing * 20, 0), Vector2(facing, 0), 1.4)
+            game.emit_fx("enemy_slash", source + Vector2(facing * 20, 0), Vector2(facing, 0), 1.4)
         "charge":
             _charge_timer = 0.30
             velocity.y = -95.0
-            game.emit_fx("dash", source, Vector2(facing, 0), 1.3)
+            game.emit_fx("enemy_dash", source, Vector2(facing, 0), 1.3)
         "fan":
             var count: int = 7 if phase == "final" else 5
             for i: int in count:
@@ -228,13 +250,12 @@ func _try_melee_contact(reach: float) -> void:
         return
     _contact_resolved = true
     if game.player.parry_timer > 0.0:
-        game.player.parry_success()
+        game.player.parry_success(self)
         _stagger_timer = 0.7
         _charge_timer = 0.0
         _pending_attack = ""
         _windup_timer = 0.0
         velocity.x = -facing * 100.0
-        game.emit_fx("parry", game.player.global_position + Vector2(0, -18), Vector2(facing, 0), 1.6)
         receive_hit(3, game.player.global_position)
     else:
         game.damage_player(1, global_position)

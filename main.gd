@@ -14,11 +14,16 @@ const Score = preload("res://audio/music_director.gd")
 const Level = preload("res://levels/bellkeep.gd")
 const HUD = preload("res://ui/hud.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
+const Impact = preload("res://combat/impact_feedback.gd")
+const CombatVFX = preload("res://presentation/combat_vfx.gd")
 
 var player: CharacterBody2D
 var boss: CharacterBody2D
 var music: Node
 var level: Node2D
+var impact: Node
+var effects: Node2D
+var _attack_hits: Dictionary = {}
 var checkpoint: Vector2 = Level.SPAWN
 var score: int = 0
 var story_safe: bool = false
@@ -75,6 +80,14 @@ func _ready() -> void:
     music.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(music)
     music.configure(self)
+    impact = Impact.new()
+    impact.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(impact)
+    impact.configure(self)
+    effects = CombatVFX.new()
+    effects.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(effects)
+    effects.configure(self)
     for entry: Dictionary in Level.ENEMIES:
         if entry["kind"] == "elite" and elite_defeated:
             continue
@@ -90,7 +103,6 @@ func _ready() -> void:
     canvas.add_child(_hud)
     _hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     hud_updated.connect(_hud.update_state)
-    warning_issued.connect(_record_warning)
     announce("Voice: You are awake. Trust your hands; the rest will return.", 5.0)
     _refresh_hud()
 
@@ -174,25 +186,10 @@ func _process(delta: float) -> void:
         return
     _clock += delta
     _announcement_time = maxf(0, _announcement_time - delta)
-    _trauma = maxf(0, _trauma - delta * 1.6)
     if is_instance_valid(player):
         var wanted: float = clampf(player.position.x + float(player.facing) * 45.0, 320, Level.LEVEL_END - 320)
         _camera.position.x = roundf(lerpf(_camera.position.x, wanted, 1.0 - exp(-delta * 5.0)))
-        _camera.offset = Vector2(sin(_clock * 79), sin(_clock * 93)) * _trauma * _trauma * 4.0
-    for i: int in range(_particles.size() - 1, -1, -1):
-        _particles[i]["life"] -= delta
-        _particles[i]["at"] += _particles[i]["velocity"] * delta
-        _particles[i]["velocity"] += Vector2(0, 100) * delta
-        if float(_particles[i]["life"]) <= 0:
-            _particles.remove_at(i)
-    for i: int in range(_strokes.size() - 1, -1, -1):
-        _strokes[i]["life"] -= delta
-        if float(_strokes[i]["life"]) <= 0:
-            _strokes.remove_at(i)
-    for i: int in range(_warnings.size() - 1, -1, -1):
-        _warnings[i]["life"] -= delta
-        if float(_warnings[i]["life"]) <= 0:
-            _warnings.remove_at(i)
+        _camera.offset = impact.sample_camera(delta) if is_instance_valid(impact) else Vector2.ZERO
     if outcome == "victory":
         _ending_clock += delta
     _hud_clock += delta
@@ -201,23 +198,38 @@ func _process(delta: float) -> void:
         _refresh_hud()
     queue_redraw()
 
-func hero_attack(source: Node2D, damage: int, reach: float, _combo: int) -> void:
+func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) -> void:
     if story_safe or outcome != "":
         return
+    var source_id: int = source.get_instance_id()
+    var serial: int = int(source.attack_serial)
+    if not _attack_hits.has(source_id) or int(_attack_hits[source_id]["serial"]) != serial:
+        _attack_hits[source_id] = {"serial": serial, "targets": {}}
+    var hits: Dictionary = _attack_hits[source_id]["targets"]
     var origin: Vector2 = source.global_position + Vector2(0, -18)
     for enemy: Node in get_tree().get_nodes_in_group("enemies"):
-        if not is_instance_valid(enemy) or bool(enemy.dead):
+        if not is_instance_valid(enemy) or bool(enemy.dead) or hits.has(enemy.get_instance_id()):
             continue
         var target: Vector2 = enemy.global_position + Vector2(0, -28 if enemy == boss else -16)
         var difference: Vector2 = target - origin
         var radius: float = 19 if enemy == boss else 10
         if absf(difference.x) <= reach + radius and difference.x * float(source.facing) >= -9 and absf(difference.y) <= (42 if enemy == boss else 28):
+            var before: int = int(enemy.health)
             enemy.receive_hit(damage, source.global_position)
+            if int(enemy.health) < before:
+                hits[enemy.get_instance_id()] = true
+                if source.has_method("confirm_attack_hit"):
+                    source.confirm_attack_hit()
+                request_impact(source, enemy, combo_index == 3)
+            elif enemy == boss:
+                # A sealed phase can clang once per swing without repeated contact spam.
+                hits[enemy.get_instance_id()] = true
 
 func damage_player(amount: int, origin: Vector2) -> void:
     if story_safe or outcome != "" or not is_instance_valid(player):
         return
-    player.receive_hit(amount, origin)
+    if player.receive_hit(amount, origin):
+        request_impact(null, player)
 
 func spawn_projectile(at: Vector2, velocity: Vector2, friendly: bool = false) -> Node2D:
     var projectile := Projectile.new()
@@ -235,6 +247,14 @@ func set_story_safe(value: bool) -> void:
     if value:
         for projectile: Node in get_tree().get_nodes_in_group("projectiles"):
             projectile.clear()
+        if is_instance_valid(effects):
+            effects.clear_hostile()
+        if is_instance_valid(impact):
+            impact.clear()
+        if is_instance_valid(player):
+            player.combat_freeze = 0
+        if is_instance_valid(boss):
+            boss.combat_freeze = 0
         _warnings.clear()
         _strokes.clear()
 
@@ -297,21 +317,17 @@ func _record_warning(kind: String, at: Vector2, duration: float) -> void:
 
 func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power: float = 1.0) -> void:
     vfx_requested.emit(kind, at, direction, power)
-    var cyan: bool = kind in ["parry", "dash", "air_jump", "pickup", "checkpoint", "parry_ready"]
-    var ink := Color("72ece2") if cyan else Color("e9bb68")
-    if kind == "hurt":
-        ink = Color("ef7678")
-    var count: int = clampi(int(5 * power), 2, 24)
-    if kind in ["slash", "enemy_slash", "telegraph", "warning", "parry_ready"]:
-        _strokes.append({"kind": kind, "at": at, "direction": direction, "life": 0.17, "max": 0.17, "power": power, "color": ink})
-        count = 2
-    for _i: int in count:
-        var angle: float = _rng.randf_range(-PI, PI)
-        var speed: float = _rng.randf_range(18, 75) * minf(power, 2)
-        var life: float = _rng.randf_range(0.16, 0.5)
-        _particles.append({"at": at, "velocity": Vector2.from_angle(angle) * speed + direction * 24, "life": life, "max": life, "color": ink, "size": 2 if power < 1.5 else 3})
-    if kind in ["hit", "hurt", "parry", "death", "burst"]:
-        _trauma = minf(1, _trauma + (0.35 if kind == "parry" else 0.2))
+    if is_instance_valid(effects):
+        effects.emit_effect(kind, at, direction, power)
+    if is_instance_valid(impact):
+        if kind == "slash":
+            impact.play_action("swing")
+        elif kind in ["dash_start", "enemy_dash"]:
+            impact.play_action("dash")
+
+func request_impact(source: Node, target: Node, heavy: bool = false, parry: bool = false) -> void:
+    if is_instance_valid(impact):
+        impact.request(source, target, heavy, parry)
 
 func _refresh_hud() -> void:
     if not is_instance_valid(player):
@@ -329,6 +345,9 @@ func _unhandled_input(event: InputEvent) -> void:
             _reload(false)
         elif event.physical_keycode == KEY_F5:
             _reload(true)
+        elif event.physical_keycode == KEY_F2:
+            impact.reduced_motion = not impact.reduced_motion
+            announce("Camera impact OFF" if impact.reduced_motion else "Camera impact ON", 2.0)
         elif event.physical_keycode == KEY_M:
             AudioServer.set_bus_mute(0, not AudioServer.is_bus_mute(0))
 
@@ -355,29 +374,6 @@ func _draw() -> void:
             var at: Vector2 = gate.position
             for y: int in range(-115, 120, 12):
                 draw_rect(Rect2(at + Vector2(-3, y), Vector2(6, 7)), Color("e9bb68"))
-    for warning: Dictionary in _warnings:
-        var at: Vector2 = warning["at"]
-        var ratio: float = float(warning["life"]) / float(warning["max"])
-        draw_line(at + Vector2(-17, 0), at + Vector2(17, 0), Color("e9bb68"), 2, false)
-        draw_rect(Rect2(at + Vector2(-16, 4), Vector2(32 * (1 - ratio), 2)), Color("fff1bd"))
-    for stroke: Dictionary in _strokes:
-        var at: Vector2 = stroke["at"]
-        var ink: Color = stroke["color"]
-        ink.a = clampf(float(stroke["life"]) / float(stroke["max"]), 0, 1)
-        var dir: float = 1 if stroke["direction"].x >= 0 else -1
-        if stroke["kind"] in ["slash", "enemy_slash"]:
-            var points := PackedVector2Array()
-            for j: int in 9:
-                var angle: float = -1.35 + float(j) / 8 * 2.7
-                points.append(at + Vector2(cos(angle) * 26 * dir, sin(angle) * 25).round())
-            draw_polyline(points, ink, 3 if stroke["power"] < 2 else 5, false)
-        else:
-            draw_line(at - Vector2(5, 0), at + Vector2(5, 0), ink, 2)
-            draw_line(at - Vector2(0, 5), at + Vector2(0, 5), ink, 2)
-    for particle: Dictionary in _particles:
-        var ink: Color = particle["color"]
-        ink.a = minf(1, float(particle["life"]) / float(particle["max"]) * 1.8)
-        draw_rect(Rect2(Vector2(particle["at"]).round(), Vector2.ONE * int(particle["size"])), ink)
     if outcome == "victory" and _ending_clock > 1.8:
         # An unidentified shadow and an interrupted memory; no identity is asserted.
         var at: Vector2 = player.position + Vector2(-player.facing * 28, 0)

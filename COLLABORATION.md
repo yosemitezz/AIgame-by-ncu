@@ -40,3 +40,18 @@ Level: extends Node2D. const SPAWN:Vector2; CHECKPOINT:Vector2; BOSS_TRIGGER_X:f
 HUD presentation signals emitted by root: hud_updated(state:Dictionary), boss_phase_changed(phase:String), warning_issued(kind:String,at:Vector2,duration:float), vfx_requested(kind:String,at:Vector2,direction:Vector2,power:float), animation_event(actor:Node,state:String,frame:int,facing:int). Functional HUD listens state dict hp/max_hp/shards/zone/hint/boss_hp/boss_max/phase/beat/section/outcome. VFX may connect signal without altering damage logic.
 
 Actual split: gameplay uses its independent work directory on feat/pixel-bellkeep-20261024. The original checkout remains on cursor/art-ui. Always inspect branch/worktree before writing; do not switch another editor's checkout.
+
+## Combat feel revision ownership
+
+User feedback authorizes improving the integrated game's combat/animation/effects, while preserving the Cursor checkout and its committed asset source files. Baseline before revision is ff65e9e. Committed art/UI history integrated from 0fdf07b (containing remote art milestone 1dd72ed) in gameplay worktree only. Main/default branch stays unchanged.
+
+- Combat revision: actors/player.gd, actors/enemy.gd, tests/combat_feel_test.gd.
+- Motion/VFX revision: presentation/actor_renderer.gd, presentation/combat_vfx.gd, presentation/feel_frames/, tools/generate_combat_frames.py, docs/feel-frames.md. New assets only; do not overwrite Cursor asset sources.
+- Lead integration: main.gd, combat/boss.gd, combat/projectile.gd, combat/impact_feedback.gd, audio/impact_sfx.gd, assets/art/pixel_actor.gd (existing integration adapter), ui/hud.gd, tests/impact_feedback_test.gd, launch/test scripts and delivery docs.
+- Independent reviewer: read only.
+
+New combat API: actor set_impact_freeze(seconds:float), public combat_freeze:float (local actor freeze only; no Engine.time_scale or scene pause); player public attack_serial:int, attack_phase:String ('windup','active','recover','none'), combo:int. During active window player calls game.hero_attack each physics tick; root deduplicates targets per attack_serial. Capture input before local freeze and retain one queued combo intent through hit-stop. Presentation mapping windup/attack/recover uses actual combat stage timing. game.request_impact(source:Node,target:Node,heavy:bool=false,parry:bool=false) centralizes local freeze, small capped camera impulse and short original sound. Music, projectiles, and the rest safety state continue on their own clock. story_safe overrides pending attacks and local freeze.
+
+One playable entry remains play.cmd in this gameplay directory. Do not operate Cursor agent or Cursor worktree. No manual/automated playthrough; only bounded logic tests and fixed keyframe captures.
+
+Committed Cursor damage-zone palette update a2c857b is integrated. New uncommitted hero art changes detected in the Cursor checkout are deliberately excluded and left untouched. Presentation revision lives in a separate new directory; no user art source files are rewritten.
