@@ -20,7 +20,7 @@ func _ready() -> void:
 		get_tree().change_scene_to_file("res://scenes/showcase_hub.tscn")
 	)
 	_back.grab_focus()
-	_legend.text = "Amber hatch = telegraph only · Cyan outline = damage read · Never cover safe lanes"
+	_legend.text = "Amber hatch = telegraph only · Coral outline = real damage · Cyan = parry/reflected · Never cover safe lanes"
 	for group in GROUPS:
 		for i in group["count"]:
 			var tex_path := "res://assets/vfx/%s/%s_%d.png" % [group["folder"], group["prefix"], i]

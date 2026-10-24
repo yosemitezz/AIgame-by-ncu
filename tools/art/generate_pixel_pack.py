@@ -39,6 +39,8 @@ PALETTE = {
     "moss": (42, 78, 56, 255),
     "arcane": (88, 196, 214, 255),
     "arcane_hi": (186, 244, 246, 255),
+    "coral": (239, 118, 120, 255),
+    "coral_hi": (255, 190, 184, 255),
     "violet": (116, 78, 168, 255),
     "warn": (236, 188, 64, 255),
     "safe": (92, 196, 132, 255),
@@ -351,7 +353,7 @@ def draw_burst(frame: int) -> Image.Image:
 
 
 def draw_warn_zone() -> Image.Image:
-    """Telegraph — amber hatch, must stay distinct from real hitbox cyan."""
+    """Telegraph — amber hatch only; real damage is coral, cyan is reserved for parry/reflected."""
     img = new_canvas(64, 16)
     for x in range(64):
         for y in range(16):
@@ -364,9 +366,10 @@ def draw_warn_zone() -> Image.Image:
 
 def draw_hitbox_zone() -> Image.Image:
     img = new_canvas(64, 16)
-    outline_rect(img, 0, 0, 63, 15, "arcane")
+    # Real damage volume is coral (#ef7678) per docs/art-ui-contract.md; cyan means parry/reflected.
+    outline_rect(img, 0, 0, 63, 15, "coral")
     for x in range(2, 62, 4):
-        px(img, x, 8, "arcane_hi")
+        px(img, x, 8, "coral_hi")
     return img
 
 
