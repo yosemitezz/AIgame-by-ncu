@@ -34,6 +34,7 @@ class Ghost extends Node2D:
 	var state: String = "idle"
 	var frame_index: int = 0
 	var face: int = 1
+	var combo: int = 1
 	var life: float = 0.3
 	var max_life: float = 0.3
 	var tint: Color = Color.WHITE
@@ -52,6 +53,9 @@ class Ghost extends Node2D:
 		return life <= 0.0
 
 var game: Node = null
+## The pixel-frame layer (presentation/combat_vfx.gd) owns telegraph drawing because it knows the attack
+## type (rain, armored, unblockable). Turn this on only when running this layer standalone.
+var draw_warnings: bool = false
 var _ramps: Dictionary = {}
 var _parts: Array[Dictionary] = []
 var _shapes: Array[Dictionary] = []
@@ -62,6 +66,8 @@ var _proj_trails: Dictionary = {}
 var _clock: float = 0.0
 var _ghost_clock: float = 0.0
 var _boss_ghost_clock: float = 0.0
+var _last_deflect_clock: float = -10.0
+var _last_deflect_at: Vector2 = Vector2.INF
 var _run_clock: float = 0.0
 var _run_ghost_clock: float = 0.0
 var _mote_clock: float = 0.0
@@ -179,6 +185,8 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 	g.state = String(source.get("animation_state"))
 	g.frame_index = int(source.get("frame"))
 	g.face = int(source.get("facing"))
+	var cmb: Variant = source.get("combo")
+	g.combo = clampi(int(cmb), 1, 3) if cmb != null else 1
 	g.life = life
 	g.max_life = life
 	g.tint = tint
@@ -192,6 +200,36 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 
 func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 	var d: float = 1.0 if dir.x >= 0.0 else -1.0
+	# Event names from the combat-feel branch map onto this layer.
+	match kind:
+		"blade_parry", "projectile_parry", "guard_break":
+			# Same clash, scaled: reflected shots small, blade-on-blade full, guard break biggest.
+			if _recent_deflect(at):
+				return
+			var scale_p: float = 0.7 if kind == "projectile_parry" else (1.0 if kind == "blade_parry" else 1.7)
+			_deflect(at, dir, scale_p, kind == "guard_break")
+			return
+		"parry":
+			if _recent_deflect(at):
+				return
+			_deflect(at, dir, power, false)
+			return
+		"dash_ghost":
+			kind = "dash"
+		"dash_start":
+			_shape("ring", at, 0.22, "flow", {"r0": 2.0, "r1": 14.0, "w": 2.0, "ry": 0.6})
+			_sparks(at, Vector2(-d, 0.0), 6, "flow", 120.0, 0.35, "streak", 0.6)
+			return
+		"enemy_dash":
+			_shape("bars", at, 0.34, "warm", {"d": d, "len": 30.0})
+			_sparks(at, Vector2(-d, 0.0), 4, "warm", 90.0, 0.35, "streak", 0.6)
+			return
+		"unblockable_charge", "charge":
+			kind = "telegraph"
+		"impact":
+			kind = "hit"
+		"debris":
+			kind = "spark"
 	match kind:
 		"slash":
 			var combo: int = clampi(int(roundf(power)), 1, 3)
@@ -210,28 +248,6 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 		"enemy_slash":
 			_shape("arc", at, 0.28, "warm", {"d": d, "r": 18.0 + 8.0 * power, "w": 3.0, "flip": false, "half": 1.3})
 			_sparks(at + Vector2(d * 14.0, 0.0), Vector2(d, 0.0), 8, "warm", 130.0, 0.4)
-		"parry":
-			# Sekiro-style deflect: one instant white-hot cross flash, then a fan of fast sparks thrown
-			# along the clash line, a hard shock ring, and long horizontal streaks. Colour only blooms
-			# afterwards, so the first frames read as steel on steel.
-			_shape("flash", at, 0.12, "cool", {"r": 34.0 + 10.0 * power})
-			_shape("cross", at, 0.2, "cool", {"r": 30.0 + 8.0 * power, "d": d})
-			_shape("streaks", at, 0.34, "flow", {"d": d, "len": 46.0, "n": 5, "both": true})
-			_shape("ring", at, 0.28, "cool", {"r0": 3.0, "r1": 40.0 + 10.0 * power, "w": 5.0, "ry": 1.0})
-			_shape("ring", at, 0.5, "flow", {"r0": 6.0, "r1": 62.0 + 14.0 * power, "w": 4.0, "ry": 1.0})
-			_shape("ring", at, 0.42, "rainbow", {"r0": 2.0, "r1": 34.0 + 8.0 * power, "w": 3.0, "ry": 1.0})
-			_shape("rays", at, 0.5, "flow", {"n": 18, "r1": 38.0 + 10.0 * power, "rot": 1.2})
-			_shape("star", at, 0.3, "cool", {"r": 18.0})
-			# Two fans: forward (where the blow came from) and back, like blades scraping apart.
-			_sparks(at, Vector2(d, -0.15), 30, "warm", 380.0, 0.55, "streak", 0.55)
-			_sparks(at, Vector2(-d, -0.25), 16, "cool", 300.0, 0.55, "streak", 0.5)
-			_sparks(at, Vector2.ZERO, 22, "flow", 260.0, 0.8, "streak", PI)
-			_sparks(at, Vector2.ZERO, 16, "rainbow", 150.0, 0.9, "shard", PI)
-			_sparks(at, Vector2.ZERO, 12, "rainbow", 100.0, 0.9, "twinkle", PI)
-			var pl: Node2D = _player()
-			if pl != null:
-				_ghost(pl, "hero", Color(0.55, 1.0, 0.95), 0.85, 0.45)
-				_ghost(pl, "hero", Color(1.0, 0.6, 0.95), 0.5, 0.65)
 		"parry_ready":
 			_shape("ring", at, 0.2, "cool", {"r0": 16.0, "r1": 5.0, "w": 2.0, "ry": 1.0})
 		"hit":
@@ -299,8 +315,46 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 		_:
 			_sparks(at, dir, 5, "gold", 80.0, 0.35, "dot")
 
+func _recent_deflect(at: Vector2) -> bool:
+	var now: float = _clock
+	if now - _last_deflect_clock < 0.05 and at.distance_to(_last_deflect_at) < 24.0:
+		return true
+	_last_deflect_clock = now
+	_last_deflect_at = at
+	return false
+
+func _deflect(at: Vector2, dir: Vector2, power: float, guard_break: bool) -> void:
+	## Sekiro-style deflect: one instant white-hot flash and glint cross, then a fan of fast sparks thrown
+	## along the clash line, hard shock rings and long two-way streaks. Colour only blooms afterwards, so
+	## the first frames read as steel on steel. power scales the whole thing.
+	var d: float = 1.0 if dir.x >= 0.0 else -1.0
+	var k: float = clampf(power, 0.5, 2.0)
+	var n_fan: int = int(30.0 * minf(k, 1.4))
+	_shape("flash", at, 0.12, "cool", {"r": 34.0 * k})
+	_shape("cross", at, 0.2, "cool", {"r": 30.0 * k, "d": d})
+	_shape("streaks", at, 0.34, "flow", {"d": d, "len": 46.0 * k, "n": 5, "both": true})
+	_shape("ring", at, 0.28, "cool", {"r0": 3.0, "r1": 40.0 * k, "w": 5.0, "ry": 1.0})
+	_shape("ring", at, 0.5, "flow", {"r0": 6.0, "r1": 62.0 * k, "w": 4.0, "ry": 1.0})
+	_shape("ring", at, 0.42, "rainbow", {"r0": 2.0, "r1": 34.0 * k, "w": 3.0, "ry": 1.0})
+	_shape("rays", at, 0.5, "flow", {"n": 18, "r1": 38.0 * k, "rot": 1.2})
+	_shape("star", at, 0.3, "cool", {"r": 18.0 * k})
+	# Two fans: forward (where the blow came from) and back, like blades scraping apart.
+	_sparks(at, Vector2(d, -0.15), n_fan, "warm", 380.0, 0.55, "streak", 0.55)
+	_sparks(at, Vector2(-d, -0.25), n_fan / 2, "cool", 300.0, 0.55, "streak", 0.5)
+	_sparks(at, Vector2.ZERO, int(22.0 * k), "flow", 260.0, 0.8, "streak", PI)
+	_sparks(at, Vector2.ZERO, int(16.0 * k), "rainbow", 150.0, 0.9, "shard", PI)
+	_sparks(at, Vector2.ZERO, int(12.0 * k), "rainbow", 100.0, 0.9, "twinkle", PI)
+	var pl: Node2D = _player()
+	if pl != null and k >= 0.9:
+		_ghost(pl, "hero", Color(0.55, 1.0, 0.95), 0.85, 0.45)
+		_ghost(pl, "hero", Color(1.0, 0.6, 0.95), 0.5, 0.65)
+	if guard_break:
+		_shape("ring", at, 0.9, "rainbow", {"r0": 6.0, "r1": 110.0, "w": 5.0, "ry": 0.8})
+		_shape("rays", at, 0.8, "rainbow", {"n": 24, "r1": 70.0, "rot": -2.0})
+		_sparks(at, Vector2.ZERO, 30, "rainbow", 320.0, 1.0, "shard", PI)
+
 func _on_warning(_kind: String, at: Vector2, duration: float) -> void:
-	if is_instance_valid(game) and bool(game.get("story_safe")):
+	if not draw_warnings or (is_instance_valid(game) and bool(game.get("story_safe"))):
 		return
 	if _warns.size() >= MAX_WARNINGS:
 		_warns.remove_at(0)

@@ -33,6 +33,10 @@ func run() -> void:
 	var health: int = game.player.health
 	var pos: Vector2 = game.player.position
 	var score: int = game.score
+	# Doubled-up contact events must collapse into one deflect, not stack.
+	for kind: String in ["blade_parry", "projectile_parry", "guard_break", "dash_start", "enemy_dash", "dash_ghost", "unblockable_charge", "impact", "debris"]:
+		game.emit_fx(kind, Vector2(300, 250), Vector2.RIGHT, 1.2)
+	fx._process(0.2)
 	for kind: String in KINDS:
 		var before: int = fx.particle_count() + fx.shape_count()
 		game.emit_fx(kind, Vector2(300, 250), Vector2.RIGHT, 1.5)
@@ -77,9 +81,13 @@ func run() -> void:
 		ran_ghost = ran_ghost or fx.ghost_count() > 0
 	check(ran_ghost, "running spawns afterimages and trail particles")
 	game.player.set("velocity", Vector2.ZERO)
+	# Warning lanes: in the merged game combat_vfx owns telegraphs, so this layer draws none by default.
+	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
+	check(fx.warning_count() == 0, "gradient layer leaves telegraph drawing to the pixel layer by default")
+	fx.draw_warnings = true
 	# Warning lanes: shown while awake, never in a story-safe section.
 	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
-	check(fx.warning_count() == 1, "warning lane recorded")
+	check(fx.warning_count() == 1, "warning lane recorded when enabled")
 	game.set_story_safe(true)
 	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
 	fx._process(0.01)

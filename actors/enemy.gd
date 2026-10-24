@@ -17,8 +17,12 @@ var _windup: float = 0.0
 var _recovery: float = 0.0
 var _stagger: float = 0.0
 var _hurt_flash: float = 0.0
+var hurt_flash: float = 0.0
+var combat_freeze: float = 0.0
+var _hurt_elapsed: float = 0.0
 var _death_time: float = 0.0
 var _attack_facing: int = -1
+var attack_serial: int = 0
 var _attack_target: Vector2
 var _shot: bool = false
 var _last_state: String = ""
@@ -48,9 +52,29 @@ func _ready() -> void:
 	add_to_group("enemies")
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
+func set_impact_freeze(seconds: float) -> void:
+	if is_instance_valid(game) and bool(game.story_safe):
+		combat_freeze = 0.0
+		return
+	combat_freeze = maxf(combat_freeze, clampf(seconds, 0.0, 0.12))
+
 func _physics_process(delta: float) -> void:
+	# Rest wins over queued attacks and local impact hold before either can tick.
+	var story_rest: bool = is_instance_valid(game) and bool(game.story_safe)
+	if story_rest:
+		combat_freeze = 0.0
+		_windup = 0.0
+		_recovery = 0.0
+		_stagger = 0.0
+		_shot = true
+	if combat_freeze > 0.0:
+		combat_freeze = maxf(0.0, combat_freeze - delta)
+		queue_redraw()
+		return
 	_clock += delta
 	_hurt_flash = maxf(0.0, _hurt_flash - delta)
+	hurt_flash = _hurt_flash
+	modulate = Color(2.5, 2.1, 1.7, 1.0) if hurt_flash > 0.065 else Color.WHITE
 	_stagger = maxf(0.0, _stagger - delta)
 	_cooldown = maxf(0.0, _cooldown - delta)
 	_recovery = maxf(0.0, _recovery - delta)
@@ -67,7 +91,7 @@ func _physics_process(delta: float) -> void:
 		return
 	var target: Node2D = game.player
 	var offset: Vector2 = target.global_position - global_position
-	var safe: bool = bool(game.story_safe) or bool(target.dead)
+	var safe: bool = story_rest or bool(target.dead)
 	if kind != "wisp":
 		velocity.y = minf(velocity.y + 900.0 * delta, 620.0)
 	if safe:
@@ -79,7 +103,12 @@ func _physics_process(delta: float) -> void:
 		animation_state = "idle"
 	elif _stagger > 0.0:
 		_windup = 0.0
-		velocity.x = move_toward(velocity.x, 0.0, 600.0 * delta)
+		_recovery = 0.0
+		_hurt_elapsed += delta
+		# Preserve the impulse through hurt: steering cannot overwrite it.
+		velocity.x = move_toward(velocity.x, 0.0, (190.0 if kind == "elite" else 280.0) * delta)
+		if kind == "wisp":
+			velocity.y = move_toward(velocity.y, 0.0, 160.0 * delta)
 		animation_state = "hurt"
 	elif _windup > 0.0:
 		_windup = maxf(0.0, _windup - delta)
@@ -101,7 +130,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			_update_walker(offset, delta)
 	move_and_slide()
-	frame = int(_clock * (12.0 if animation_state == "run" else 7.0)) % 4
+	frame = mini(3, int(_hurt_elapsed * 14.0)) if animation_state == "hurt" else int(_clock * (12.0 if animation_state == "run" else 7.0)) % 4
 	if global_position.y > 720.0:
 		_die()
 	_publish_animation()
@@ -147,6 +176,7 @@ func _floor_ahead(direction: int) -> bool:
 	return not hit.is_empty()
 
 func _begin_attack() -> void:
+	attack_serial += 1
 	_windup = 0.66 if kind == "wisp" else (0.48 if kind == "elite" else 0.58)
 	_cooldown = 1.55 if kind == "wisp" else (1.12 if kind == "elite" else 1.45)
 	_attack_facing = facing
@@ -172,8 +202,11 @@ func _execute_attack() -> void:
 	game.emit_fx("enemy_slash", global_position + Vector2(_attack_facing * 22.0, -17.0), Vector2(_attack_facing, 0.0), 0.8 if kind == "elite" else 0.5)
 	if absf(offset.x) > reach or absf(offset.y) > 32.0 or offset.x * _attack_facing < -8.0:
 		return
-	if float(player.parry_timer) > 0.0 and (global_position.x - player.global_position.x) * int(player.facing) >= -8.0:
-		player.parry_success()
+	var blade_root: Vector2 = global_position + Vector2(_attack_facing * 8.0, -17.0)
+	var blade_tip: Vector2 = global_position + Vector2(_attack_facing * reach, -17.0)
+	var guard_point: Vector2 = player.global_position + Vector2(int(player.facing) * 18.0, -18.0)
+	var contact: Vector2 = Geometry2D.get_closest_point_to_segment(guard_point, blade_root, blade_tip)
+	if player.parry_success(self, contact, "melee", attack_serial):
 		_stagger = 0.55
 		_cooldown = 1.1
 		receive_hit(1, player.global_position)
@@ -183,13 +216,24 @@ func _execute_attack() -> void:
 func receive_hit(amount: int, origin: Vector2) -> void:
 	if dead or amount <= 0 or _hurt_flash > 0.06 or (is_instance_valid(game) and bool(game.story_safe)):
 		return
+	var heavy: bool = amount >= 2
 	health = maxi(0, health - amount)
-	_hurt_flash = 0.13
-	_stagger = maxf(_stagger, 0.18)
+	_hurt_flash = 0.15 if heavy else 0.12
+	hurt_flash = _hurt_flash
+	_hurt_elapsed = 0.0
+	_stagger = maxf(_stagger, (0.30 if heavy else 0.18) if kind == "elite" else (0.36 if heavy else 0.23))
 	_windup = 0.0
-	velocity.x = (1.0 if global_position.x >= origin.x else -1.0) * (80.0 if kind == "elite" else 145.0)
+	_recovery = 0.0
+	_cooldown = maxf(_cooldown, _stagger + 0.24)
+	var impulse: float = (155.0 if heavy else 90.0) if kind == "elite" else (230.0 if heavy else 145.0)
+	velocity.x = (1.0 if global_position.x >= origin.x else -1.0) * impulse
+	velocity.y = -110.0 if heavy else -52.0
+	modulate = Color(2.5, 2.1, 1.7, 1.0)
+	animation_state = "hurt"
+	frame = 0
+	_publish_animation()
 	if is_instance_valid(game):
-		game.emit_fx("hit", global_position + Vector2(0.0, -18.0), (global_position - origin).normalized(), 1.0)
+		game.emit_fx("hit", global_position + Vector2(0.0, -18.0), (global_position - origin).normalized(), 1.35 if heavy else 0.75)
 	if health <= 0:
 		_die()
 
@@ -197,6 +241,9 @@ func _die() -> void:
 	if dead:
 		return
 	dead = true
+	animation_state = "dead"
+	frame = 0
+	_publish_animation()
 	collision_layer = 0
 	collision_mask = 0
 	remove_from_group("enemies")

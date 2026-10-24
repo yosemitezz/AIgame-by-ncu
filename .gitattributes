@@ -11,3 +11,7 @@
 *.ps1 text eol=lf
 *.cmd text eol=crlf
 *.png binary
+
+# Preserve upstream font license text verbatim, including its original spaces.
+assets/fonts/LICENSE-OFL whitespace=-blank-at-eol
+assets/fonts/licenses/* whitespace=-blank-at-eol

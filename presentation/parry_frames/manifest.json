@@ -1,0 +1,110 @@
+{
+  "hero": {
+    "canvas": [
+      64,
+      64
+    ],
+    "anchor": [
+      28,
+      58
+    ],
+    "states": {
+      "parry_ready": 0,
+      "parry_recoil": 1,
+      "parry_recover": 2
+    },
+    "frames_per_state": 4,
+    "unique_frames": 12
+  },
+  "boss": {
+    "canvas": [
+      80,
+      80
+    ],
+    "anchor": [
+      40,
+      76
+    ],
+    "states": {
+      "parry_recoil": 0,
+      "guard_break": 1,
+      "guard_recover": 2
+    },
+    "frames_per_state": 4,
+    "unique_frames": 12
+  },
+  "blade_parry": {
+    "canvas": [
+      80,
+      80
+    ],
+    "frames": 6,
+    "white_core_frames": 1
+  },
+  "projectile_parry": {
+    "canvas": [
+      40,
+      40
+    ],
+    "frames": 6,
+    "white_core_frames": 1
+  },
+  "guard_break": {
+    "canvas": [
+      96,
+      96
+    ],
+    "frames": 6,
+    "white_core_frames": 1
+  },
+  "license": "MIT",
+  "source": "Original integer-grid poses and contact effects in tools/generate_parry_frames.py. No video pixels.",
+  "flow_palette": [
+    [
+      65,
+      224,
+      217
+    ],
+    [
+      72,
+      191,
+      237
+    ],
+    [
+      92,
+      151,
+      242
+    ],
+    [
+      122,
+      115,
+      228
+    ],
+    [
+      163,
+      103,
+      217
+    ],
+    [
+      205,
+      116,
+      205
+    ],
+    [
+      235,
+      139,
+      177
+    ],
+    [
+      246,
+      170,
+      137
+    ],
+    [
+      248,
+      207,
+      115
+    ]
+  ],
+  "timing_note": "Actor pose progress is bound to real parry/reaction stages. Contact effects use short real-time lifetimes; no audio or clock writes."
+}

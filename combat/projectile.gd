@@ -48,7 +48,10 @@ func _physics_process(delta: float) -> void:
 				chosen = enemy
 				chosen_distance = previous.distance_to(closest)
 		if is_instance_valid(chosen):
+			var health_before: int = int(chosen.health)
 			chosen.receive_hit(2, previous)
+			if int(chosen.health) < health_before and game.has_method("request_impact"):
+				game.request_impact(game.player, chosen, false, false)
 			game.emit_fx("hit", chosen.global_position + Vector2(0.0, -18.0), velocity.normalized(), 0.9)
 			clear()
 			return
@@ -62,8 +65,8 @@ func _physics_process(delta: float) -> void:
 		# be reflected after it has already crossed the player's hurt circle.
 		if float(player.parry_timer) > 0.0 and parry_contact >= 0.0 and (hurt_contact < 0.0 or parry_contact <= hurt_contact):
 			global_position = previous.lerp(destination, parry_contact)
-			reflect()
-			return
+			if reflect():
+				return
 		if hurt_contact >= 0.0:
 			game.damage_player(1, previous)
 			clear()
@@ -94,16 +97,17 @@ func _circle_contact(from_at: Vector2, to_at: Vector2, center: Vector2, radius: 
 	var contact: float = (-b - sqrt(discriminant)) / (2.0 * a)
 	return contact if contact >= 0.0 and contact <= 1.0 else -1.0
 
-func reflect() -> void:
-	if _cleared or friendly or not is_instance_valid(game) or bool(game.story_safe):
-		return
+func reflect() -> bool:
+	if _cleared or friendly or not is_instance_valid(game) or bool(game.story_safe) or get_tree().paused:
+		return false
+	if not is_instance_valid(game.player) or not game.player.parry_success(self, global_position, "projectile", get_instance_id()):
+		return false
 	friendly = true
 	_age = 0.0
 	_trail.clear()
 	var direction: Vector2 = Vector2(1.0, -0.12)
 	if is_instance_valid(game.player):
 		direction = Vector2(int(game.player.facing), -0.12).normalized()
-		game.player.parry_success()
 	var nearest: float = 900.0
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(enemy) or bool(enemy.dead):
@@ -115,6 +119,7 @@ func reflect() -> void:
 			direction = (target - global_position).normalized()
 	velocity = direction * maxf(250.0, velocity.length() + 80.0)
 	queue_redraw()
+	return true
 
 func clear() -> void:
 	if _cleared:
