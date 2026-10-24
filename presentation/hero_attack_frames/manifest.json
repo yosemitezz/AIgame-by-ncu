@@ -1,0 +1,4650 @@
+{
+  "version": 1,
+  "source": "Original articulated broken-crown armor family; tools/generate_hero_attack_revision.py; no external assets or 3D.",
+  "license": "MIT",
+  "hero": {
+    "canvas": [
+      128,
+      96
+    ],
+    "anchor": [
+      48,
+      88
+    ],
+    "columns": 8,
+    "total_frames": 48,
+    "states": {
+      "cut_1_windup": {
+        "start": 0,
+        "count": 4
+      },
+      "cut_1_attack": {
+        "start": 4,
+        "count": 4
+      },
+      "cut_1_recover": {
+        "start": 8,
+        "count": 4
+      },
+      "cut_1_air_attack": {
+        "start": 12,
+        "count": 4
+      },
+      "cut_2_windup": {
+        "start": 16,
+        "count": 4
+      },
+      "cut_2_attack": {
+        "start": 20,
+        "count": 4
+      },
+      "cut_2_recover": {
+        "start": 24,
+        "count": 4
+      },
+      "cut_2_air_attack": {
+        "start": 28,
+        "count": 4
+      },
+      "cut_3_windup": {
+        "start": 32,
+        "count": 4
+      },
+      "cut_3_attack": {
+        "start": 36,
+        "count": 4
+      },
+      "cut_3_recover": {
+        "start": 40,
+        "count": 4
+      },
+      "cut_3_air_attack": {
+        "start": 44,
+        "count": 4
+      }
+    },
+    "weapon_tips": {
+      "cut_1_windup": [
+        [
+          56,
+          -22
+        ],
+        [
+          46,
+          -48
+        ],
+        [
+          6,
+          -76
+        ],
+        [
+          -28,
+          -69
+        ]
+      ],
+      "cut_1_attack": [
+        [
+          16,
+          -72
+        ],
+        [
+          63,
+          -36
+        ],
+        [
+          66,
+          -12
+        ],
+        [
+          54,
+          2
+        ]
+      ],
+      "cut_1_recover": [
+        [
+          41,
+          3
+        ],
+        [
+          47,
+          0
+        ],
+        [
+          51,
+          -9
+        ],
+        [
+          54,
+          -19
+        ]
+      ],
+      "cut_1_air_attack": [
+        [
+          16,
+          -77
+        ],
+        [
+          64,
+          -41
+        ],
+        [
+          66,
+          -17
+        ],
+        [
+          55,
+          -3
+        ]
+      ],
+      "cut_2_windup": [
+        [
+          38,
+          3
+        ],
+        [
+          22,
+          5
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          -13,
+          3
+        ]
+      ],
+      "cut_2_attack": [
+        [
+          21,
+          1
+        ],
+        [
+          62,
+          -14
+        ],
+        [
+          64,
+          -45
+        ],
+        [
+          47,
+          -69
+        ]
+      ],
+      "cut_2_recover": [
+        [
+          28,
+          -79
+        ],
+        [
+          40,
+          -64
+        ],
+        [
+          51,
+          -42
+        ],
+        [
+          54,
+          -19
+        ]
+      ],
+      "cut_2_air_attack": [
+        [
+          21,
+          -4
+        ],
+        [
+          63,
+          -19
+        ],
+        [
+          64,
+          -50
+        ],
+        [
+          48,
+          -74
+        ]
+      ],
+      "cut_3_windup": [
+        [
+          41,
+          -65
+        ],
+        [
+          13,
+          -78
+        ],
+        [
+          -18,
+          -79
+        ],
+        [
+          -38,
+          -70
+        ]
+      ],
+      "cut_3_attack": [
+        [
+          28,
+          -78
+        ],
+        [
+          71,
+          -40
+        ],
+        [
+          71,
+          -27
+        ],
+        [
+          64,
+          -11
+        ]
+      ],
+      "cut_3_recover": [
+        [
+          51,
+          0
+        ],
+        [
+          55,
+          -5
+        ],
+        [
+          56,
+          -13
+        ],
+        [
+          56,
+          -19
+        ]
+      ],
+      "cut_3_air_attack": [
+        [
+          28,
+          -83
+        ],
+        [
+          72,
+          -45
+        ],
+        [
+          71,
+          -32
+        ],
+        [
+          65,
+          -16
+        ]
+      ]
+    },
+    "frame_data": {
+      "cut_1_windup": [
+        {
+          "hip": [
+            47,
+            72
+          ],
+          "shoulder": [
+            49,
+            59
+          ],
+          "hand": [
+            64,
+            63
+          ],
+          "rear_foot": [
+            37,
+            87
+          ],
+          "front_foot": [
+            60,
+            87
+          ],
+          "rear_knee": [
+            40,
+            79
+          ],
+          "front_knee": [
+            55,
+            79
+          ],
+          "head": [
+            51,
+            50
+          ],
+          "elbow": [
+            56,
+            64
+          ],
+          "rear_elbow": [
+            40,
+            66
+          ],
+          "rear_hand": [
+            34,
+            63
+          ],
+          "tip": [
+            104,
+            66
+          ],
+          "tip_local": [
+            56,
+            -22
+          ],
+          "hand_local": [
+            16,
+            -25
+          ],
+          "blade_angle_degrees": 5,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              47,
+              72
+            ],
+            "shoulder": [
+              49,
+              59
+            ],
+            "head": [
+              51,
+              50
+            ]
+          },
+          "body_bbox": [
+            32,
+            39,
+            68,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "2c04530931d96bbd09c534a58f8ba2d6d6c665da3fa56242f9cd27aa146e0498",
+          "cloth_lag_pixels": 3
+        },
+        {
+          "hip": [
+            46,
+            73
+          ],
+          "shoulder": [
+            46,
+            61
+          ],
+          "hand": [
+            59,
+            59
+          ],
+          "rear_foot": [
+            35,
+            87
+          ],
+          "front_foot": [
+            61,
+            85
+          ],
+          "rear_knee": [
+            39,
+            81
+          ],
+          "front_knee": [
+            55,
+            77
+          ],
+          "head": [
+            48,
+            52
+          ],
+          "elbow": [
+            52,
+            59
+          ],
+          "rear_elbow": [
+            36,
+            68
+          ],
+          "rear_hand": [
+            30,
+            66
+          ],
+          "tip": [
+            94,
+            40
+          ],
+          "tip_local": [
+            46,
+            -48
+          ],
+          "hand_local": [
+            11,
+            -29
+          ],
+          "blade_angle_degrees": -28,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              46,
+              73
+            ],
+            "shoulder": [
+              46,
+              61
+            ],
+            "head": [
+              48,
+              52
+            ]
+          },
+          "body_bbox": [
+            27,
+            41,
+            69,
+            89
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "c33e5ebbed972c4753d8d8939862b7039e6618e041007e1154cd4d45a4b31581",
+          "cloth_lag_pixels": 5
+        },
+        {
+          "hip": [
+            45,
+            74
+          ],
+          "shoulder": [
+            43,
+            62
+          ],
+          "hand": [
+            51,
+            52
+          ],
+          "rear_foot": [
+            33,
+            87
+          ],
+          "front_foot": [
+            63,
+            86
+          ],
+          "rear_knee": [
+            38,
+            82
+          ],
+          "front_knee": [
+            56,
+            78
+          ],
+          "head": [
+            45,
+            53
+          ],
+          "elbow": [
+            46,
+            55
+          ],
+          "rear_elbow": [
+            33,
+            69
+          ],
+          "rear_hand": [
+            27,
+            66
+          ],
+          "tip": [
+            54,
+            12
+          ],
+          "tip_local": [
+            6,
+            -76
+          ],
+          "hand_local": [
+            3,
+            -36
+          ],
+          "blade_angle_degrees": -86,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              45,
+              74
+            ],
+            "shoulder": [
+              43,
+              62
+            ],
+            "head": [
+              45,
+              53
+            ]
+          },
+          "body_bbox": [
+            22,
+            42,
+            71,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "0123878c7fea2d09ef78731eab1c8f96fa5f9739ddd0b066ff0fed9aedd4918d",
+          "cloth_lag_pixels": 7
+        },
+        {
+          "hip": [
+            44,
+            75
+          ],
+          "shoulder": [
+            41,
+            63
+          ],
+          "hand": [
+            44,
+            51
+          ],
+          "rear_foot": [
+            32,
+            87
+          ],
+          "front_foot": [
+            64,
+            87
+          ],
+          "rear_knee": [
+            37,
+            83
+          ],
+          "front_knee": [
+            56,
+            79
+          ],
+          "head": [
+            43,
+            54
+          ],
+          "elbow": [
+            40,
+            55
+          ],
+          "rear_elbow": [
+            31,
+            70
+          ],
+          "rear_hand": [
+            24,
+            68
+          ],
+          "tip": [
+            20,
+            19
+          ],
+          "tip_local": [
+            -28,
+            -69
+          ],
+          "hand_local": [
+            -4,
+            -37
+          ],
+          "blade_angle_degrees": -126,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              44,
+              75
+            ],
+            "shoulder": [
+              41,
+              63
+            ],
+            "head": [
+              43,
+              54
+            ]
+          },
+          "body_bbox": [
+            18,
+            43,
+            72,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "182495f31de7537c1aae645f50c1f21af6b9106acfe4216ff3d831b00594b8b0",
+          "cloth_lag_pixels": 9
+        }
+      ],
+      "cut_1_attack": [
+        {
+          "hip": [
+            47,
+            74
+          ],
+          "shoulder": [
+            48,
+            62
+          ],
+          "hand": [
+            56,
+            55
+          ],
+          "rear_foot": [
+            32,
+            87
+          ],
+          "front_foot": [
+            65,
+            85
+          ],
+          "rear_knee": [
+            38,
+            82
+          ],
+          "front_knee": [
+            57,
+            77
+          ],
+          "head": [
+            50,
+            53
+          ],
+          "elbow": [
+            52,
+            56
+          ],
+          "rear_elbow": [
+            38,
+            69
+          ],
+          "rear_hand": [
+            32,
+            66
+          ],
+          "tip": [
+            64,
+            16
+          ],
+          "tip_local": [
+            16,
+            -72
+          ],
+          "hand_local": [
+            8,
+            -33
+          ],
+          "blade_angle_degrees": -78,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              47,
+              74
+            ],
+            "shoulder": [
+              48,
+              62
+            ],
+            "head": [
+              50,
+              53
+            ]
+          },
+          "body_bbox": [
+            27,
+            42,
+            73,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "25a65788919ac1e4d673ef2c4312a2fe00c43adec5f0ca5657c067aca8877e02",
+          "cloth_lag_pixels": 7
+        },
+        {
+          "hip": [
+            53,
+            73
+          ],
+          "shoulder": [
+            55,
+            61
+          ],
+          "hand": [
+            73,
+            64
+          ],
+          "rear_foot": [
+            30,
+            87
+          ],
+          "front_foot": [
+            74,
+            87
+          ],
+          "rear_knee": [
+            39,
+            82
+          ],
+          "front_knee": [
+            62,
+            77
+          ],
+          "head": [
+            58,
+            52
+          ],
+          "elbow": [
+            68,
+            62
+          ],
+          "rear_elbow": [
+            44,
+            68
+          ],
+          "rear_hand": [
+            37,
+            66
+          ],
+          "tip": [
+            111,
+            52
+          ],
+          "tip_local": [
+            63,
+            -36
+          ],
+          "hand_local": [
+            25,
+            -24
+          ],
+          "blade_angle_degrees": -18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              53,
+              73
+            ],
+            "shoulder": [
+              55,
+              61
+            ],
+            "head": [
+              58,
+              52
+            ]
+          },
+          "body_bbox": [
+            26,
+            41,
+            82,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "c892d233d44306ac5220fa454fa50b23d7c90a00c3fe0045f110aa9e55a21754",
+          "cloth_lag_pixels": 13
+        },
+        {
+          "hip": [
+            57,
+            74
+          ],
+          "shoulder": [
+            64,
+            64
+          ],
+          "hand": [
+            76,
+            64
+          ],
+          "rear_foot": [
+            28,
+            87
+          ],
+          "front_foot": [
+            77,
+            87
+          ],
+          "rear_knee": [
+            39,
+            82
+          ],
+          "front_knee": [
+            67,
+            79
+          ],
+          "head": [
+            67,
+            55
+          ],
+          "elbow": [
+            75,
+            67
+          ],
+          "rear_elbow": [
+            52,
+            71
+          ],
+          "rear_hand": [
+            45,
+            68
+          ],
+          "tip": [
+            114,
+            76
+          ],
+          "tip_local": [
+            66,
+            -12
+          ],
+          "hand_local": [
+            28,
+            -24
+          ],
+          "blade_angle_degrees": 18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              57,
+              74
+            ],
+            "shoulder": [
+              64,
+              64
+            ],
+            "head": [
+              67,
+              55
+            ]
+          },
+          "body_bbox": [
+            24,
+            44,
+            85,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "0b643905ba751de2006d2495c3d20ce93c2b2ed3d5786d9b5ba1bdba99d10311",
+          "cloth_lag_pixels": 18
+        },
+        {
+          "hip": [
+            58,
+            75
+          ],
+          "shoulder": [
+            66,
+            67
+          ],
+          "hand": [
+            72,
+            63
+          ],
+          "rear_foot": [
+            29,
+            87
+          ],
+          "front_foot": [
+            78,
+            87
+          ],
+          "rear_knee": [
+            40,
+            83
+          ],
+          "front_knee": [
+            68,
+            80
+          ],
+          "head": [
+            69,
+            58
+          ],
+          "elbow": [
+            74,
+            69
+          ],
+          "rear_elbow": [
+            53,
+            74
+          ],
+          "rear_hand": [
+            46,
+            72
+          ],
+          "tip": [
+            102,
+            90
+          ],
+          "tip_local": [
+            54,
+            2
+          ],
+          "hand_local": [
+            24,
+            -25
+          ],
+          "blade_angle_degrees": 42,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              58,
+              75
+            ],
+            "shoulder": [
+              66,
+              67
+            ],
+            "head": [
+              69,
+              58
+            ]
+          },
+          "body_bbox": [
+            25,
+            47,
+            86,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "b39cf5d87ce5e858597efcf2b26452bc3ac17247be974ece4b925be5b43c9db3",
+          "cloth_lag_pixels": 20
+        }
+      ],
+      "cut_1_recover": [
+        {
+          "hip": [
+            57,
+            75
+          ],
+          "shoulder": [
+            64,
+            67
+          ],
+          "hand": [
+            70,
+            56
+          ],
+          "rear_foot": [
+            29,
+            87
+          ],
+          "front_foot": [
+            77,
+            87
+          ],
+          "rear_knee": [
+            40,
+            83
+          ],
+          "front_knee": [
+            67,
+            81
+          ],
+          "head": [
+            67,
+            58
+          ],
+          "elbow": [
+            72,
+            66
+          ],
+          "rear_elbow": [
+            52,
+            74
+          ],
+          "rear_hand": [
+            45,
+            71
+          ],
+          "tip": [
+            89,
+            91
+          ],
+          "tip_local": [
+            41,
+            3
+          ],
+          "hand_local": [
+            22,
+            -32
+          ],
+          "blade_angle_degrees": 62,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              57,
+              75
+            ],
+            "shoulder": [
+              64,
+              67
+            ],
+            "head": [
+              67,
+              58
+            ]
+          },
+          "body_bbox": [
+            25,
+            47,
+            85,
+            91
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "47a6fba0f18b7632d25f3139f08ca6baae4bfc3ff8cba1b1f35eb121c97a9908",
+          "cloth_lag_pixels": 18
+        },
+        {
+          "hip": [
+            54,
+            74
+          ],
+          "shoulder": [
+            60,
+            64
+          ],
+          "hand": [
+            67,
+            59
+          ],
+          "rear_foot": [
+            31,
+            87
+          ],
+          "front_foot": [
+            72,
+            87
+          ],
+          "rear_knee": [
+            40,
+            82
+          ],
+          "front_knee": [
+            63,
+            80
+          ],
+          "head": [
+            62,
+            55
+          ],
+          "elbow": [
+            67,
+            64
+          ],
+          "rear_elbow": [
+            49,
+            71
+          ],
+          "rear_hand": [
+            42,
+            69
+          ],
+          "tip": [
+            95,
+            88
+          ],
+          "tip_local": [
+            47,
+            0
+          ],
+          "hand_local": [
+            19,
+            -29
+          ],
+          "blade_angle_degrees": 46,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              54,
+              74
+            ],
+            "shoulder": [
+              60,
+              64
+            ],
+            "head": [
+              62,
+              55
+            ]
+          },
+          "body_bbox": [
+            27,
+            44,
+            80,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "64eb06dcf9a8ee5753ef97effb22552c8693561ab6d7af714b6d6bd9bc9fd9da",
+          "cloth_lag_pixels": 13
+        },
+        {
+          "hip": [
+            51,
+            73
+          ],
+          "shoulder": [
+            55,
+            62
+          ],
+          "hand": [
+            63,
+            62
+          ],
+          "rear_foot": [
+            34,
+            87
+          ],
+          "front_foot": [
+            66,
+            87
+          ],
+          "rear_knee": [
+            41,
+            80
+          ],
+          "front_knee": [
+            59,
+            79
+          ],
+          "head": [
+            57,
+            53
+          ],
+          "elbow": [
+            61,
+            65
+          ],
+          "rear_elbow": [
+            45,
+            69
+          ],
+          "rear_hand": [
+            38,
+            66
+          ],
+          "tip": [
+            99,
+            79
+          ],
+          "tip_local": [
+            51,
+            -9
+          ],
+          "hand_local": [
+            15,
+            -26
+          ],
+          "blade_angle_degrees": 25,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              51,
+              73
+            ],
+            "shoulder": [
+              55,
+              62
+            ],
+            "head": [
+              57,
+              53
+            ]
+          },
+          "body_bbox": [
+            30,
+            42,
+            74,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "7b31da6b0919bf37369cf39297748405c24699b6b09467f88fd877b2fdc5b703",
+          "cloth_lag_pixels": 8
+        },
+        {
+          "hip": [
+            49,
+            72
+          ],
+          "shoulder": [
+            51,
+            60
+          ],
+          "hand": [
+            62,
+            63
+          ],
+          "rear_foot": [
+            37,
+            87
+          ],
+          "front_foot": [
+            61,
+            87
+          ],
+          "rear_knee": [
+            42,
+            79
+          ],
+          "front_knee": [
+            56,
+            79
+          ],
+          "head": [
+            53,
+            51
+          ],
+          "elbow": [
+            58,
+            64
+          ],
+          "rear_elbow": [
+            42,
+            67
+          ],
+          "rear_hand": [
+            35,
+            65
+          ],
+          "tip": [
+            102,
+            69
+          ],
+          "tip_local": [
+            54,
+            -19
+          ],
+          "hand_local": [
+            14,
+            -25
+          ],
+          "blade_angle_degrees": 8,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              49,
+              72
+            ],
+            "shoulder": [
+              51,
+              60
+            ],
+            "head": [
+              53,
+              51
+            ]
+          },
+          "body_bbox": [
+            33,
+            40,
+            69,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "00bbede1811e926a3404cf175fb5f67e57db8908826be1b069ea74ba20b68ca5",
+          "cloth_lag_pixels": 4
+        }
+      ],
+      "cut_1_air_attack": [
+        {
+          "hip": [
+            47,
+            69
+          ],
+          "shoulder": [
+            48,
+            57
+          ],
+          "hand": [
+            56,
+            50
+          ],
+          "rear_foot": [
+            33,
+            77
+          ],
+          "front_foot": [
+            70,
+            75
+          ],
+          "rear_knee": [
+            43,
+            72
+          ],
+          "front_knee": [
+            62,
+            67
+          ],
+          "head": [
+            50,
+            48
+          ],
+          "elbow": [
+            52,
+            52
+          ],
+          "rear_elbow": [
+            37,
+            64
+          ],
+          "rear_hand": [
+            30,
+            61
+          ],
+          "tip": [
+            64,
+            11
+          ],
+          "tip_local": [
+            16,
+            -77
+          ],
+          "hand_local": [
+            8,
+            -38
+          ],
+          "blade_angle_degrees": -78,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              47,
+              69
+            ],
+            "shoulder": [
+              48,
+              57
+            ],
+            "head": [
+              50,
+              48
+            ]
+          },
+          "body_bbox": [
+            22,
+            37,
+            78,
+            80
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "6b90c949a7426f9dbe1fa3397ecf0e95c58b9b58b490d7b5233f96de52a9e8a0",
+          "cloth_lag_pixels": 12
+        },
+        {
+          "hip": [
+            54,
+            68
+          ],
+          "shoulder": [
+            56,
+            56
+          ],
+          "hand": [
+            74,
+            59
+          ],
+          "rear_foot": [
+            34,
+            79
+          ],
+          "front_foot": [
+            76,
+            73
+          ],
+          "rear_knee": [
+            44,
+            73
+          ],
+          "front_knee": [
+            66,
+            66
+          ],
+          "head": [
+            59,
+            47
+          ],
+          "elbow": [
+            68,
+            56
+          ],
+          "rear_elbow": [
+            44,
+            63
+          ],
+          "rear_hand": [
+            37,
+            61
+          ],
+          "tip": [
+            112,
+            47
+          ],
+          "tip_local": [
+            64,
+            -41
+          ],
+          "hand_local": [
+            26,
+            -29
+          ],
+          "blade_angle_degrees": -18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              54,
+              68
+            ],
+            "shoulder": [
+              56,
+              56
+            ],
+            "head": [
+              59,
+              47
+            ]
+          },
+          "body_bbox": [
+            23,
+            36,
+            84,
+            82
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "0fa4ed44a935dbe0f5ea2484f93fd29b834fb10d001cd4ff587f08d618f56b0b",
+          "cloth_lag_pixels": 19
+        },
+        {
+          "hip": [
+            57,
+            69
+          ],
+          "shoulder": [
+            64,
+            59
+          ],
+          "hand": [
+            76,
+            59
+          ],
+          "rear_foot": [
+            35,
+            80
+          ],
+          "front_foot": [
+            79,
+            74
+          ],
+          "rear_knee": [
+            45,
+            74
+          ],
+          "front_knee": [
+            69,
+            68
+          ],
+          "head": [
+            67,
+            50
+          ],
+          "elbow": [
+            75,
+            62
+          ],
+          "rear_elbow": [
+            50,
+            66
+          ],
+          "rear_hand": [
+            43,
+            63
+          ],
+          "tip": [
+            114,
+            71
+          ],
+          "tip_local": [
+            66,
+            -17
+          ],
+          "hand_local": [
+            28,
+            -29
+          ],
+          "blade_angle_degrees": 18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              57,
+              69
+            ],
+            "shoulder": [
+              64,
+              59
+            ],
+            "head": [
+              67,
+              50
+            ]
+          },
+          "body_bbox": [
+            25,
+            39,
+            87,
+            83
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "9ee23dfd5b77968b2b8058048f364c498d1fef04dd73e4248f4e751450416911",
+          "cloth_lag_pixels": 25
+        },
+        {
+          "hip": [
+            59,
+            70
+          ],
+          "shoulder": [
+            67,
+            62
+          ],
+          "hand": [
+            73,
+            58
+          ],
+          "rear_foot": [
+            33,
+            79
+          ],
+          "front_foot": [
+            78,
+            77
+          ],
+          "rear_knee": [
+            44,
+            75
+          ],
+          "front_knee": [
+            68,
+            70
+          ],
+          "head": [
+            70,
+            53
+          ],
+          "elbow": [
+            76,
+            64
+          ],
+          "rear_elbow": [
+            53,
+            69
+          ],
+          "rear_hand": [
+            45,
+            67
+          ],
+          "tip": [
+            103,
+            85
+          ],
+          "tip_local": [
+            55,
+            -3
+          ],
+          "hand_local": [
+            25,
+            -30
+          ],
+          "blade_angle_degrees": 42,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              59,
+              70
+            ],
+            "shoulder": [
+              67,
+              62
+            ],
+            "head": [
+              70,
+              53
+            ]
+          },
+          "body_bbox": [
+            25,
+            42,
+            86,
+            85
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "8bbdfa400ecdb73f290d35407e1a2a51c7a3ad7761a5a430315eb5b18be7a2ea",
+          "cloth_lag_pixels": 28
+        }
+      ],
+      "cut_2_windup": [
+        {
+          "hip": [
+            50,
+            72
+          ],
+          "shoulder": [
+            53,
+            60
+          ],
+          "hand": [
+            64,
+            58
+          ],
+          "rear_foot": [
+            36,
+            87
+          ],
+          "front_foot": [
+            63,
+            87
+          ],
+          "rear_knee": [
+            40,
+            80
+          ],
+          "front_knee": [
+            58,
+            78
+          ],
+          "head": [
+            55,
+            51
+          ],
+          "elbow": [
+            62,
+            61
+          ],
+          "rear_elbow": [
+            44,
+            67
+          ],
+          "rear_hand": [
+            37,
+            64
+          ],
+          "tip": [
+            86,
+            91
+          ],
+          "tip_local": [
+            38,
+            3
+          ],
+          "hand_local": [
+            16,
+            -30
+          ],
+          "blade_angle_degrees": 56,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              50,
+              72
+            ],
+            "shoulder": [
+              53,
+              60
+            ],
+            "head": [
+              55,
+              51
+            ]
+          },
+          "body_bbox": [
+            32,
+            40,
+            71,
+            89
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "2b2484db391e83851d233f2dbee0e9649ceb2c8ea769723212243f2b2b41ac97",
+          "cloth_lag_pixels": 4
+        },
+        {
+          "hip": [
+            49,
+            73
+          ],
+          "shoulder": [
+            50,
+            62
+          ],
+          "hand": [
+            58,
+            55
+          ],
+          "rear_foot": [
+            34,
+            87
+          ],
+          "front_foot": [
+            65,
+            86
+          ],
+          "rear_knee": [
+            39,
+            82
+          ],
+          "front_knee": [
+            59,
+            77
+          ],
+          "head": [
+            52,
+            53
+          ],
+          "elbow": [
+            55,
+            60
+          ],
+          "rear_elbow": [
+            40,
+            69
+          ],
+          "rear_hand": [
+            34,
+            67
+          ],
+          "tip": [
+            70,
+            93
+          ],
+          "tip_local": [
+            22,
+            5
+          ],
+          "hand_local": [
+            10,
+            -33
+          ],
+          "blade_angle_degrees": 72,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              49,
+              73
+            ],
+            "shoulder": [
+              50,
+              62
+            ],
+            "head": [
+              52,
+              53
+            ]
+          },
+          "body_bbox": [
+            30,
+            42,
+            73,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "b6b3bb4cf5559317ca70b7e8913329433872009282a483e7803b659aa1c27317",
+          "cloth_lag_pixels": 6
+        },
+        {
+          "hip": [
+            48,
+            74
+          ],
+          "shoulder": [
+            46,
+            63
+          ],
+          "hand": [
+            51,
+            53
+          ],
+          "rear_foot": [
+            32,
+            87
+          ],
+          "front_foot": [
+            66,
+            87
+          ],
+          "rear_knee": [
+            38,
+            83
+          ],
+          "front_knee": [
+            60,
+            79
+          ],
+          "head": [
+            48,
+            54
+          ],
+          "elbow": [
+            48,
+            61
+          ],
+          "rear_elbow": [
+            36,
+            70
+          ],
+          "rear_hand": [
+            29,
+            67
+          ],
+          "tip": [
+            50,
+            93
+          ],
+          "tip_local": [
+            2,
+            5
+          ],
+          "hand_local": [
+            3,
+            -35
+          ],
+          "blade_angle_degrees": 92,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              48,
+              74
+            ],
+            "shoulder": [
+              46,
+              63
+            ],
+            "head": [
+              48,
+              54
+            ]
+          },
+          "body_bbox": [
+            24,
+            43,
+            74,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "2029848947a7300d13cd85566362f1ea725ee84a63c5c54606f955193c189a95",
+          "cloth_lag_pixels": 8
+        },
+        {
+          "hip": [
+            47,
+            75
+          ],
+          "shoulder": [
+            43,
+            65
+          ],
+          "hand": [
+            45,
+            52
+          ],
+          "rear_foot": [
+            31,
+            87
+          ],
+          "front_foot": [
+            67,
+            87
+          ],
+          "rear_knee": [
+            37,
+            83
+          ],
+          "front_knee": [
+            61,
+            81
+          ],
+          "head": [
+            45,
+            56
+          ],
+          "elbow": [
+            42,
+            62
+          ],
+          "rear_elbow": [
+            32,
+            72
+          ],
+          "rear_hand": [
+            26,
+            70
+          ],
+          "tip": [
+            35,
+            91
+          ],
+          "tip_local": [
+            -13,
+            3
+          ],
+          "hand_local": [
+            -3,
+            -36
+          ],
+          "blade_angle_degrees": 104,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              47,
+              75
+            ],
+            "shoulder": [
+              43,
+              65
+            ],
+            "head": [
+              45,
+              56
+            ]
+          },
+          "body_bbox": [
+            19,
+            45,
+            75,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "31ef5443ba2bb66b9911e0ba0d1a402a50207ff1f4e404de68a802903a69103f",
+          "cloth_lag_pixels": 10
+        }
+      ],
+      "cut_2_attack": [
+        {
+          "hip": [
+            49,
+            75
+          ],
+          "shoulder": [
+            48,
+            65
+          ],
+          "hand": [
+            57,
+            51
+          ],
+          "rear_foot": [
+            31,
+            87
+          ],
+          "front_foot": [
+            68,
+            85
+          ],
+          "rear_knee": [
+            38,
+            83
+          ],
+          "front_knee": [
+            60,
+            78
+          ],
+          "head": [
+            50,
+            56
+          ],
+          "elbow": [
+            51,
+            61
+          ],
+          "rear_elbow": [
+            38,
+            72
+          ],
+          "rear_hand": [
+            31,
+            69
+          ],
+          "tip": [
+            69,
+            89
+          ],
+          "tip_local": [
+            21,
+            1
+          ],
+          "hand_local": [
+            9,
+            -37
+          ],
+          "blade_angle_degrees": 72,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              49,
+              75
+            ],
+            "shoulder": [
+              48,
+              65
+            ],
+            "head": [
+              50,
+              56
+            ]
+          },
+          "body_bbox": [
+            26,
+            45,
+            76,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "31c08e6f004a53cebdf9a6de17468f4c1519fea4b1e748f883b9b73e51588fda",
+          "cloth_lag_pixels": 8
+        },
+        {
+          "hip": [
+            54,
+            73
+          ],
+          "shoulder": [
+            59,
+            62
+          ],
+          "hand": [
+            72,
+            62
+          ],
+          "rear_foot": [
+            30,
+            87
+          ],
+          "front_foot": [
+            73,
+            87
+          ],
+          "rear_knee": [
+            39,
+            82
+          ],
+          "front_knee": [
+            64,
+            78
+          ],
+          "head": [
+            61,
+            53
+          ],
+          "elbow": [
+            67,
+            66
+          ],
+          "rear_elbow": [
+            48,
+            69
+          ],
+          "rear_hand": [
+            41,
+            67
+          ],
+          "tip": [
+            110,
+            74
+          ],
+          "tip_local": [
+            62,
+            -14
+          ],
+          "hand_local": [
+            24,
+            -26
+          ],
+          "blade_angle_degrees": 18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              54,
+              73
+            ],
+            "shoulder": [
+              59,
+              62
+            ],
+            "head": [
+              61,
+              53
+            ]
+          },
+          "body_bbox": [
+            26,
+            42,
+            81,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "d84427dc7f918eef98e9495d5fe07bc0a17368c270146a0e8f00b59a6aab08f6",
+          "cloth_lag_pixels": 14
+        },
+        {
+          "hip": [
+            56,
+            72
+          ],
+          "shoulder": [
+            64,
+            59
+          ],
+          "hand": [
+            74,
+            55
+          ],
+          "rear_foot": [
+            31,
+            87
+          ],
+          "front_foot": [
+            75,
+            87
+          ],
+          "rear_knee": [
+            41,
+            81
+          ],
+          "front_knee": [
+            66,
+            77
+          ],
+          "head": [
+            67,
+            50
+          ],
+          "elbow": [
+            72,
+            60
+          ],
+          "rear_elbow": [
+            52,
+            66
+          ],
+          "rear_hand": [
+            45,
+            63
+          ],
+          "tip": [
+            112,
+            43
+          ],
+          "tip_local": [
+            64,
+            -45
+          ],
+          "hand_local": [
+            26,
+            -33
+          ],
+          "blade_angle_degrees": -18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              56,
+              72
+            ],
+            "shoulder": [
+              64,
+              59
+            ],
+            "head": [
+              67,
+              50
+            ]
+          },
+          "body_bbox": [
+            27,
+            39,
+            83,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "4289fc847fa44f4027d9d065867d5caf5109623d643ebb761135492e50004dcc",
+          "cloth_lag_pixels": 19
+        },
+        {
+          "hip": [
+            55,
+            71
+          ],
+          "shoulder": [
+            61,
+            56
+          ],
+          "hand": [
+            67,
+            48
+          ],
+          "rear_foot": [
+            33,
+            87
+          ],
+          "front_foot": [
+            73,
+            87
+          ],
+          "rear_knee": [
+            42,
+            80
+          ],
+          "front_knee": [
+            64,
+            77
+          ],
+          "head": [
+            64,
+            47
+          ],
+          "elbow": [
+            70,
+            52
+          ],
+          "rear_elbow": [
+            48,
+            63
+          ],
+          "rear_hand": [
+            41,
+            61
+          ],
+          "tip": [
+            95,
+            19
+          ],
+          "tip_local": [
+            47,
+            -69
+          ],
+          "hand_local": [
+            19,
+            -40
+          ],
+          "blade_angle_degrees": -46,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              55,
+              71
+            ],
+            "shoulder": [
+              61,
+              56
+            ],
+            "head": [
+              64,
+              47
+            ]
+          },
+          "body_bbox": [
+            26,
+            36,
+            81,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "22e6aaa5df64bfe5c5987613321890c8c2036e9eedcfd0179a1b6b0ba4f655ee",
+          "cloth_lag_pixels": 21
+        }
+      ],
+      "cut_2_recover": [
+        {
+          "hip": [
+            54,
+            71
+          ],
+          "shoulder": [
+            59,
+            56
+          ],
+          "hand": [
+            61,
+            46
+          ],
+          "rear_foot": [
+            33,
+            87
+          ],
+          "front_foot": [
+            72,
+            87
+          ],
+          "rear_knee": [
+            42,
+            80
+          ],
+          "front_knee": [
+            63,
+            77
+          ],
+          "head": [
+            62,
+            47
+          ],
+          "elbow": [
+            64,
+            50
+          ],
+          "rear_elbow": [
+            47,
+            63
+          ],
+          "rear_hand": [
+            40,
+            60
+          ],
+          "tip": [
+            76,
+            9
+          ],
+          "tip_local": [
+            28,
+            -79
+          ],
+          "hand_local": [
+            13,
+            -42
+          ],
+          "blade_angle_degrees": -68,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              54,
+              71
+            ],
+            "shoulder": [
+              59,
+              56
+            ],
+            "head": [
+              62,
+              47
+            ]
+          },
+          "body_bbox": [
+            27,
+            36,
+            80,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "7050992c9d185c473fb21bf3dda8307a0f668fa133d1f3b99c5738f3d63d51f0",
+          "cloth_lag_pixels": 18
+        },
+        {
+          "hip": [
+            52,
+            72
+          ],
+          "shoulder": [
+            56,
+            58
+          ],
+          "hand": [
+            59,
+            51
+          ],
+          "rear_foot": [
+            34,
+            87
+          ],
+          "front_foot": [
+            68,
+            87
+          ],
+          "rear_knee": [
+            42,
+            80
+          ],
+          "front_knee": [
+            61,
+            78
+          ],
+          "head": [
+            58,
+            49
+          ],
+          "elbow": [
+            61,
+            54
+          ],
+          "rear_elbow": [
+            45,
+            65
+          ],
+          "rear_hand": [
+            38,
+            63
+          ],
+          "tip": [
+            88,
+            24
+          ],
+          "tip_local": [
+            40,
+            -64
+          ],
+          "hand_local": [
+            11,
+            -37
+          ],
+          "blade_angle_degrees": -43,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              52,
+              72
+            ],
+            "shoulder": [
+              56,
+              58
+            ],
+            "head": [
+              58,
+              49
+            ]
+          },
+          "body_bbox": [
+            29,
+            38,
+            76,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "cfd5008e2f4c139e5e4c30f270036e11c3c79928e0d0f3a9450f3036177f18e0",
+          "cloth_lag_pixels": 13
+        },
+        {
+          "hip": [
+            50,
+            72
+          ],
+          "shoulder": [
+            53,
+            59
+          ],
+          "hand": [
+            61,
+            57
+          ],
+          "rear_foot": [
+            36,
+            87
+          ],
+          "front_foot": [
+            64,
+            87
+          ],
+          "rear_knee": [
+            42,
+            79
+          ],
+          "front_knee": [
+            58,
+            78
+          ],
+          "head": [
+            55,
+            50
+          ],
+          "elbow": [
+            59,
+            60
+          ],
+          "rear_elbow": [
+            43,
+            66
+          ],
+          "rear_hand": [
+            36,
+            63
+          ],
+          "tip": [
+            99,
+            46
+          ],
+          "tip_local": [
+            51,
+            -42
+          ],
+          "hand_local": [
+            13,
+            -31
+          ],
+          "blade_angle_degrees": -16,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              50,
+              72
+            ],
+            "shoulder": [
+              53,
+              59
+            ],
+            "head": [
+              55,
+              50
+            ]
+          },
+          "body_bbox": [
+            31,
+            39,
+            72,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "ea388d33023c0c9437a0a365cb53a319c4c7f9eb58177f03f8abbdff9b6645c9",
+          "cloth_lag_pixels": 8
+        },
+        {
+          "hip": [
+            49,
+            72
+          ],
+          "shoulder": [
+            51,
+            60
+          ],
+          "hand": [
+            62,
+            63
+          ],
+          "rear_foot": [
+            38,
+            87
+          ],
+          "front_foot": [
+            61,
+            87
+          ],
+          "rear_knee": [
+            42,
+            79
+          ],
+          "front_knee": [
+            56,
+            79
+          ],
+          "head": [
+            53,
+            51
+          ],
+          "elbow": [
+            58,
+            64
+          ],
+          "rear_elbow": [
+            42,
+            67
+          ],
+          "rear_hand": [
+            35,
+            65
+          ],
+          "tip": [
+            102,
+            69
+          ],
+          "tip_local": [
+            54,
+            -19
+          ],
+          "hand_local": [
+            14,
+            -25
+          ],
+          "blade_angle_degrees": 8,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              49,
+              72
+            ],
+            "shoulder": [
+              51,
+              60
+            ],
+            "head": [
+              53,
+              51
+            ]
+          },
+          "body_bbox": [
+            33,
+            40,
+            69,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "e45a9836f9704cd728e4136c40180657d61e2ebc22e96f5afac69823a46faa99",
+          "cloth_lag_pixels": 4
+        }
+      ],
+      "cut_2_air_attack": [
+        {
+          "hip": [
+            49,
+            70
+          ],
+          "shoulder": [
+            48,
+            60
+          ],
+          "hand": [
+            57,
+            46
+          ],
+          "rear_foot": [
+            33,
+            77
+          ],
+          "front_foot": [
+            70,
+            75
+          ],
+          "rear_knee": [
+            43,
+            72
+          ],
+          "front_knee": [
+            62,
+            67
+          ],
+          "head": [
+            50,
+            51
+          ],
+          "elbow": [
+            51,
+            56
+          ],
+          "rear_elbow": [
+            37,
+            67
+          ],
+          "rear_hand": [
+            30,
+            64
+          ],
+          "tip": [
+            69,
+            84
+          ],
+          "tip_local": [
+            21,
+            -4
+          ],
+          "hand_local": [
+            9,
+            -42
+          ],
+          "blade_angle_degrees": 72,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              49,
+              70
+            ],
+            "shoulder": [
+              48,
+              60
+            ],
+            "head": [
+              50,
+              51
+            ]
+          },
+          "body_bbox": [
+            21,
+            40,
+            78,
+            83
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "1fbcdaf8e59b97fb45323b1b7d9c7e7fcf12d67cc103a97dbb5e68e892055753",
+          "cloth_lag_pixels": 13
+        },
+        {
+          "hip": [
+            55,
+            68
+          ],
+          "shoulder": [
+            60,
+            57
+          ],
+          "hand": [
+            73,
+            57
+          ],
+          "rear_foot": [
+            34,
+            79
+          ],
+          "front_foot": [
+            76,
+            73
+          ],
+          "rear_knee": [
+            44,
+            73
+          ],
+          "front_knee": [
+            66,
+            66
+          ],
+          "head": [
+            62,
+            48
+          ],
+          "elbow": [
+            68,
+            61
+          ],
+          "rear_elbow": [
+            47,
+            64
+          ],
+          "rear_hand": [
+            40,
+            62
+          ],
+          "tip": [
+            111,
+            69
+          ],
+          "tip_local": [
+            63,
+            -19
+          ],
+          "hand_local": [
+            25,
+            -31
+          ],
+          "blade_angle_degrees": 18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              55,
+              68
+            ],
+            "shoulder": [
+              60,
+              57
+            ],
+            "head": [
+              62,
+              48
+            ]
+          },
+          "body_bbox": [
+            26,
+            37,
+            84,
+            82
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "5178a5f1d72f59f3f156803c5a4044e633baea9b18bb52b9bc36dc3b83f0e82d",
+          "cloth_lag_pixels": 20
+        },
+        {
+          "hip": [
+            56,
+            67
+          ],
+          "shoulder": [
+            64,
+            54
+          ],
+          "hand": [
+            74,
+            50
+          ],
+          "rear_foot": [
+            35,
+            80
+          ],
+          "front_foot": [
+            79,
+            74
+          ],
+          "rear_knee": [
+            45,
+            74
+          ],
+          "front_knee": [
+            69,
+            68
+          ],
+          "head": [
+            67,
+            45
+          ],
+          "elbow": [
+            72,
+            55
+          ],
+          "rear_elbow": [
+            50,
+            61
+          ],
+          "rear_hand": [
+            43,
+            58
+          ],
+          "tip": [
+            112,
+            38
+          ],
+          "tip_local": [
+            64,
+            -50
+          ],
+          "hand_local": [
+            26,
+            -38
+          ],
+          "blade_angle_degrees": -18,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              56,
+              67
+            ],
+            "shoulder": [
+              64,
+              54
+            ],
+            "head": [
+              67,
+              45
+            ]
+          },
+          "body_bbox": [
+            24,
+            34,
+            87,
+            83
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "b3cad6c8734a7a11c232856860ce086cca2adf50a9450b8b370a82cee8de99d0",
+          "cloth_lag_pixels": 26
+        },
+        {
+          "hip": [
+            56,
+            66
+          ],
+          "shoulder": [
+            62,
+            51
+          ],
+          "hand": [
+            68,
+            43
+          ],
+          "rear_foot": [
+            33,
+            79
+          ],
+          "front_foot": [
+            78,
+            77
+          ],
+          "rear_knee": [
+            44,
+            75
+          ],
+          "front_knee": [
+            68,
+            70
+          ],
+          "head": [
+            65,
+            42
+          ],
+          "elbow": [
+            71,
+            47
+          ],
+          "rear_elbow": [
+            48,
+            58
+          ],
+          "rear_hand": [
+            40,
+            56
+          ],
+          "tip": [
+            96,
+            14
+          ],
+          "tip_local": [
+            48,
+            -74
+          ],
+          "hand_local": [
+            20,
+            -45
+          ],
+          "blade_angle_degrees": -46,
+          "steel_length_pixels": 40,
+          "body_axes": {
+            "hip": [
+              56,
+              66
+            ],
+            "shoulder": [
+              62,
+              51
+            ],
+            "head": [
+              65,
+              42
+            ]
+          },
+          "body_bbox": [
+            19,
+            31,
+            86,
+            82
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "3bac165f8bf24bc67a1155e0a0f971768c9a7b42c84e92175ca069b6932197b6",
+          "cloth_lag_pixels": 29
+        }
+      ],
+      "cut_3_windup": [
+        {
+          "hip": [
+            48,
+            73
+          ],
+          "shoulder": [
+            49,
+            61
+          ],
+          "hand": [
+            62,
+            55
+          ],
+          "rear_foot": [
+            35,
+            87
+          ],
+          "front_foot": [
+            64,
+            87
+          ],
+          "rear_knee": [
+            39,
+            81
+          ],
+          "front_knee": [
+            57,
+            80
+          ],
+          "head": [
+            51,
+            52
+          ],
+          "elbow": [
+            56,
+            56
+          ],
+          "rear_elbow": [
+            45,
+            70
+          ],
+          "rear_hand": [
+            57,
+            58
+          ],
+          "tip": [
+            89,
+            23
+          ],
+          "tip_local": [
+            41,
+            -65
+          ],
+          "hand_local": [
+            14,
+            -33
+          ],
+          "blade_angle_degrees": -50,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              48,
+              73
+            ],
+            "shoulder": [
+              49,
+              61
+            ],
+            "head": [
+              51,
+              52
+            ]
+          },
+          "body_bbox": [
+            31,
+            41,
+            72,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "a279e0f6e5c8379e4084de05b1bc319407785a27bff42dc9c64cc1a56449caa3",
+          "cloth_lag_pixels": 4
+        },
+        {
+          "hip": [
+            46,
+            75
+          ],
+          "shoulder": [
+            45,
+            64
+          ],
+          "hand": [
+            55,
+            52
+          ],
+          "rear_foot": [
+            32,
+            87
+          ],
+          "front_foot": [
+            67,
+            86
+          ],
+          "rear_knee": [
+            37,
+            84
+          ],
+          "front_knee": [
+            59,
+            79
+          ],
+          "head": [
+            47,
+            55
+          ],
+          "elbow": [
+            48,
+            56
+          ],
+          "rear_elbow": [
+            41,
+            73
+          ],
+          "rear_hand": [
+            50,
+            55
+          ],
+          "tip": [
+            61,
+            10
+          ],
+          "tip_local": [
+            13,
+            -78
+          ],
+          "hand_local": [
+            7,
+            -36
+          ],
+          "blade_angle_degrees": -82,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              46,
+              75
+            ],
+            "shoulder": [
+              45,
+              64
+            ],
+            "head": [
+              47,
+              55
+            ]
+          },
+          "body_bbox": [
+            24,
+            44,
+            75,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "d21d0338fd6352dec198d59a069e9adc6424111f93536235d4f64308b8bdf582",
+          "cloth_lag_pixels": 7
+        },
+        {
+          "hip": [
+            44,
+            77
+          ],
+          "shoulder": [
+            40,
+            67
+          ],
+          "hand": [
+            46,
+            48
+          ],
+          "rear_foot": [
+            29,
+            87
+          ],
+          "front_foot": [
+            69,
+            87
+          ],
+          "rear_knee": [
+            35,
+            85
+          ],
+          "front_knee": [
+            60,
+            82
+          ],
+          "head": [
+            42,
+            58
+          ],
+          "elbow": [
+            40,
+            54
+          ],
+          "rear_elbow": [
+            36,
+            76
+          ],
+          "rear_hand": [
+            41,
+            51
+          ],
+          "tip": [
+            30,
+            9
+          ],
+          "tip_local": [
+            -18,
+            -79
+          ],
+          "hand_local": [
+            -2,
+            -40
+          ],
+          "blade_angle_degrees": -112,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              44,
+              77
+            ],
+            "shoulder": [
+              40,
+              67
+            ],
+            "head": [
+              42,
+              58
+            ]
+          },
+          "body_bbox": [
+            16,
+            46,
+            77,
+            91
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "e250b2aaf235c000347ed1b7f921e3c4ae083a2c3a57449999419d7c0015a311",
+          "cloth_lag_pixels": 10
+        },
+        {
+          "hip": [
+            43,
+            78
+          ],
+          "shoulder": [
+            38,
+            68
+          ],
+          "hand": [
+            40,
+            47
+          ],
+          "rear_foot": [
+            27,
+            87
+          ],
+          "front_foot": [
+            71,
+            87
+          ],
+          "rear_knee": [
+            34,
+            85
+          ],
+          "front_knee": [
+            61,
+            83
+          ],
+          "head": [
+            40,
+            59
+          ],
+          "elbow": [
+            35,
+            54
+          ],
+          "rear_elbow": [
+            34,
+            77
+          ],
+          "rear_hand": [
+            35,
+            50
+          ],
+          "tip": [
+            10,
+            18
+          ],
+          "tip_local": [
+            -38,
+            -70
+          ],
+          "hand_local": [
+            -8,
+            -41
+          ],
+          "blade_angle_degrees": -136,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              43,
+              78
+            ],
+            "shoulder": [
+              38,
+              68
+            ],
+            "head": [
+              40,
+              59
+            ]
+          },
+          "body_bbox": [
+            11,
+            45,
+            79,
+            91
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "e14488da783710298d90dfc24b73c6116583bb30e31c09ddc53026b2aa175cfa",
+          "cloth_lag_pixels": 13
+        }
+      ],
+      "cut_3_attack": [
+        {
+          "hip": [
+            48,
+            76
+          ],
+          "shoulder": [
+            50,
+            65
+          ],
+          "hand": [
+            58,
+            48
+          ],
+          "rear_foot": [
+            27,
+            87
+          ],
+          "front_foot": [
+            72,
+            84
+          ],
+          "rear_knee": [
+            35,
+            85
+          ],
+          "front_knee": [
+            61,
+            77
+          ],
+          "head": [
+            52,
+            56
+          ],
+          "elbow": [
+            53,
+            52
+          ],
+          "rear_elbow": [
+            46,
+            74
+          ],
+          "rear_hand": [
+            53,
+            51
+          ],
+          "tip": [
+            76,
+            10
+          ],
+          "tip_local": [
+            28,
+            -78
+          ],
+          "hand_local": [
+            10,
+            -40
+          ],
+          "blade_angle_degrees": -64,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              48,
+              76
+            ],
+            "shoulder": [
+              50,
+              65
+            ],
+            "head": [
+              52,
+              56
+            ]
+          },
+          "body_bbox": [
+            23,
+            45,
+            80,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot"
+          ],
+          "body_sha256": "331f074e49ca25c474e24b833c4a607f5d670f15fa701fb177b7e849d1e211f3",
+          "cloth_lag_pixels": 9
+        },
+        {
+          "hip": [
+            56,
+            75
+          ],
+          "shoulder": [
+            61,
+            65
+          ],
+          "hand": [
+            77,
+            54
+          ],
+          "rear_foot": [
+            26,
+            87
+          ],
+          "front_foot": [
+            79,
+            87
+          ],
+          "rear_knee": [
+            37,
+            84
+          ],
+          "front_knee": [
+            68,
+            79
+          ],
+          "head": [
+            64,
+            56
+          ],
+          "elbow": [
+            72,
+            58
+          ],
+          "rear_elbow": [
+            57,
+            74
+          ],
+          "rear_hand": [
+            72,
+            57
+          ],
+          "tip": [
+            119,
+            48
+          ],
+          "tip_local": [
+            71,
+            -40
+          ],
+          "hand_local": [
+            29,
+            -34
+          ],
+          "blade_angle_degrees": -8,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              56,
+              75
+            ],
+            "shoulder": [
+              61,
+              65
+            ],
+            "head": [
+              64,
+              56
+            ]
+          },
+          "body_bbox": [
+            22,
+            45,
+            87,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "60ccf2570df50743fe22f384e8517fad33c1b1d647b86aed5bc48e5b96ac7e86",
+          "cloth_lag_pixels": 17
+        },
+        {
+          "hip": [
+            61,
+            76
+          ],
+          "shoulder": [
+            70,
+            68
+          ],
+          "hand": [
+            77,
+            58
+          ],
+          "rear_foot": [
+            25,
+            87
+          ],
+          "front_foot": [
+            82,
+            87
+          ],
+          "rear_knee": [
+            38,
+            85
+          ],
+          "front_knee": [
+            72,
+            80
+          ],
+          "head": [
+            73,
+            59
+          ],
+          "elbow": [
+            78,
+            64
+          ],
+          "rear_elbow": [
+            66,
+            77
+          ],
+          "rear_hand": [
+            72,
+            61
+          ],
+          "tip": [
+            119,
+            61
+          ],
+          "tip_local": [
+            71,
+            -27
+          ],
+          "hand_local": [
+            29,
+            -30
+          ],
+          "blade_angle_degrees": 4,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              61,
+              76
+            ],
+            "shoulder": [
+              70,
+              68
+            ],
+            "head": [
+              73,
+              59
+            ]
+          },
+          "body_bbox": [
+            21,
+            48,
+            90,
+            91
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "c8dfb3530e348f85259b253be4fd0b6436cffa95f6021b579b655d533ce239c3",
+          "cloth_lag_pixels": 25
+        },
+        {
+          "hip": [
+            62,
+            78
+          ],
+          "shoulder": [
+            71,
+            71
+          ],
+          "hand": [
+            74,
+            59
+          ],
+          "rear_foot": [
+            26,
+            87
+          ],
+          "front_foot": [
+            83,
+            87
+          ],
+          "rear_knee": [
+            39,
+            85
+          ],
+          "front_knee": [
+            73,
+            82
+          ],
+          "head": [
+            74,
+            62
+          ],
+          "elbow": [
+            79,
+            67
+          ],
+          "rear_elbow": [
+            67,
+            80
+          ],
+          "rear_hand": [
+            69,
+            62
+          ],
+          "tip": [
+            112,
+            77
+          ],
+          "tip_local": [
+            64,
+            -11
+          ],
+          "hand_local": [
+            26,
+            -29
+          ],
+          "blade_angle_degrees": 26,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              62,
+              78
+            ],
+            "shoulder": [
+              71,
+              71
+            ],
+            "head": [
+              74,
+              62
+            ]
+          },
+          "body_bbox": [
+            22,
+            51,
+            91,
+            94
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "479a5646f8e540263d1e69bb4adc507ea7255e4224836b24bc377a1d41af11ea",
+          "cloth_lag_pixels": 28
+        }
+      ],
+      "cut_3_recover": [
+        {
+          "hip": [
+            61,
+            78
+          ],
+          "shoulder": [
+            70,
+            71
+          ],
+          "hand": [
+            72,
+            56
+          ],
+          "rear_foot": [
+            26,
+            87
+          ],
+          "front_foot": [
+            82,
+            87
+          ],
+          "rear_knee": [
+            39,
+            85
+          ],
+          "front_knee": [
+            72,
+            83
+          ],
+          "head": [
+            73,
+            62
+          ],
+          "elbow": [
+            76,
+            66
+          ],
+          "rear_elbow": [
+            66,
+            80
+          ],
+          "rear_hand": [
+            67,
+            59
+          ],
+          "tip": [
+            99,
+            88
+          ],
+          "tip_local": [
+            51,
+            0
+          ],
+          "hand_local": [
+            24,
+            -32
+          ],
+          "blade_angle_degrees": 50,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              61,
+              78
+            ],
+            "shoulder": [
+              70,
+              71
+            ],
+            "head": [
+              73,
+              62
+            ]
+          },
+          "body_bbox": [
+            22,
+            51,
+            90,
+            94
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "6dc03578efa8ddebb88478372b0081da699d3893005ba786bf524f07531bf6ec",
+          "cloth_lag_pixels": 25
+        },
+        {
+          "hip": [
+            57,
+            76
+          ],
+          "shoulder": [
+            64,
+            67
+          ],
+          "hand": [
+            69,
+            58
+          ],
+          "rear_foot": [
+            29,
+            87
+          ],
+          "front_foot": [
+            77,
+            87
+          ],
+          "rear_knee": [
+            40,
+            83
+          ],
+          "front_knee": [
+            68,
+            81
+          ],
+          "head": [
+            66,
+            58
+          ],
+          "elbow": [
+            71,
+            66
+          ],
+          "rear_elbow": [
+            60,
+            76
+          ],
+          "rear_hand": [
+            64,
+            61
+          ],
+          "tip": [
+            103,
+            83
+          ],
+          "tip_local": [
+            55,
+            -5
+          ],
+          "hand_local": [
+            21,
+            -30
+          ],
+          "blade_angle_degrees": 36,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              57,
+              76
+            ],
+            "shoulder": [
+              64,
+              67
+            ],
+            "head": [
+              66,
+              58
+            ]
+          },
+          "body_bbox": [
+            25,
+            47,
+            85,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "dfe931609ddce5b789a55b8d1fef0d8ff00453a801d77e907eae0fcf1239343d",
+          "cloth_lag_pixels": 18
+        },
+        {
+          "hip": [
+            53,
+            74
+          ],
+          "shoulder": [
+            58,
+            63
+          ],
+          "hand": [
+            65,
+            61
+          ],
+          "rear_foot": [
+            33,
+            87
+          ],
+          "front_foot": [
+            69,
+            87
+          ],
+          "rear_knee": [
+            41,
+            81
+          ],
+          "front_knee": [
+            62,
+            79
+          ],
+          "head": [
+            60,
+            54
+          ],
+          "elbow": [
+            64,
+            65
+          ],
+          "rear_elbow": [
+            54,
+            72
+          ],
+          "rear_hand": [
+            60,
+            64
+          ],
+          "tip": [
+            104,
+            75
+          ],
+          "tip_local": [
+            56,
+            -13
+          ],
+          "hand_local": [
+            17,
+            -27
+          ],
+          "blade_angle_degrees": 20,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              53,
+              74
+            ],
+            "shoulder": [
+              58,
+              63
+            ],
+            "head": [
+              60,
+              54
+            ]
+          },
+          "body_bbox": [
+            29,
+            43,
+            77,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "f69c1acf17df7d9e75a229bfdd1e623a8567ca653f524672712582492c480133",
+          "cloth_lag_pixels": 11
+        },
+        {
+          "hip": [
+            49,
+            72
+          ],
+          "shoulder": [
+            51,
+            60
+          ],
+          "hand": [
+            62,
+            63
+          ],
+          "rear_foot": [
+            37,
+            87
+          ],
+          "front_foot": [
+            61,
+            87
+          ],
+          "rear_knee": [
+            42,
+            79
+          ],
+          "front_knee": [
+            56,
+            79
+          ],
+          "head": [
+            53,
+            51
+          ],
+          "elbow": [
+            58,
+            64
+          ],
+          "rear_elbow": [
+            47,
+            69
+          ],
+          "rear_hand": [
+            57,
+            66
+          ],
+          "tip": [
+            104,
+            69
+          ],
+          "tip_local": [
+            56,
+            -19
+          ],
+          "hand_local": [
+            14,
+            -25
+          ],
+          "blade_angle_degrees": 8,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              49,
+              72
+            ],
+            "shoulder": [
+              51,
+              60
+            ],
+            "head": [
+              53,
+              51
+            ]
+          },
+          "body_bbox": [
+            32,
+            40,
+            69,
+            90
+          ],
+          "airborne": false,
+          "ground_contact": true,
+          "planted_feet": [
+            "rear_foot",
+            "front_foot"
+          ],
+          "body_sha256": "98f7953a6f0ea2922231bef387471893c9e69c639d3f2d85886f04998bf244af",
+          "cloth_lag_pixels": 5
+        }
+      ],
+      "cut_3_air_attack": [
+        {
+          "hip": [
+            48,
+            71
+          ],
+          "shoulder": [
+            50,
+            60
+          ],
+          "hand": [
+            58,
+            43
+          ],
+          "rear_foot": [
+            33,
+            77
+          ],
+          "front_foot": [
+            70,
+            75
+          ],
+          "rear_knee": [
+            43,
+            72
+          ],
+          "front_knee": [
+            62,
+            67
+          ],
+          "head": [
+            52,
+            51
+          ],
+          "elbow": [
+            53,
+            48
+          ],
+          "rear_elbow": [
+            46,
+            69
+          ],
+          "rear_hand": [
+            53,
+            46
+          ],
+          "tip": [
+            76,
+            5
+          ],
+          "tip_local": [
+            28,
+            -83
+          ],
+          "hand_local": [
+            10,
+            -45
+          ],
+          "blade_angle_degrees": -64,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              48,
+              71
+            ],
+            "shoulder": [
+              50,
+              60
+            ],
+            "head": [
+              52,
+              51
+            ]
+          },
+          "body_bbox": [
+            22,
+            40,
+            78,
+            83
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "391529780fba2cf07502d418c5e3ecf5b32ef0e07f96f8b37402ec9affe6fd87",
+          "cloth_lag_pixels": 14
+        },
+        {
+          "hip": [
+            57,
+            70
+          ],
+          "shoulder": [
+            62,
+            60
+          ],
+          "hand": [
+            78,
+            49
+          ],
+          "rear_foot": [
+            34,
+            79
+          ],
+          "front_foot": [
+            76,
+            73
+          ],
+          "rear_knee": [
+            44,
+            73
+          ],
+          "front_knee": [
+            66,
+            66
+          ],
+          "head": [
+            65,
+            51
+          ],
+          "elbow": [
+            72,
+            52
+          ],
+          "rear_elbow": [
+            58,
+            69
+          ],
+          "rear_hand": [
+            73,
+            52
+          ],
+          "tip": [
+            120,
+            43
+          ],
+          "tip_local": [
+            72,
+            -45
+          ],
+          "hand_local": [
+            30,
+            -39
+          ],
+          "blade_angle_degrees": -8,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              57,
+              70
+            ],
+            "shoulder": [
+              62,
+              60
+            ],
+            "head": [
+              65,
+              51
+            ]
+          },
+          "body_bbox": [
+            25,
+            40,
+            84,
+            83
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "4263d702311bb53bdd391b3831b630d33affd6c76cfcb2f19dda0501b77d6d10",
+          "cloth_lag_pixels": 23
+        },
+        {
+          "hip": [
+            61,
+            71
+          ],
+          "shoulder": [
+            70,
+            63
+          ],
+          "hand": [
+            77,
+            53
+          ],
+          "rear_foot": [
+            35,
+            80
+          ],
+          "front_foot": [
+            79,
+            74
+          ],
+          "rear_knee": [
+            45,
+            74
+          ],
+          "front_knee": [
+            69,
+            68
+          ],
+          "head": [
+            73,
+            54
+          ],
+          "elbow": [
+            78,
+            59
+          ],
+          "rear_elbow": [
+            66,
+            72
+          ],
+          "rear_hand": [
+            72,
+            56
+          ],
+          "tip": [
+            119,
+            56
+          ],
+          "tip_local": [
+            71,
+            -32
+          ],
+          "hand_local": [
+            29,
+            -35
+          ],
+          "blade_angle_degrees": 4,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              61,
+              71
+            ],
+            "shoulder": [
+              70,
+              63
+            ],
+            "head": [
+              73,
+              54
+            ]
+          },
+          "body_bbox": [
+            24,
+            43,
+            87,
+            86
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "67ca76ce1086ccc98d08b7c905c8f387ed2516a878690f4fbc1f3b8f859f3e19",
+          "cloth_lag_pixels": 32
+        },
+        {
+          "hip": [
+            63,
+            73
+          ],
+          "shoulder": [
+            72,
+            66
+          ],
+          "hand": [
+            75,
+            54
+          ],
+          "rear_foot": [
+            33,
+            79
+          ],
+          "front_foot": [
+            78,
+            77
+          ],
+          "rear_knee": [
+            44,
+            75
+          ],
+          "front_knee": [
+            68,
+            70
+          ],
+          "head": [
+            75,
+            57
+          ],
+          "elbow": [
+            80,
+            62
+          ],
+          "rear_elbow": [
+            68,
+            75
+          ],
+          "rear_hand": [
+            70,
+            57
+          ],
+          "tip": [
+            113,
+            72
+          ],
+          "tip_local": [
+            65,
+            -16
+          ],
+          "hand_local": [
+            27,
+            -34
+          ],
+          "blade_angle_degrees": 26,
+          "steel_length_pixels": 42,
+          "body_axes": {
+            "hip": [
+              63,
+              73
+            ],
+            "shoulder": [
+              72,
+              66
+            ],
+            "head": [
+              75,
+              57
+            ]
+          },
+          "body_bbox": [
+            22,
+            46,
+            86,
+            89
+          ],
+          "airborne": true,
+          "ground_contact": false,
+          "planted_feet": [],
+          "body_sha256": "202d9b651046da3e41637dea40e29c10689fb5a2238a8fab99976917605c1eb8",
+          "cloth_lag_pixels": 36
+        }
+      ]
+    },
+    "nominal_armor_body_height": 44,
+    "palette_rgb": [
+      "#111323",
+      "#273146",
+      "#493c72",
+      "#775c9c",
+      "#c58ea8",
+      "#b8c5c4",
+      "#e0eadb",
+      "#fff3d2",
+      "#cb9861",
+      "#9fa9b6",
+      "#72f0eb",
+      "#e5797b",
+      "#725049"
+    ]
+  },
+  "timing": {
+    "samples": [
+      0,
+      0.25,
+      0.5,
+      0.75
+    ],
+    "first_contact_frame": 1,
+    "phase_frames": 4
+  },
+  "constraints": {
+    "anti_alias": false,
+    "whole_frame_rotation": false,
+    "whole_frame_translation": false,
+    "3d_sources": false,
+    "ground_feet_line": 88
+  },
+  "attack_profile": {
+    "resource": "res://data/hero_attack_profiles.json",
+    "sha256": "04520886e313ec3d945973cfd236e50074d11ac1cc4854405728ac644fb12d08",
+    "origin": [
+      0,
+      -24
+    ],
+    "contact_start": 0.25,
+    "combos": {
+      "1": {
+        "id": "descending_moon",
+        "radii": [
+          180,
+          72
+        ],
+        "angle_keys": [
+          [
+            0.0,
+            -78
+          ],
+          [
+            0.25,
+            -18
+          ],
+          [
+            0.5,
+            18
+          ],
+          [
+            0.75,
+            42
+          ],
+          [
+            1.0,
+            62
+          ]
+        ],
+        "blade_span_degrees": 28,
+        "sprite_tip_ratio": 0.26,
+        "phase_seconds": {
+          "windup": 0.045,
+          "active": 0.095,
+          "recover": 0.13
+        },
+        "lunge_speed": 126,
+        "lunge_seconds": 0.07
+      },
+      "2": {
+        "id": "rising_tide",
+        "radii": [
+          204,
+          84
+        ],
+        "angle_keys": [
+          [
+            0.0,
+            72
+          ],
+          [
+            0.25,
+            18
+          ],
+          [
+            0.5,
+            -18
+          ],
+          [
+            0.75,
+            -46
+          ],
+          [
+            1.0,
+            -68
+          ]
+        ],
+        "blade_span_degrees": 30,
+        "sprite_tip_ratio": 0.26,
+        "phase_seconds": {
+          "windup": 0.055,
+          "active": 0.105,
+          "recover": 0.13
+        },
+        "lunge_speed": 138,
+        "lunge_seconds": 0.075
+      },
+      "3": {
+        "id": "cleaving_star",
+        "radii": [
+          228,
+          96
+        ],
+        "angle_keys": [
+          [
+            0.0,
+            -64
+          ],
+          [
+            0.25,
+            -8
+          ],
+          [
+            0.5,
+            4
+          ],
+          [
+            0.75,
+            26
+          ],
+          [
+            1.0,
+            50
+          ]
+        ],
+        "blade_span_degrees": 40,
+        "sprite_tip_ratio": 0.26,
+        "phase_seconds": {
+          "windup": 0.075,
+          "active": 0.125,
+          "recover": 0.17
+        },
+        "lunge_speed": 166,
+        "lunge_seconds": 0.08
+      }
+    }
+  }
+}

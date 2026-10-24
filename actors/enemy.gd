@@ -2,6 +2,7 @@ extends CharacterBody2D
 ## Deliberately readable enemy attack tells; body contact alone does not damage.
 
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
+const AttackProfile = preload("res://combat/attack_profile.gd")
 # Original mob patterns: finite layers with a frozen aim corridor, never frame-rate fire.
 const SCREEN_WARMUP: float = 0.25
 const MAX_LAYERS_PER_TICK: int = 2
@@ -179,7 +180,7 @@ func _update_walker(offset: Vector2, delta: float) -> void:
 		_begin_attack(true)
 		return
 	var speed: float = 88.0 if kind == "elite" else 50.0
-	if absf(offset.x) < 310.0 and absf(offset.x) > attack_range * 0.75:
+	if absf(offset.x) < ranged_outer_distance() + 12.0 and absf(offset.x) > attack_range * 0.75:
 		var may_move: bool = not is_on_floor() or _floor_ahead(facing)
 		velocity.x = move_toward(velocity.x, facing * speed if may_move else 0.0, 650.0 * delta)
 		if kind == "elite" and is_on_floor() and offset.y < -32.0 and absf(offset.x) < 160.0:
@@ -192,8 +193,8 @@ func _update_wisp(offset: Vector2, delta: float) -> void:
 	var target_y: float = _home.y - 12.0 + sin(_clock * 2.3) * 10.0
 	if patrol_bounds.has_area():
 		target_y = clampf(target_y, patrol_bounds.position.y + 12.0, patrol_bounds.end.y - 8.0)
-	if absf(offset.x) < 350.0 and _target_in_patrol():
-		velocity.x = move_toward(velocity.x, facing * 42.0 if absf(offset.x) > 170.0 else -facing * 16.0, 150.0 * delta)
+	if absf(offset.x) < ranged_outer_distance() + 12.0 and _target_in_patrol():
+		velocity.x = move_toward(velocity.x, facing * 42.0 if absf(offset.x) > wisp_standoff_distance() else -facing * 16.0, 150.0 * delta)
 		if _cooldown <= 0.0 and _can_start_barrage():
 			_begin_attack(true)
 	else:
@@ -311,12 +312,22 @@ func _has_line_of_sight(target_at: Vector2) -> bool:
 	var query := PhysicsRayQueryParameters2D.create(_muzzle(), target_at, 1)
 	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
+static func ranged_outer_distance() -> float:
+	# The real finisher reaches 228px. Add 112px of visible warning runway,
+	# capped at 340px so the existing screen/LOS checks remain the outer authority.
+	return minf(340.0, AttackProfile.radii(3).x + 112.0)
+
+static func wisp_standoff_distance() -> float:
+	# A 32px buffer beyond the real finisher (260px now) permits a readable
+	# retreat, while player speed still closes on the unchanged 16px/s backpedal.
+	return minf(ranged_outer_distance() - 64.0, AttackProfile.radii(3).x + 32.0)
+
 func _ranged_distance_allowed() -> bool:
 	if not is_instance_valid(game) or not is_instance_valid(game.player):
 		return false
 	var distance: float = _muzzle().distance_to(game.player.global_position + Vector2(0, -14))
 	var minimum: float = 144.0 if kind == "elite" else (120.0 if kind == "wisp" else 112.0)
-	var maximum: float = 310.0 if kind == "elite" else (300.0 if kind == "wisp" else 250.0)
+	var maximum: float = ranged_outer_distance()
 	return distance >= minimum and distance <= maximum
 
 func _can_start_barrage() -> bool:

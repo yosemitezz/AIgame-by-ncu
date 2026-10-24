@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "coordinate_system": "feet-local pixels; facing right; positive angles turn downward",
+  "origin": [0, -24],
+  "contact_start": 0.25,
+  "arc_step_degrees": 3.0,
+  "combos": {
+    "1": {
+      "id": "descending_moon",
+      "radii": [180, 72],
+      "angle_keys": [[0.0, -78], [0.25, -18], [0.5, 18], [0.75, 42], [1.0, 62]],
+      "blade_span_degrees": 28,
+      "sprite_tip_ratio": 0.26,
+      "phase_seconds": {"windup": 0.045, "active": 0.095, "recover": 0.130},
+      "lunge_speed": 126,
+      "lunge_seconds": 0.070
+    },
+    "2": {
+      "id": "rising_tide",
+      "radii": [204, 84],
+      "angle_keys": [[0.0, 72], [0.25, 18], [0.5, -18], [0.75, -46], [1.0, -68]],
+      "blade_span_degrees": 30,
+      "sprite_tip_ratio": 0.26,
+      "phase_seconds": {"windup": 0.055, "active": 0.105, "recover": 0.130},
+      "lunge_speed": 138,
+      "lunge_seconds": 0.075
+    },
+    "3": {
+      "id": "cleaving_star",
+      "radii": [228, 96],
+      "angle_keys": [[0.0, -64], [0.25, -8], [0.5, 4], [0.75, 26], [1.0, 50]],
+      "blade_span_degrees": 40,
+      "sprite_tip_ratio": 0.26,
+      "phase_seconds": {"windup": 0.075, "active": 0.125, "recover": 0.170},
+      "lunge_speed": 166,
+      "lunge_seconds": 0.080
+    }
+  }
+}

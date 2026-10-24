@@ -1,5 +1,6 @@
 extends SceneTree
 ## Bounded real-scene presentation contracts. No automated playthrough.
+const AttackProfile = preload("res://combat/attack_profile.gd")
 const Boss = preload("res://combat/boss.gd")
 var passed: int = 0
 var failed: int = 0
@@ -29,6 +30,8 @@ func active(progress: float = 0.0) -> void:
 	game.player.attack_timer = 0.2
 	game.player._phase_elapsed = game.player._phase_duration() * progress
 	game.player.animation_state = "attack"
+	game.player.attack_sweep_from = maxf(AttackProfile.contact_start(), progress - 0.05)
+	game.player.attack_sweep_to = maxf(AttackProfile.contact_start(), progress)
 
 func bound_shape() -> Dictionary:
 	for shape: Dictionary in fx._shapes:
@@ -47,6 +50,19 @@ func sweep_sample(steps: int) -> int:
 	for i: int in range(steps + 1):
 		game.player._phase_elapsed = game.player._phase_duration() * float(i) / float(steps)
 		fx._sync_slash(shape)
+	return fx.particle_count()
+
+func profile_sample(steps: int) -> int:
+	wipe()
+	active(AttackProfile.contact_start())
+	game.vfx_requested.emit("slash", game.player.position, Vector2.RIGHT, 2.0)
+	var primary: Dictionary = bound_shape()
+	for index: int in range(steps + 1):
+		var progress: float = lerpf(AttackProfile.contact_start(), 1.0, float(index) / steps)
+		game.player._phase_elapsed = game.player._phase_duration() * progress
+		game.player.attack_sweep_from = maxf(AttackProfile.contact_start(), progress - 0.01)
+		game.player.attack_sweep_to = progress
+		fx._sync_slash(primary)
 	return fx.particle_count()
 
 func run() -> void:
@@ -101,6 +117,15 @@ func run() -> void:
 	wipe()
 	game.vfx_requested.emit("guard_break", Vector2(320, 250), Vector2.RIGHT, 1.0)
 	check(float(fx._shapes[0]["r"]) > blade_radius and fx.shape_count() > reflection_count, "guard break retains its distinct larger expanding layers")
+	wipe()
+	game.vfx_requested.emit("blade_parry", Vector2(320, 250), Vector2.RIGHT, 1.0)
+	check(float(fx._shapes[0]["r"]) <= 18.0 and float(fx._shapes[0]["max"]) <= 0.033, "parry white core keeps native eighteen-pixel cap and one-to-two-frame life")
+	fx._process(0.05)
+	var white_flashes: int = 0
+	for shape: Dictionary in fx._shapes:
+		if String(shape["type"]) == "flash":
+			white_flashes += 1
+	check(white_flashes == 0 and fx.shape_count() > 0 and fx.particle_count() > 0, "whiteflash_ages_out_by_0.05 while colored rings and directional sparks remain")
 	# Actual phase authority: hold, progress, natural release and cancellation.
 	wipe()
 	active(0.3)
@@ -108,15 +133,47 @@ func run() -> void:
 	var primary: Dictionary = bound_shape()
 	check(not primary.is_empty(), "preferred slash shape binds to real active serial")
 	fx._process(0.001)
+	check(String(primary["type"]) == "profile", "real active slash uses shared melee geometry instead of legacy circles")
+	check(primary.get("polygon", PackedVector2Array()) == AttackProfile.world_polygon(game.player, game.player.attack_sweep_from, game.player.attack_sweep_to), "bright contour polygon equals the actual accepted query polygon")
+	var frozen_polygon: PackedVector2Array = primary.get("polygon", PackedVector2Array()).duplicate()
 	var pose: float = primary.get("visual_t", -1.0)
 	var spark_step: int = primary.get("spark_step", 0)
+	# Real root overlay pause must preserve an already-active slash and a Boss windup warning.
+	var pause_boss := Boss.new()
+	game.add_child(pause_boss)
+	pause_boss.configure(game, Vector2(900, 300))
+	pause_boss.set_physics_process(false)
+	game.boss = pause_boss
+	pause_boss._begin_attack("slash", {"windup_beats": 0.8})
+	var warning_before: Dictionary = fx._warns.back()
+	var warning_life_before: float = warning_before["life"]
+	var paused_serial: int = game.player.attack_serial
+	var sound_state: Dictionary = game.impact.sounds._last_played.duplicate(true)
+	var impacts_before: int = game.impact.impact_count
+	game._set_overlay("map")
+	await process_frame
+	fx._process(0.1)
+	check(not bound_shape().is_empty() and int(bound_shape()["serial"]) == paused_serial, "map pause preserves the live slash serial")
+	check(fx._warns.has(warning_before) and float(warning_before["life"]) == warning_life_before, "map pause preserves the frozen Boss windup warning")
+	check(primary.get("polygon", PackedVector2Array()) == frozen_polygon and is_equal_approx(float(primary["visual_t"]), pose), "map pause cannot advance primary pose or geometry")
+	game._set_overlay("")
+	await process_frame
+	fx._process(0.0)
+	check(not bound_shape().is_empty() and int(bound_shape()["serial"]) == paused_serial and fx._warns.has(warning_before), "overlay resume retains the same live primary and warning")
+	check(primary.get("polygon", PackedVector2Array()) == frozen_polygon and is_equal_approx(float(primary["visual_t"]), pose), "overlay resume does not jump phase progress")
+	check(game.impact.sounds._last_played == sound_state and game.impact.impact_count == impacts_before, "overlay resume never reissues swing or impact sound")
+	game.boss = null
+	pause_boss.queue_free()
 	game.player.combat_freeze = 0.1
 	for _i: int in 8:
 		fx._process(0.016)
+	check(primary.get("polygon", PackedVector2Array()) == frozen_polygon, "local freeze holds the exact shared contour geometry")
 	check(is_equal_approx(float(primary["visual_t"]), pose), "local impact hold freezes primary slash pose")
 	check(int(primary.get("spark_step", 0)) == spark_step, "held slash does not emit frame-rate-driven tip sparks")
 	game.player.combat_freeze = 0.0
 	game.player._phase_elapsed = game.player._phase_duration() * 0.7
+	game.player.attack_sweep_from = 0.65
+	game.player.attack_sweep_to = 0.7
 	fx._process(0.001)
 	check(float(primary["visual_t"]) > pose, "slash advances when actual combat progress advances")
 	game.player._cancel_attack()
@@ -170,6 +227,7 @@ func run() -> void:
 	var thirty: int = sweep_sample(30)
 	var sixty: int = sweep_sample(60)
 	check(thirty == sixty and thirty == 24, "leading-edge particles are equal at 30/60 samples and capped per stroke")
+	check(profile_sample(30) == profile_sample(60), "shared-profile leading fragments have frame-rate-independent sample count")
 	game.player._cancel_attack()
 	# Ghosts contain immutable presentation data, including reaction stages.
 	wipe()
@@ -180,6 +238,20 @@ func run() -> void:
 	fx._ghost(game.player, "hero", Color.CYAN, 0.6, 0.3)
 	var hero_ghost: Node = fx._ghosts.back()
 	var snapshot_progress: float = hero_ghost.get_parry_progress()
+	check(hero_ghost.scale == Vector2.ONE and not hero_ghost.z_as_relative and hero_ghost.z_index == 1, "outline ghost keeps native scale and stays below actors")
+	hero_ghost.tick(0.02)
+	check(hero_ghost.scale == Vector2.ONE and hero_ghost.max_life <= 0.14, "fading ghost never inflates or lives beyond short pixel trail")
+	check(hero_ghost.airborne == (not game.player.is_on_floor()), "hero ghost snapshots airborne art selection")
+	var ghost_count_before: int = fx.ghost_count()
+	fx._clock += 0.05
+	fx._ghost(game.player, "hero", Color.CYAN, 0.6, 0.3)
+	check(fx.ghost_count() == ghost_count_before, "elapsed time alone cannot duplicate a stationary ghost")
+	for sample: int in 12:
+		fx._clock += 0.04
+		game.player.position.x += 7.0
+		fx._ghost(game.player, "hero", Color.CYAN, 0.6, 0.3)
+	check(fx.ghost_count() <= fx.MAX_OWNER_GHOSTS, "one actor can own at most five outline ghosts")
+	game.player.position = position_before
 	game.player.combo = 1
 	game.player._clear_parry()
 	check(hero_ghost.combo == 3 and hero_ghost.parry_phase == "recoil", "ghost preserves combo and parry stage instead of live defaults")
@@ -196,14 +268,18 @@ func run() -> void:
 	boss.reaction_state = "none"
 	boss.reaction_progress = 0.0
 	check(boss_ghost.reaction_state == "guard_break" and is_equal_approx(boss_ghost.reaction_progress, 0.35), "Boss snapshot keeps the actual break pose after actor recovery")
+	check(not boss_ghost.boss_pose_snapshot.is_empty(), "Boss ghost captures the pure KatanaVisual pose description")
 	check(boss_ghost.impact_flash == 0.0, "snapshot hurt flash cannot obscure the break pose")
-	# Compare four landing warnings with projectiles emitted by the real Boss rain pattern.
+	# Compare locked warning columns with the same friend pattern descriptors used at release.
 	wipe()
+	game.boss = boss
 	game.player.position.x = 3000.0
-	var rain_at := Vector2(game.player.position.x, 120)
-	var rain_columns: PackedVector2Array = fx._rain_columns(rain_at)
-	game.warning_issued.emit("rain", rain_at, 0.6)
-	boss._pending_attack = "rain"
+	boss._begin_attack("rain", {"count": 7, "speed": 130.0, "safe_lane_half_width": 30.0})
+	var warning: Dictionary = fx._warns.back()
+	var rain_columns: Array = warning.get("columns", []).duplicate()
+	var locked_geometry: Dictionary = boss.get_warning_geometry("rain")
+	check(rain_columns == locked_geometry.get("columns", []), "rain warning snapshots the Boss pure locked geometry")
+	game.player.position.x += 100.0
 	boss._release_attack()
 	var actual_columns: Array[float] = []
 	for rain_shot: Node in get_nodes_in_group("projectiles"):
@@ -212,13 +288,15 @@ func run() -> void:
 			actual_columns.append(rain_shot.global_position.x)
 			rain_shot.clear()
 	actual_columns.sort()
-	var columns_match: bool = actual_columns.size() == rain_columns.size() and rain_columns.size() == 4
+	rain_columns.sort()
+	var columns_match: bool = actual_columns.size() == rain_columns.size() and rain_columns.size() > 0
 	for i: int in mini(actual_columns.size(), rain_columns.size()):
-		columns_match = columns_match and is_equal_approx(actual_columns[i], rain_columns[i].x)
-	check(columns_match, "rain warning columns align with the four real Boss projectiles")
-	check(rain_columns.size() == 4 and absf(rain_columns[1].x - 3000.0) == 48.0 and absf(rain_columns[2].x - 3000.0) == 48.0, "rain warning leaves the central safe lane unmarked")
-	check(fx._warns[0]["kind"] == "rain", "rain event retains its specialized warning kind")
+		columns_match = columns_match and is_equal_approx(actual_columns[i], float(rain_columns[i]))
+	check(columns_match, "locked rain warning and actual friend projectiles agree after player movement")
+	check(rain_columns.all(func(x: Variant) -> bool: return absf(float(x)-3000.0) >= 30.0), "locked rain center safe lane stays unmarked")
+	check(warning["kind"] == "rain", "rain event retains its specialized warning kind")
 	game.player.position = position_before
+	game.boss = null
 	boss.queue_free()
 	# A real projectile must survive its second cache sample, then clear without a stale tail.
 	wipe()

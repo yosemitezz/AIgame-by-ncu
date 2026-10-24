@@ -1,6 +1,7 @@
 extends SceneTree
 ## Finite mob-pattern geometry/contact tests, not an automated playthrough.
 const Enemy = preload("res://actors/enemy.gd")
+const AttackProfile = preload("res://combat/attack_profile.gd")
 const Player = preload("res://actors/player.gd")
 const Projectile = preload("res://combat/projectile.gd")
 
@@ -145,6 +146,30 @@ func run() -> void:
     check(Enemy.barrage_angles("wisp_crown", 0).size() == 6 and Enemy.barrage_angles("wisp_crown", 1).size() == 6 and safe_ray_lane("wisp_crown", 0, 120.0, 15.0) and safe_ray_lane("wisp_crown", 1, 120.0, 15.0), "both six-ray wisp layers preserve a shared central corridor")
     check(Enemy.barrage_angles("elite_fan").size() == 8 and safe_ray_lane("elite_fan", 0, 144.0, 10.0), "elite fan has eight rays and an explicit approach lane")
     check(Enemy.barrage_angles("elite_wheel", 0).size() + Enemy.barrage_angles("elite_wheel", 1).size() <= 20 and safe_ray_lane("elite_wheel", 0, 144.0, 30.0) and safe_ray_lane("elite_wheel", 1, 144.0, 30.0), "open elite wheel stays within twenty rays and preserves its sixty-degree corridor")
+
+    check(is_equal_approx(Enemy.ranged_outer_distance(), 340.0) and Enemy.ranged_outer_distance() > AttackProfile.radii(3).x + 80.0, "ranged warning window extends beyond the real Hero finisher without exceeding on-screen 340px")
+    for mob_kind: String in ["sentry", "wisp", "elite"]:
+        reset_fixture()
+        var ranged_enemy: CharacterBody2D = make_enemy(mob_kind, Vector2(250, 238 if mob_kind == "wisp" else 300))
+        ranged_enemy._attack_facing = 1
+        var muzzle: Vector2 = ranged_enemy._muzzle()
+        game.player.position = muzzle + Vector2(Enemy.ranged_outer_distance() - 0.25, 14.0)
+        check(ranged_enemy._ranged_distance_allowed(), "%s may answer from just inside the new real range boundary" % mob_kind)
+        game.player.position.x += 0.5
+        check(not ranged_enemy._ranged_distance_allowed(), "%s cannot shoot beyond the new strict maximum" % mob_kind)
+        game.player.position = muzzle + Vector2(320.0, 14.0)
+        ranged_enemy._update_visibility(0.25)
+        ranged_enemy._begin_attack(true)
+        check(ranged_enemy.attack_serial == 1 and ranged_enemy._windup > 0.6 and game.attempts == 0, "%s warns at 320px using the unchanged full windup" % mob_kind)
+    reset_fixture()
+    var spacing_wisp: CharacterBody2D = make_enemy("wisp", Vector2(250, 238))
+    spacing_wisp._cooldown = 100.0
+    spacing_wisp.velocity = Vector2.ZERO
+    spacing_wisp._update_wisp(Vector2(Enemy.wisp_standoff_distance() - 1.0, 0.0), 0.1)
+    check(is_equal_approx(Enemy.wisp_standoff_distance(), 260.0) and spacing_wisp.velocity.x < 0.0, "wisp slowly retreats inside its Hero-profile-derived 260px standoff")
+    spacing_wisp.velocity = Vector2.ZERO
+    spacing_wisp._update_wisp(Vector2(Enemy.wisp_standoff_distance() + 1.0, 0.0), 0.1)
+    check(spacing_wisp.velocity.x > 0.0, "wisp approaches beyond its standoff instead of becoming an unreachable offscreen kite")
 
     reset_fixture()
     var enemy: CharacterBody2D = make_enemy("sentry")

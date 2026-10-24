@@ -1,6 +1,8 @@
 extends RefCounted
 ## Sprite presentation only; phase and facing come from gameplay.
 ## New integer-grid poses retain a stable feet anchor. No gameplay transforms.
+const KatanaVisual = preload("res://presentation/katana_visual.gd")
+const HeroAttackVisual = preload("res://presentation/hero_attack_visual.gd")
 const HERO_ANCHOR := Vector2(28, 58)
 const HERO_SIZE := Vector2(64, 64)
 const ORIGINAL_STATES := ["idle", "run", "jump", "fall", "dash", "attack", "parry", "hurt", "dead", "windup"]
@@ -40,13 +42,8 @@ static func hero_region(state: String, frame: int, combo: int = 1) -> Rect2:
     var index: int = int(descriptor["start"]) + sample
     return Rect2(Vector2(index % 8, index / 8) * HERO_SIZE, HERO_SIZE)
 
-static func weapon_tip_local(combo: int, frame: int) -> Vector2:
-    var data: Dictionary = _data()
-    var tips: Dictionary = data.get("hero", {}).get("weapon_tips", {})
-    var key: String = "cut_%d_attack" % clampi(combo, 1, 3)
-    var points: Array = tips.get(key, [[20, -24]])
-    var point: Array = points[clampi(frame, 0, points.size() - 1)]
-    return Vector2(float(point[0]), float(point[1]))
+static func weapon_tip_local(combo: int, frame: int, airborne: bool = false) -> Vector2:
+    return HeroAttackVisual.weapon_tip(combo,frame,airborne)
 
 static func silhouette_texture() -> Texture2D:
     return _texture("res://presentation/dungeon_frames/hero_silhouette.png")
@@ -99,6 +96,12 @@ static func _parry_pose(actor: Object, kind: String, state: String, frame: int) 
     return {"state": key, "progress": progress}
 
 static func paint(canvas: Node2D, kind: String, state: String, frame: int, facing: int) -> void:
+    if kind == "boss":
+        KatanaVisual.paint(canvas,state,frame,facing)
+        return
+    if kind == "hero" and state in ["windup","attack","recover"]:
+        HeroAttackVisual.paint(canvas,state,frame,facing,_combo(canvas))
+        return
     var region: Rect2
     var anchor: Vector2
     var frame_size: Vector2

@@ -119,3 +119,21 @@ metadata. Controller owns climbing and shallow-water speed; action input still h
 owner. Projectile style is an optional fourth root spawn argument; cap returns null.
 Mobs must consume finite layers even if capacity rejects a shot. Fine Boss design is out
 of this milestone. Narrative proposals are recorded in docs/story-direction.md only.
+
+
+## Katana / wide-melee milestone
+
+User explicitly authorizes the new Boss appearance/animation and adaptation of friend
+PR1. Fine final moves remain unprovided. Preserve upstream integrate/vfx-primary and
+all Cursor/integrate uncommitted hero/UI files; never wholesale merge the PR's audio.
+New own branch feat/boss-katana-art-20261024 is based on251e478. Root updates the old
+playable worktree only by clean, inactive, checked fast-forward after verification.
+
+Owners: Boss agent combat/boss.gd, friend_rhythm and temporary move data; combat
+agent player/Profile/Query; hero artist new hero_attack_frames+generator; Boss/FX
+artist katana_frames+generator, FxLayer, SpeedFeedback, outline shader; root visual
+adapters, main, HUD, integration/tests/docs/Git. Reviewer is read only. Shape source
+is data/hero_attack_profiles.json; no independent VFX hit radius. Root is the only
+hit ledger/damage entry and Impact the only hit-stop/shake/audio service. Renderer
+reads get_presentation_pose and immutable ghost snapshots. F3 controls presentation
+only. New mob species are a subsequent milestone, not a reason to delay this one.

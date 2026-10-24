@@ -21,7 +21,7 @@ func update_state(next: Dictionary) -> void:
     queue_redraw()
 
 func panel_layout(canvas: Vector2) -> Dictionary:
-    return {"status": Rect2(8, 8, canvas.x - 16, 44), "boss": Rect2(8, 58, canvas.x - 16, 40), "controls": Rect2(8, canvas.y - 44, canvas.x - 16, 36), "pause": Rect2((canvas.x - 456) * 0.5, (canvas.y - 252) * 0.5, 456, 252), "map": Rect2(24, 64, canvas.x - 48, canvas.y - 88)}
+    return {"status": Rect2(8, 8, canvas.x - 16, 44), "boss": Rect2(8, 58, canvas.x - 16, 40), "controls": Rect2(8, canvas.y - 44, canvas.x - 16, 36), "pause": Rect2((canvas.x - 456) * 0.5, (canvas.y - 276) * 0.5, 456, 276), "map": Rect2(24, 64, canvas.x - 48, canvas.y - 88)}
 
 func text(at: Vector2, value: String, point_size: int = 12, ink: Color = WHITE, width: float = -1) -> void:
     draw_string(font, at.round(), value, HORIZONTAL_ALIGNMENT_LEFT, width, point_size, ink)
@@ -93,7 +93,7 @@ func _draw() -> void:
 
 func _draw_boss(rect: Rect2) -> void:
     frame_box(rect)
-    text(rect.position + Vector2(10, 16), "空响钟守")
+    text(rect.position + Vector2(10, 16), "执刃钟守")
     var bar_x: float = rect.position.x + 165
     var bar_width: float = rect.size.x - 177
     draw_rect(Rect2(bar_x, rect.position.y + 7, bar_width, 9), Color("3a2634"))
@@ -118,7 +118,8 @@ func _draw_pause(rect: Rect2) -> void:
     centered(rect.position.y + 110, "R 返回检查点    F5 重新启程")
     centered(rect.position.y + 150, "F2 震屏：" + ("关闭" if state.get("reduced_motion", false) else "开启"), 12, CYAN)
     centered(rect.position.y + 180, "M 声音：" + ("静音" if state.get("muted", false) else "开启"), 12, CYAN)
-    centered(rect.position.y + 222, "空格跳跃 / W、S攀爬 / E操作门与机关", 12, Color("aaa6b2"))
+    centered(rect.position.y + 210, "F3 速度感：" + ["关闭","标准","强"][clampi(int(state.get("speed_effects_level",1)),0,2)], 12, CYAN)
+    centered(rect.position.y + 248, "空格跳跃 / W、S攀爬 / E操作门与机关", 12, Color("aaa6b2"))
 
 func map_point(at: Vector2, area: Rect2) -> Vector2:
     var bounds: Rect2 = Level.WORLD_BOUNDS

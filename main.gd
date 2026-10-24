@@ -9,6 +9,8 @@ signal parry_contacted(defender: Node, source: Node, contact: Vector2, kind: Str
 signal narrative_event(kind: String, payload: Dictionary)
 signal corruption_visual_changed(amount: float)
 
+const MeleeQuery = preload("res://combat/melee_query.gd")
+const SpeedFeedback = preload("res://presentation/speed_feedback.gd")
 const Player = preload("res://actors/player.gd")
 const Enemy = preload("res://actors/enemy.gd")
 const Projectile = preload("res://combat/projectile.gd")
@@ -26,6 +28,8 @@ var music: Node
 var level: Node2D
 var impact: Node
 var effects: Node2D
+var speed_feedback: Node2D
+var speed_effects_level: int = 1
 var _attack_hits: Dictionary = {}
 var parry_feedback_count: int = 0
 var last_parry_kind: String = ""
@@ -103,6 +107,10 @@ func _ready() -> void:
     effects.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(effects)
     effects.setup(self)
+    speed_feedback = SpeedFeedback.new()
+    speed_feedback.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(speed_feedback)
+    speed_feedback.configure(self)
     for entry: Dictionary in Level.ENEMIES:
         if entry["kind"] == "elite" and elite_defeated:
             continue
@@ -215,7 +223,8 @@ func _process(delta: float) -> void:
     _parry_notice_time = maxf(0, _parry_notice_time - delta)
     _announcement_time = maxf(0, _announcement_time - delta)
     if is_instance_valid(player):
-        var wanted: Vector2 = camera_target(player.position, player.facing)
+        var lead: float = speed_feedback.sample_camera_lead(delta) if is_instance_valid(speed_feedback) else 0.0
+        var wanted: Vector2 = camera_target(player.position, player.facing, lead)
         _camera.position = _camera.position.lerp(wanted, 1.0 - exp(-delta * 5.0)).round()
         _camera.offset = impact.sample_camera(delta) if is_instance_valid(impact) else Vector2.ZERO
     if outcome == "victory":
@@ -226,40 +235,36 @@ func _process(delta: float) -> void:
         _refresh_hud()
     queue_redraw()
 
-func camera_target(at: Vector2, facing: int = 1) -> Vector2:
+func camera_target(at: Vector2, facing: int = 1, speed_lead: float = 0.0) -> Vector2:
     var half_view: Vector2 = get_viewport_rect().size * 0.5
     var bounds: Rect2 = Level.WORLD_BOUNDS
-    return Vector2(clampf(at.x + facing * 45.0, half_view.x, Level.LEVEL_END - half_view.x), clampf(at.y - 90.0, bounds.position.y + half_view.y, bounds.end.y - half_view.y)).round()
+    return Vector2(clampf(at.x + facing * 45.0 + speed_lead, half_view.x, Level.LEVEL_END - half_view.x), clampf(at.y - 90.0, bounds.position.y + half_view.y, bounds.end.y - half_view.y)).round()
 
 func enemy_out_of_bounds(at: Vector2) -> bool:
     return at.y > Level.FALL_LIMIT or at.x < -80.0 or at.x > Level.LEVEL_END + 80.0
 
 func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) -> void:
-    if story_safe or outcome != "":
+    if story_safe or outcome != "" or source.get("attack_phase") != "active":
         return
     var source_id: int = source.get_instance_id()
     var serial: int = int(source.attack_serial)
     if not _attack_hits.has(source_id) or int(_attack_hits[source_id]["serial"]) != serial:
         _attack_hits[source_id] = {"serial": serial, "targets": {}}
     var hits: Dictionary = _attack_hits[source_id]["targets"]
-    var origin: Vector2 = source.global_position + Vector2(0, -18)
-    for enemy: Node in get_tree().get_nodes_in_group("enemies"):
+    # Geometry, arc direction and visible boundary all come from one shared profile.
+    # Root remains the only per-serial damage/impact authority.
+    for enemy: Node2D in MeleeQuery.collect(source,get_tree().get_nodes_in_group("enemies")):
         if not is_instance_valid(enemy) or bool(enemy.dead) or hits.has(enemy.get_instance_id()):
             continue
-        var target: Vector2 = enemy.global_position + Vector2(0, -28 if enemy == boss else -16)
-        var difference: Vector2 = target - origin
-        var radius: float = 19 if enemy == boss else 10
-        if absf(difference.x) <= reach + radius and difference.x * float(source.facing) >= -9 and absf(difference.y) <= (42 if enemy == boss else 28):
-            var before: int = int(enemy.health)
-            enemy.receive_hit(damage, source.global_position)
-            if int(enemy.health) < before:
-                hits[enemy.get_instance_id()] = true
-                if source.has_method("confirm_attack_hit"):
-                    source.confirm_attack_hit()
-                request_impact(source, enemy, combo_index == 3)
-            elif enemy == boss:
-                # A sealed phase can clang once per swing without repeated contact spam.
-                hits[enemy.get_instance_id()] = true
+        var before: int = int(enemy.health)
+        enemy.receive_hit(damage,source.global_position)
+        if int(enemy.health)<before:
+            hits[enemy.get_instance_id()] = true
+            if source.has_method("confirm_attack_hit"):
+                source.confirm_attack_hit()
+            request_impact(source,enemy,combo_index==3)
+        elif enemy == boss:
+            hits[enemy.get_instance_id()] = true
 
 func damage_player(amount: int, origin: Vector2) -> void:
     if story_safe or outcome != "" or not is_instance_valid(player):
@@ -420,7 +425,7 @@ func _refresh_hud() -> void:
     var nearby_hint: String = level.interaction_hint(player.position)
     if nearby_hint != "":
         zone["hint"] = nearby_hint
-    hud_updated.emit({"player_at": player.position, "opened_doors": level.get_opened_ids(), "collected": _collected, "checkpoint_active": checkpoint_active, "elite_defeated": elite_defeated, "overlay": _overlay, "reduced_motion": impact.reduced_motion if is_instance_valid(impact) else false, "muted": AudioServer.is_bus_mute(0), "hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
+    hud_updated.emit({"speed_effects_level": speed_effects_level, "player_at": player.position, "opened_doors": level.get_opened_ids(), "collected": _collected, "checkpoint_active": checkpoint_active, "elite_defeated": elite_defeated, "overlay": _overlay, "reduced_motion": impact.reduced_motion if is_instance_valid(impact) else false, "muted": AudioServer.is_bus_mute(0), "hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
 
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo:
@@ -435,6 +440,9 @@ func _unhandled_input(event: InputEvent) -> void:
         elif event.physical_keycode == KEY_F2:
             impact.reduced_motion = not impact.reduced_motion
             announce("Camera impact OFF" if impact.reduced_motion else "Camera impact ON", 2.0)
+            _refresh_hud()
+        elif event.physical_keycode == KEY_F3:
+            speed_effects_level = (speed_effects_level + 1) % 3
             _refresh_hud()
         elif event.physical_keycode == KEY_M:
             AudioServer.set_bus_mute(0, not AudioServer.is_bus_mute(0))

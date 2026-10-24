@@ -92,6 +92,7 @@ func run() -> void:
 	# Afterimages: a parry spawns one, and the cap holds under repeated dashes.
 	game.player.set("dash_timer", 1.0)
 	for _i: int in 200:
+		game.player.position.x += 12.0
 		fx._process(0.03)
 	check(fx.ghost_count() > 0 and fx.ghost_count() <= 28, "dash afterimages spawn and stay capped (%d)" % fx.ghost_count())
 	game.player.set("dash_timer", 0.0)
@@ -102,10 +103,12 @@ func run() -> void:
 	game.player.set("velocity", Vector2(160.0, 0.0))
 	var ran_ghost: bool = false
 	for _i: int in 40:
+		game.player.position.x += 6.0
 		fx._process(0.03)
 		ran_ghost = ran_ghost or fx.ghost_count() > 0
 	check(ran_ghost, "running spawns afterimages and trail particles")
 	game.player.set("velocity", Vector2.ZERO)
+	game.player.position = pos
 	# The single scene FxLayer owns telegraphs, including their warning kind.
 	check(fx.draw_warnings, "single gradient layer owns warning drawing")
 	# Warning lanes: shown while awake, never in a story-safe section.

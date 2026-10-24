@@ -7,6 +7,7 @@ signal state_changed(state: String, frame: int, direction: int)
 signal parried
 
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
+const AttackProfile = preload("res://combat/attack_profile.gd")
 const RUN_SPEED: float = 180.0
 const JUMP_SPEED: float = -340.0
 const GRAVITY: float = 900.0
@@ -22,11 +23,11 @@ const PARRY_RECOIL: float = 0.06
 const PARRY_RECOVER: float = 0.10
 const PARRY_COUNTER_DELAY: float = 0.035
 const PARRY_RECOIL_SPEED: float = 55.0
-const ATTACK_STARTUP: float = 0.045
-const COMBO_WINDUP: Array[float] = [0.045, 0.055, 0.075]
-const COMBO_ACTIVE: Array[float] = [0.095, 0.105, 0.125]
-const COMBO_RECOVER: Array[float] = [0.130, 0.130, 0.170]
-const COMBO_LENGTHS: Array[float] = [0.270, 0.290, 0.370]
+static var ATTACK_STARTUP: float = AttackProfile.duration(1, "windup")
+static var COMBO_WINDUP: Array[float] = [AttackProfile.duration(1, "windup"), AttackProfile.duration(2, "windup"), AttackProfile.duration(3, "windup")]
+static var COMBO_ACTIVE: Array[float] = [AttackProfile.duration(1, "active"), AttackProfile.duration(2, "active"), AttackProfile.duration(3, "active")]
+static var COMBO_RECOVER: Array[float] = [AttackProfile.duration(1, "recover"), AttackProfile.duration(2, "recover"), AttackProfile.duration(3, "recover")]
+static var COMBO_LENGTHS: Array[float] = [AttackProfile.total_duration(1), AttackProfile.total_duration(2), AttackProfile.total_duration(3)]
 const RECOVER_CANCEL_DELAY: float = 0.055
 const CONFIRM_CANCEL_DELAY: float = 0.050
 
@@ -41,6 +42,9 @@ var dash_timer: float = 0.0
 var attack_timer: float = 0.0
 var attack_phase: String = "none"
 var attack_serial: int = 0
+var attack_sweep_from: float = 0.25
+var attack_sweep_to: float = 0.25
+var _attack_query_progress: float = 0.25
 var queued_attack: bool = false
 var combat_freeze: float = 0.0
 var impact_flash: float = 0.0
@@ -201,8 +205,8 @@ func _physics_process(delta: float) -> void:
 				desired *= SHALLOW_WATER_SPEED
 			if is_on_floor() and attack_phase != "none":
 				desired *= 0.32 if attack_phase == "windup" else 0.70
-				if _lunge_timer > 0.0 and attack_phase == "active":
-					desired = facing * (150.0 if combo == 3 else (108.0 if combo == 2 else 88.0))
+				if _lunge_timer > 0.0 and attack_phase == "active" and _can_ground_lunge(delta):
+					desired = facing * float(AttackProfile.profile(combo).get("lunge_speed", 126.0))
 			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, (1800.0 if is_on_floor() else 1250.0) * delta)
 		if _jump_buffer > 0.0 and _hurt_lock <= 0.0:
 			if _coyote > 0.0:
@@ -408,7 +412,10 @@ func _start_attack() -> void:
 	combo = combo % 3 + 1 if _combo_grace > 0.0 else 1
 	attack_serial += 1
 	_attack_elapsed = 0.0
-	attack_timer = COMBO_LENGTHS[combo - 1]
+	attack_timer = AttackProfile.total_duration(combo)
+	attack_sweep_from = AttackProfile.contact_start()
+	attack_sweep_to = attack_sweep_from
+	_attack_query_progress = attack_sweep_from
 	queued_attack = false
 	_combo_grace = 0.0
 	_hit_confirmed = false
@@ -421,49 +428,61 @@ func get_attack_progress() -> float:
 	return clampf(_phase_elapsed / maxf(0.001, _phase_duration()), 0.0, 1.0)
 
 func _phase_duration() -> float:
-	var slot: int = clampi(combo - 1, 0, 2)
-	match attack_phase:
-		"windup": return COMBO_WINDUP[slot]
-		"active": return COMBO_ACTIVE[slot]
-		"recover": return COMBO_RECOVER[slot]
-	return 0.0
+	return AttackProfile.duration(combo, attack_phase)
 
 func _enter_attack_phase(stage: String) -> void:
 	attack_phase = stage
 	_phase_elapsed = 0.0
 	_state_clock = 0.0
 	if stage == "active":
-		_lunge_timer = 0.065
+		_lunge_timer = float(AttackProfile.profile(combo).get("lunge_seconds", 0.07))
 		_fx("slash", global_position + Vector2(facing * 22.0, -18.0), Vector2(facing, 0.0), float(combo))
 	_set_animation("attack" if stage == "active" else stage, 0.0)
 
+func _can_ground_lunge(delta: float) -> bool:
+	if not is_inside_tree() or not is_on_floor():
+		return false
+	var state: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var speed: float = float(AttackProfile.profile(combo).get("lunge_speed", 126.0))
+	var ahead: float = maxf(26.0, speed * delta + 10.0)
+	var wall: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(global_position + Vector2(0.0, -12.0), global_position + Vector2(facing * ahead, -12.0), 1)
+	if not state.intersect_ray(wall).is_empty():
+		return false
+	var ground: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(global_position + Vector2(facing * ahead, -4.0), global_position + Vector2(facing * ahead, 24.0), 1)
+	return not state.intersect_ray(ground).is_empty()
+
+func _query_active_sweep(progress: float) -> bool:
+	attack_sweep_from = _attack_query_progress
+	attack_sweep_to = clampf(progress, AttackProfile.contact_start(), 1.0)
+	_attack_query_progress = attack_sweep_to
+	_strike_done = true
+	_set_animation("attack", 0.0)
+	if is_instance_valid(game) and not bool(game.story_safe):
+		game.hero_attack(self, 2 if combo == 3 else 1, AttackProfile.radii(combo).x, combo)
+	return combat_freeze > 0.0 or attack_phase == "none"
+
 func _advance_attack(delta: float) -> void:
 	var remaining: float = maxf(0.0, delta)
-	var pulsed: bool = false
 	while remaining > 0.000001 and attack_phase != "none":
 		var duration: float = _phase_duration()
 		if duration <= 0.0:
 			_cancel_attack()
 			return
-		var contact_start: float = duration * 0.25
-		# Active pose 0 still carries the raised blade. First contact is pose 1,
-		# then the rest of this active phase continues querying every physics tick.
-		if attack_phase == "active" and not pulsed and _phase_elapsed >= contact_start - 0.000001:
-			pulsed = true
-			_strike_done = true
-			_set_animation("attack", 0.0)
-			if is_instance_valid(game) and not bool(game.story_safe):
-				game.hero_attack(self, 2 if combo == 3 else 1, 55.0 if combo == 3 else (47.0 if combo == 2 else 42.0), combo)
-			# Impact holds this pose immediately; music/projectiles are untouched.
-			if combat_freeze > 0.0 or attack_phase == "none":
-				return
+		var contact_begin: float = duration * AttackProfile.contact_start()
 		var consumed: float = minf(remaining, maxf(0.0, duration - _phase_elapsed))
-		if attack_phase == "active" and not pulsed and _phase_elapsed < contact_start:
-			consumed = minf(consumed, contact_start - _phase_elapsed)
+		if attack_phase == "active" and not _strike_done and _phase_elapsed < contact_begin:
+			consumed = minf(consumed, contact_begin - _phase_elapsed)
 		_phase_elapsed += consumed
 		_attack_elapsed += consumed
-		attack_timer = maxf(0.0, COMBO_LENGTHS[clampi(combo - 1, 0, 2)] - _attack_elapsed)
+		attack_timer = maxf(0.0, AttackProfile.total_duration(combo) - _attack_elapsed)
 		remaining -= consumed
+		if attack_phase == "active" and _phase_elapsed >= contact_begin - 0.000001:
+			var progress: float = clampf(_phase_elapsed / duration, AttackProfile.contact_start(), 1.0)
+			if not _strike_done or progress > _attack_query_progress + 0.000001:
+				# First clash is exactly the forward pose. Later queries cover the
+				# entire physics interval, including its final active edge.
+				if _query_active_sweep(progress):
+					return
 		if _phase_elapsed >= duration - 0.000001:
 			match attack_phase:
 				"windup": _enter_attack_phase("active")
@@ -485,6 +504,9 @@ func _cancel_attack() -> void:
 	_lunge_timer = 0.0
 	_hit_confirmed = false
 	_strike_done = true
+	attack_sweep_from = AttackProfile.contact_start()
+	attack_sweep_to = attack_sweep_from
+	_attack_query_progress = attack_sweep_from
 
 func receive_hit(amount: int, origin: Vector2) -> bool:
 	if dead or invuln > 0.0 or amount <= 0 or (is_instance_valid(game) and bool(game.story_safe)):

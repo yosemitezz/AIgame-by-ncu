@@ -65,8 +65,14 @@ func run() -> void:
     check(projectile.position.x > at.x, "projectiles keep moving during actor-local hit-stop")
     projectile.clear()
     target._hurt_flash = 0
-    game.player.attack_serial += 1
-    game.hero_attack(game.player, 1, 55, 1)
+    # The preceding real parry canceled the old attack. Begin a real new swing;
+    # changing only its serial must not bypass the controller's active phase.
+    game.player.combat_freeze = 0
+    game.player._clear_parry()
+    game.player.parry_timer = 0
+    game.player._cancel_attack()
+    game.player._start_attack()
+    game.player._advance_attack(0.1)
     check(target.health == before - 3, "next attack serial can hit same target again")
     var bounded: bool = true
     var offset := Vector2.ZERO

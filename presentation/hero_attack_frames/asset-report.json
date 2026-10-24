@@ -1,0 +1,141 @@
+{
+  "frames": 48,
+  "unique_frames": 48,
+  "opaque_palette_colors": 10,
+  "alpha_levels": [
+    0,
+    255
+  ],
+  "anchor": [
+    48,
+    88
+  ],
+  "clipped_frames": [],
+  "adjacent_changed_pixels": {
+    "cut_1_windup": [
+      1261,
+      1160,
+      1054
+    ],
+    "cut_1_attack": [
+      1519,
+      1660,
+      1242
+    ],
+    "cut_1_recover": [
+      1314,
+      1302,
+      1202
+    ],
+    "cut_1_air_attack": [
+      1548,
+      1628,
+      1436
+    ],
+    "cut_2_windup": [
+      1147,
+      1104,
+      943
+    ],
+    "cut_2_attack": [
+      1478,
+      1311,
+      1441
+    ],
+    "cut_2_recover": [
+      1163,
+      1105,
+      1040
+    ],
+    "cut_2_air_attack": [
+      1559,
+      1404,
+      1551
+    ],
+    "cut_3_windup": [
+      1294,
+      1401,
+      1149
+    ],
+    "cut_3_attack": [
+      1683,
+      1624,
+      1289
+    ],
+    "cut_3_recover": [
+      1446,
+      1437,
+      1423
+    ],
+    "cut_3_air_attack": [
+      1703,
+      1623,
+      1430
+    ]
+  },
+  "unique_body_frames_per_state": {
+    "cut_1_windup": 4,
+    "cut_1_attack": 4,
+    "cut_1_recover": 4,
+    "cut_1_air_attack": 4,
+    "cut_2_windup": 4,
+    "cut_2_attack": 4,
+    "cut_2_recover": 4,
+    "cut_2_air_attack": 4,
+    "cut_3_windup": 4,
+    "cut_3_attack": 4,
+    "cut_3_recover": 4,
+    "cut_3_air_attack": 4
+  },
+  "all_ground_frames_have_support": true,
+  "all_air_frames_have_tucked_feet": true,
+  "attack_angles": {
+    "1": [
+      -78,
+      -18,
+      18,
+      42
+    ],
+    "2": [
+      72,
+      18,
+      -18,
+      -46
+    ],
+    "3": [
+      -64,
+      -8,
+      4,
+      26
+    ]
+  },
+  "shared_profile_origin": [
+    0,
+    -24
+  ],
+  "shared_energy_radii": {
+    "1": [
+      180,
+      72
+    ],
+    "2": [
+      204,
+      84
+    ],
+    "3": [
+      228,
+      96
+    ]
+  },
+  "sha256": {
+    "hero_active_contact_2x.png": "8160a8365ce4d21607f9c084e2eb2bb1c29212d612bfc36c9bc5c033428672b6",
+    "hero_atlas.png": "30891ccb334f7fea777f830befd5dc9ae48cbb5e84194d43f591d675d27c9526",
+    "hero_attack_contact_2x.png": "6e761c125eb61ef3e02059cbd34077a04a6c25f46c3067b58ba049d735640cff",
+    "hero_attack_contact_native.png": "220eb37815a3d9cfcbb1da800c3ce4c62b48ecebfc197c700626614124942971",
+    "hero_flash.png": "aea009f70df6f3eecfae8201a8d4e4cd113bcabe690334d1d2f7d8c184ce7811",
+    "hero_silhouette.png": "27f1b93e8d8fd9a6cd516414a6500e84c92e80f1434dc2b1190dff924a50e5f1"
+  },
+  "shared_profile_angles_match": true,
+  "first_contact_fully_extended": true,
+  "passed": true
+}
