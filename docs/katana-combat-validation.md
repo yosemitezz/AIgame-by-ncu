@@ -37,8 +37,10 @@ and cancellation generation, six-slot eligibility and projectile geometry. They 
 called by the main Boss. Existing MusicDirector remains the only score clock, with
 fixed beat starts, health-gated phrase loops and safe rests. Source ports include
 full MIT notice/provenance. Original private audio and reference chart are excluded.
-Final six moves/chart values were not supplied: data/boss_moves.json is clearly
-marked as our original temporary configuration, not a finished friend moveset.
+In the pinned PR1 baseline the final move/chart values were absent. The newly
+received PR3 now adds authored attacks and laser arrays; it is not integrated here.
+Our data/boss_moves.json remains an explicitly original temporary configuration,
+not those newer authored moves.
 Laser and heavy-note judging from the independent subproject are not claimed here.
 Rain preview and release share a locked source; victory/rest invalidate future cues
 and clear old attacks. No original PR launcher/player/audio/damage engine runs.
@@ -82,3 +84,5 @@ Skills: create-game-assets/raster pipeline, godot-animation, godot-2d-movement,
 game-feel, godot-gdscript-headless-testing, existing coldbrew builder/core. Team split:
 Boss source adapter, geometry/controller, hero pose source, Boss pose/FX/speed,
 root wiring/validation/Git, independent read-only review.
+
+PR3 pending integration: https://github.com/yosemitezz/AIgame-by-ncu/pull/3, head fff7526a3dc687c9625dece860a79695c00db8d0, merge ad7d9bd1fc06223428a8029349308a4318040d27. This is newer than the PR1 adapter validated in this milestone and must be compared separately; no claim that the friend still has all slots empty.
