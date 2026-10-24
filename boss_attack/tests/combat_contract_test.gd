@@ -11,7 +11,7 @@ var failed := 0
 func _initialize() -> void:
 	test_double_taps_are_independent()
 	test_heavy_windows_and_overlap()
-	test_move_slots_are_empty_contract()
+	test_move_slots_and_pattern_contract()
 	print("COMBAT RESULTS: %d passed, %d failed" % [passed, failed])
 	quit(1 if failed > 0 else 0)
 
@@ -49,14 +49,20 @@ func test_heavy_windows_and_overlap() -> void:
 	assert_true(boundary_result[0]["success"], "positive 125ms boundary is inclusive")
 
 
-func test_move_slots_are_empty_contract() -> void:
+func test_move_slots_and_pattern_contract() -> void:
 	var slots = MOVE_SLOTS_SCRIPT.new()
 	var ok: bool = slots.load_config("res://data/boss_moves.json")
 	assert_true(ok, "move slots load: %s" % [slots.errors])
 	assert_eq(slots.slots.size(), 6, "exactly six slots")
-	for slot_id in ["move_1", "move_2", "move_3", "move_4", "fixed_1", "fixed_2"]:
+	for slot_id in ["move_1", "move_2", "move_3", "move_4", "fixed_1"]:
 		assert_true(slots.slots.has(slot_id), "%s exists" % slot_id)
-		assert_false(bool(slots.slots[slot_id]["enabled"]), "%s remains awaiting user design" % slot_id)
+		assert_true(bool(slots.slots[slot_id]["enabled"]), "%s authored logic is enabled" % slot_id)
+	assert_false(bool(slots.slots["fixed_2"]["enabled"]), "fixed_2 remains intentionally empty")
+	assert_eq(slots.normal_cycle, ["move_1", "move_2", "move_3", "move_4"], "normal move cycle")
+	assert_eq(slots.fast_cycle, ["fast_1", "fast_2", "fast_3", "fast_4"], "fast action cycle")
+	assert_eq(slots.get_normal_pattern(0).get("pattern_id"), "charge_dash_ring", "first normal move")
+	assert_eq(slots.get_fast_pattern(3).get("display_name"), "四连弹", "fourth fast group")
+	assert_eq(slots.get_fixed_pattern().get("pattern_id"), "cube_diagonal_lasers", "fixed move 1")
 	slots.free()
 
 

@@ -16,6 +16,7 @@ var assets: BattleAssetSlots
 var heavy_judge := HeavyJudge.new()
 var _battle_over := false
 var _arena_rect := Rect2(84.0, 38.0, 542.0, 310.0)
+var _laser_formation_config: Dictionary = {}
 
 
 func _ready() -> void:
@@ -33,10 +34,11 @@ func _ready() -> void:
 	assets = load(ASSETS_PATH) as BattleAssetSlots
 
 	player.configure(config, _arena_rect)
-	boss.configure(config)
+	boss.configure(config, _arena_rect)
 	projectiles.configure(config, _arena_rect)
 	projectiles.set_player(player)
 	projectiles.set_boss_origin(boss.global_position)
+	boss.set_battle_context(player, projectiles)
 
 	if assets != null:
 		player.set_visual_texture(assets.player_texture)
@@ -48,6 +50,9 @@ func _ready() -> void:
 			push_error("BossMoveSlots: %s" % error)
 		_fail_startup("Boss move slot contract failed. See log.")
 		return
+	var fixed_pattern := move_slots.get_fixed_pattern()
+	boss.set_fixed_parameters(fixed_pattern.get("parameters", {}))
+	_laser_formation_config = move_slots.get_laser_formations()
 
 	director.configure(config)
 	if not director.initialize():
@@ -64,6 +69,7 @@ func _process(_delta: float) -> void:
 	if not director.running:
 		return
 	projectiles.set_chart_time(director.current_chart_time)
+	boss.advance_to(director.current_chart_time)
 	for result in heavy_judge.update(director.current_chart_time):
 		if bool(result["success"]):
 			hud.on_heavy_success()
@@ -101,14 +107,19 @@ func _on_phase_ended(_phase: Dictionary) -> void:
 
 
 func _on_timing_group(group: Dictionary, phase_index: int) -> void:
-	var slot := move_slots.select_for_timing_group(phase_index, float(group["beat_float"]), {
-		"group": group,
-	})
-	if not slot.is_empty():
+	var phrase_value: Variant = group.get("action_phrase_index")
+	if phrase_value == null or int(group.get("action_note_index", 0)) != 1:
 		return
-	# The training shot is a shared contract test. It is deliberately not
-	# assigned to any of the six user-owned move slots.
-	projectiles.try_training_shot(player.global_position, 0.0)
+	var phrase: Dictionary = director.chart.action_phrases[int(phrase_value)]
+	var pattern: Dictionary
+	if str(phrase.get("mode", "basic")) == "fast":
+		pattern = move_slots.get_fast_pattern(int(phrase.get("sequence_index", 0)))
+	else:
+		pattern = move_slots.get_normal_pattern(int(phrase.get("sequence_index", 0)))
+	if pattern.is_empty():
+		return
+	if boss.begin_attack(pattern, float(phrase["start_time"]), player.global_position):
+		hud.set_attack_name(str(pattern.get("display_name", pattern.get("pattern_id", ""))))
 
 
 func _on_slot_requested(slot: Dictionary, context: Dictionary) -> void:
@@ -116,7 +127,19 @@ func _on_slot_requested(slot: Dictionary, context: Dictionary) -> void:
 
 
 func _on_laser_warning(laser: Dictionary) -> void:
-	projectiles.queue_laser_warning(laser)
+	if laser.has("fixed_attack_index"):
+		if bool(laser.get("fixed_primary", false)):
+			var fixed_pattern := move_slots.get_fixed_pattern()
+			boss.begin_fixed_one(fixed_pattern, float(laser["time"]), int(laser["fixed_attack_index"]))
+			hud.set_attack_name("固定段招式1")
+		return
+	var formation_index: Variant = laser.get("formation_index")
+	if formation_index == null or int(laser.get("formation_line_index", -1)) != 0:
+		return
+	var formation: Dictionary = director.chart.laser_formations[int(formation_index)]
+	var lines := LaserFormationPlanner.build_lines(formation, _laser_formation_config, _arena_rect)
+	for line in lines:
+		projectiles.queue_laser_geometry(line)
 
 
 func _on_block_started() -> void:

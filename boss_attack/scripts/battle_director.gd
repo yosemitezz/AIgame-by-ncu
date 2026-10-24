@@ -24,6 +24,7 @@ var chart_path := "res://data/if_infinity.chart.json"
 var configured_bpm := 203.0
 var configured_offset_ms := 245.0
 var phase_gap_beats := 4.0
+var fast_interval_threshold_beats := 1.01
 
 var _player: AudioStreamPlayer
 var _manual_elapsed := 0.0
@@ -37,6 +38,7 @@ func configure(config: Dictionary) -> void:
 	configured_bpm = float(config.get("bpm", configured_bpm))
 	configured_offset_ms = float(config.get("offset_ms", configured_offset_ms))
 	phase_gap_beats = float(config.get("phase_gap_beats", phase_gap_beats))
+	fast_interval_threshold_beats = float(config.get("fast_interval_threshold_beats", fast_interval_threshold_beats))
 	song_duration_seconds = float(config.get("song_duration_seconds", song_duration_seconds))
 	music_path = str(config.get("music_path", music_path))
 	chart_path = str(config.get("chart_path", chart_path))
@@ -49,6 +51,7 @@ func initialize() -> bool:
 	add_child(_player)
 	_player.finished.connect(_on_music_finished)
 
+	chart.fast_interval_threshold_beats = fast_interval_threshold_beats
 	if not chart.parse_file(chart_path, configured_bpm, configured_offset_ms, phase_gap_beats):
 		for error in chart.errors:
 			push_error("ChartParser: %s" % error)

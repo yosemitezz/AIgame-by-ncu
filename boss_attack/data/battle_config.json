@@ -6,6 +6,7 @@
   "bpm": 203.0,
   "offset_ms": 245.0,
   "phase_gap_beats": 4.0,
+  "fast_interval_threshold_beats": 1.01,
   "song_duration_seconds": 418.516,
   "heavy_window_seconds": 0.125,
   "heavy_lead_seconds": 2.0,
@@ -34,8 +35,8 @@
     "move_speed": 118.0
   },
   "training_preview": {
-    "enabled": true,
-    "warning": "Temporary generic aim shot only. It is not bound to a final move slot.",
+    "enabled": false,
+    "warning": "Disabled after authored Boss moves were integrated.",
     "shot_cooldown_seconds": 0.42,
     "projectile_speed": 330.0,
     "projectile_ttl_seconds": 0.89,

@@ -47,6 +47,7 @@ function Invoke-GodotCheck {
 Invoke-GodotCheck -Name 'import' -Arguments @('--editor','--import','--quit')
 Invoke-GodotCheck -Name 'chart-parser-test' -Arguments @('--script','res://tests/chart_parser_test.gd')
 Invoke-GodotCheck -Name 'combat-contract-test' -Arguments @('--script','res://tests/combat_contract_test.gd')
+Invoke-GodotCheck -Name 'boss-attack-contract-test' -Arguments @('--script','res://tests/boss_attack_contract_test.gd')
 Invoke-GodotCheck -Name 'audio-contract-test' -Arguments @('--script','res://tests/audio_contract_test.gd')
 Invoke-GodotCheck -Name 'scheduler-test' -Arguments @('--script','res://tests/scheduler_test.gd')
 Invoke-GodotCheck -Name 'startup-smoke' -Arguments @('--quit-after','20')

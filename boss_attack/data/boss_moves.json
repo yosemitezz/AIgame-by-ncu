@@ -1,62 +1,85 @@
 {
-  "schema_version": 1,
-  "status": "awaiting-user-move-designs",
-  "notes": "All slots are intentionally disabled. Fill pattern_id, phase_indices, beat bounds, and parameters from the user's final move handoff.",
+  "schema_version": 2,
+  "status": "logic-authored-assets-pending",
+  "normal_cycle": ["move_1", "move_2", "move_3", "move_4"],
+  "fast_cycle": ["fast_1", "fast_2", "fast_3", "fast_4"],
   "slots": [
     {
       "move_slot": "move_1",
       "display_name": "招式1",
       "segment_type": "normal",
-      "enabled": false,
-      "pattern_id": "",
-      "phase_indices": [],
-      "start_beat": null,
-      "end_beat": null,
-      "parameters": {}
+      "enabled": true,
+      "pattern_id": "charge_dash_ring",
+      "parameters": {
+        "actions": [
+          {"beat": 0.0, "type": "aim", "target": "locked_player"},
+          {"beat": 2.0, "type": "dash", "target": "locked_player", "duration_beats": 2.0, "damage": 6.0},
+          {"beat": 4.0, "type": "ring", "count": 8, "angle_offset_degrees": 0.0, "speed": 175.0, "ttl_seconds": 2.0, "damage": 6.0}
+        ]
+      }
     },
     {
       "move_slot": "move_2",
       "display_name": "招式2",
       "segment_type": "normal",
-      "enabled": false,
-      "pattern_id": "",
-      "phase_indices": [],
-      "start_beat": null,
-      "end_beat": null,
-      "parameters": {}
+      "enabled": true,
+      "pattern_id": "side_sweep_spray",
+      "parameters": {
+        "actions": [
+          {"beat": 0.0, "type": "teleport", "target": "arena_left"},
+          {"beat": 2.0, "type": "dash", "target": "arena_right", "duration_beats": 1.55, "damage": 6.0},
+          {"beat": 2.15, "type": "side_spray", "count": 3, "speed": 118.0, "ttl_seconds": 2.0, "damage": 6.0},
+          {"beat": 2.7, "type": "side_spray", "count": 3, "speed": 118.0, "ttl_seconds": 2.0, "damage": 6.0},
+          {"beat": 3.25, "type": "side_spray", "count": 3, "speed": 118.0, "ttl_seconds": 2.0, "damage": 6.0}
+        ]
+      }
     },
     {
       "move_slot": "move_3",
       "display_name": "招式3",
       "segment_type": "normal",
-      "enabled": false,
-      "pattern_id": "",
-      "phase_indices": [],
-      "start_beat": null,
-      "end_beat": null,
-      "parameters": {}
+      "enabled": true,
+      "pattern_id": "fan_then_dash",
+      "parameters": {
+        "actions": [
+          {"beat": 0.0, "type": "fan", "count": 3, "spread_degrees": 34.0, "speed": 205.0, "ttl_seconds": 1.8, "damage": 6.0},
+          {"beat": 2.0, "type": "aim", "target": "locked_player"},
+          {"beat": 2.0, "type": "dash", "target": "locked_player", "duration_beats": 1.55, "damage": 6.0}
+        ]
+      }
     },
     {
       "move_slot": "move_4",
       "display_name": "招式4",
       "segment_type": "normal",
-      "enabled": false,
-      "pattern_id": "",
-      "phase_indices": [],
-      "start_beat": null,
-      "end_beat": null,
-      "parameters": {}
+      "enabled": true,
+      "pattern_id": "dash_double_ring",
+      "parameters": {
+        "actions": [
+          {"beat": 0.0, "type": "dash", "target": "locked_player", "duration_beats": 1.4, "damage": 6.0},
+          {"beat": 2.0, "type": "ring", "count": 8, "angle_offset_degrees": 0.0, "speed": 155.0, "ttl_seconds": 2.4, "damage": 6.0},
+          {"beat": 2.25, "type": "ring", "count": 8, "angle_offset_degrees": 22.5, "speed": 155.0, "ttl_seconds": 2.4, "damage": 6.0}
+        ]
+      }
     },
     {
       "move_slot": "fixed_1",
       "display_name": "固定段招式1",
       "segment_type": "fixed",
-      "enabled": false,
-      "pattern_id": "",
-      "phase_indices": [],
-      "start_beat": null,
-      "end_beat": null,
-      "parameters": {}
+      "enabled": true,
+      "pattern_id": "cube_diagonal_lasers",
+      "parameters": {
+        "cube_flight_beats": 2.0,
+        "warning_beats": 2.0,
+        "line_hold_seconds": 0.9,
+        "line_thickness": 10.0,
+        "target_lanes": [
+          {"x": 0.27, "y": 0.33},
+          {"x": 0.73, "y": 0.32},
+          {"x": 0.68, "y": 0.70},
+          {"x": 0.30, "y": 0.68}
+        ]
+      }
     },
     {
       "move_slot": "fixed_2",
@@ -64,11 +87,69 @@
       "segment_type": "fixed",
       "enabled": false,
       "pattern_id": "",
-      "phase_indices": [],
-      "start_beat": null,
-      "end_beat": null,
       "parameters": {}
     }
-  ]
+  ],
+  "fast_patterns": {
+    "fast_1": {
+      "display_name": "冲—弹—弹—弹",
+      "actions": [
+        {"beat": 0.0, "type": "aim", "target": "locked_player"},
+        {"beat": 1.0, "type": "dash", "target": "locked_player", "duration_beats": 1.0, "damage": 6.0},
+        {"beat": 2.0, "type": "ring", "count": 8, "angle_offset_degrees": 0.0, "speed": 145.0, "ttl_seconds": 2.0, "damage": 6.0},
+        {"beat": 3.0, "type": "ring", "count": 8, "angle_offset_degrees": 22.5, "speed": 145.0, "ttl_seconds": 2.0, "damage": 6.0}
+      ]
+    },
+    "fast_2": {
+      "display_name": "弹—弹—冲—弹",
+      "actions": [
+        {"beat": 0.0, "type": "fan", "count": 3, "spread_degrees": 34.0, "angle_offset_degrees": -24.0, "speed": 170.0, "ttl_seconds": 2.0, "damage": 6.0},
+        {"beat": 1.0, "type": "fan", "count": 3, "spread_degrees": 34.0, "angle_offset_degrees": 24.0, "speed": 170.0, "ttl_seconds": 2.0, "damage": 6.0},
+        {"beat": 2.0, "type": "dash", "target": "locked_player", "duration_beats": 1.0, "damage": 6.0},
+        {"beat": 3.0, "type": "ring", "count": 6, "angle_offset_degrees": 0.0, "speed": 145.0, "ttl_seconds": 2.0, "damage": 6.0}
+      ]
+    },
+    "fast_3": {
+      "display_name": "双冲",
+      "actions": [
+        {"beat": 0.0, "type": "aim", "target": "locked_player"},
+        {"beat": 1.0, "type": "dash", "target": "locked_player", "duration_beats": 1.0, "damage": 6.0},
+        {"beat": 2.0, "type": "aim", "target": "locked_player"},
+        {"beat": 3.0, "type": "dash", "target": "locked_player", "duration_beats": 1.0, "damage": 6.0}
+      ]
+    },
+    "fast_4": {
+      "display_name": "四连弹",
+      "actions": [
+        {"beat": 0.0, "type": "center"},
+        {"beat": 0.05, "type": "ring", "count": 8, "angle_offset_degrees": 0.0, "speed": 115.0, "ttl_seconds": 3.0, "damage": 6.0},
+        {"beat": 1.05, "type": "ring", "count": 8, "angle_offset_degrees": 22.5, "speed": 115.0, "ttl_seconds": 3.0, "damage": 6.0},
+        {"beat": 2.05, "type": "ring", "count": 6, "angle_offset_degrees": 0.0, "speed": 115.0, "ttl_seconds": 3.0, "damage": 6.0},
+        {"beat": 3.05, "type": "ring", "count": 6, "angle_offset_degrees": 30.0, "speed": 115.0, "ttl_seconds": 3.0, "damage": 6.0}
+      ]
+    }
+  },
+  "laser_formations": {
+    "beam_hold_tail_seconds": 0.7,
+    "line_thickness": 9.0,
+    "patterns": {
+      "diamond": {
+        "safe_radius": 44.0,
+        "safe_offsets": [[-0.20, 0.0], [0.18, 0.04], [-0.16, 0.10]]
+      },
+      "parallel": {
+        "line_offsets": [-60.0, -20.0, 20.0, 60.0],
+        "safe_offsets": [[-0.16, 0.0], [0.14, 0.06], [0.0, -0.12]]
+      },
+      "grid": {
+        "vertical_half_gap": 64.0,
+        "horizontal_half_gap": 43.0,
+        "safe_offsets": [[0.16, 0.18], [-0.18, -0.14], [0.20, -0.16]]
+      },
+      "rotating": {
+        "safe_radius": 38.0,
+        "safe_offsets": [[-0.18, -0.12], [0.16, 0.15], [-0.13, 0.18]]
+      }
+    }
+  }
 }
-
