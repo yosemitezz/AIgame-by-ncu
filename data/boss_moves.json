@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "status": "original-provisional-not-friend-final-design",
+  "source_pr": 1,
+  "source_commit": "4e79620503bc9fd05a2154018ec97ec76f227557",
+  "notes": "Original redistributable short cue charts and temporary six-slot mappings authored for this main-game integration. Friends final six moves, heavy values and final chart remain unspecified. No private recording or chart copied.",
+  "slots": [
+    {
+      "move_slot": "move_1",
+      "display_name": "招式1",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "armored_slash",
+      "phase_indices": [
+        0
+      ],
+      "start_beat": 0,
+      "end_beat": 1,
+      "parameters": {
+        "windup_beats": 0.8,
+        "contact_reach": 78.0
+      }
+    },
+    {
+      "move_slot": "move_2",
+      "display_name": "招式2",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "charge",
+      "phase_indices": [
+        0
+      ],
+      "start_beat": 2,
+      "end_beat": 3,
+      "parameters": {
+        "windup_beats": 0.8,
+        "contact_reach": 78.0
+      }
+    },
+    {
+      "move_slot": "move_3",
+      "display_name": "招式3",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "radial",
+      "phase_indices": [
+        0
+      ],
+      "start_beat": 4,
+      "end_beat": 5,
+      "parameters": {
+        "windup_beats": 0.8,
+        "contact_reach": 78.0,
+        "count": 10,
+        "speed": 100.0,
+        "gap_center_degrees": -90.0,
+        "gap_half_degrees": 22.0
+      }
+    },
+    {
+      "move_slot": "move_4",
+      "display_name": "招式4",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "rain",
+      "phase_indices": [
+        0
+      ],
+      "start_beat": 6,
+      "end_beat": 7,
+      "parameters": {
+        "windup_beats": 0.8,
+        "contact_reach": 78.0,
+        "count": 7,
+        "speed": 130.0,
+        "safe_lane_half_width": 30.0
+      }
+    },
+    {
+      "move_slot": "fixed_1",
+      "display_name": "固定段招式1",
+      "segment_type": "fixed",
+      "enabled": true,
+      "pattern_id": "slash",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {
+        "windup_beats": 0.8,
+        "contact_reach": 78.0,
+        "count": 5,
+        "speed": 118.0,
+        "spread_degrees": 57.0
+      }
+    },
+    {
+      "move_slot": "fixed_2",
+      "display_name": "固定段招式2",
+      "segment_type": "fixed",
+      "enabled": true,
+      "pattern_id": "spread",
+      "phase_indices": [],
+      "start_beat": null,
+      "end_beat": null,
+      "parameters": {
+        "windup_beats": 0.8,
+        "contact_reach": 78.0,
+        "count": 5,
+        "speed": 118.0,
+        "spread_degrees": 57.0
+      }
+    }
+  ],
+  "charts": {
+    "fixed": {
+      "note": [
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            4,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            6,
+            0,
+            1
+          ],
+          "column": 0
+        }
+      ]
+    },
+    "random": {
+      "note": [
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            4,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            6,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            8,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            10,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            12,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            14,
+            0,
+            1
+          ],
+          "column": 0
+        }
+      ]
+    },
+    "final": {
+      "note": [
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            4,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            6,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            8,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            10,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            12,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            14,
+            0,
+            1
+          ],
+          "column": 0
+        }
+      ]
+    }
+  },
+  "loop_beats": {
+    "fixed": 8,
+    "random": 16,
+    "final": 16
+  },
+  "explicit_slots": {
+    "fixed": {
+      "0": "fixed_1",
+      "2": "fixed_2",
+      "4": "fixed_1",
+      "6": "fixed_2"
+    },
+    "final": {
+      "2": "fixed_1",
+      "6": "fixed_2",
+      "10": "fixed_1",
+      "14": "fixed_2"
+    }
+  },
+  "normal_cycle_beats": 8
+}

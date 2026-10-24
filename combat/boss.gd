@@ -2,6 +2,9 @@ extends CharacterBody2D
 ## Bellkeeper: readable beat-led windups, pursuit, repositioning and projectile patterns.
 
 const Pixels = preload("res://assets/art/pixel_actor.gd")
+const FriendDirector = preload("res://combat/friend_rhythm/battle_director.gd")
+const FriendSlots = preload("res://combat/friend_rhythm/boss_move_slots.gd")
+const FriendPatterns = preload("res://combat/friend_rhythm/projectile_patterns.gd")
 const ARENA_LEFT: float = 2660.0
 const ARENA_RIGHT: float = 3330.0
 # Original tuning starting points, not measurements taken from reference footage.
@@ -60,6 +63,24 @@ var _posture_lockout: float = 0.0
 var _combo_pending: bool = false
 var _combo_timer: float = 0.0
 var _resolved_contacts: Dictionary = {}
+var friend_director = FriendDirector.new()
+var friend_last_slot: String = ""
+var friend_cues_started: int = 0
+var friend_trace: Array[Dictionary] = []
+var _friend_slots: Node
+var _friend_config: Dictionary = {}
+var _friend_section_origin: int = 0
+var _friend_last_beat: int = -1
+var _friend_current_beat: int = 0
+var _friend_used_cues: Dictionary = {}
+var _attack_parameters: Dictionary = {}
+var _action_kind: String = ""
+var _locked_target: Vector2 = Vector2.ZERO
+var _windup_duration: float = 0.0
+var _release_elapsed: float = 0.0
+var _present_strike: int = 0
+var _death_elapsed: float = 0.0
+var _warning_geometry: Dictionary = {}
 
 func configure(p_game: Node, at: Vector2) -> void:
     game = p_game
@@ -74,6 +95,16 @@ func configure(p_game: Node, at: Vector2) -> void:
     collider.shape = shape
     add_child(collider)
     add_to_group("enemies")
+    var file := FileAccess.open("res://data/boss_moves.json", FileAccess.READ)
+    var parsed: Variant = JSON.parse_string(file.get_as_text()) if file else null
+    if parsed is Dictionary:
+        _friend_config = parsed
+    _friend_slots = FriendSlots.new()
+    add_child(_friend_slots)
+    if not _friend_slots.load_config("res://data/boss_moves.json"):
+        push_error("Friend six-slot configuration invalid: %s" % [_friend_slots.errors])
+    _friend_slots.slot_requested.connect(_on_friend_slot)
+    friend_director.timing_group.connect(_on_friend_group)
     if is_instance_valid(game.music):
         game.music.beat.connect(_on_beat)
         game.music.section_changed.connect(_on_section)
@@ -117,8 +148,9 @@ func _request_phase_if_ready() -> void:
 func _on_section(section: String) -> void:
     phase = section
     _cancel_all_attacks()
-    _recovery_timer = 0.3
+    _recovery_timer = 0.0 if section == "fixed" else 0.3
     velocity.x = 0.0
+    _load_friend_section(section)
     if section == "rest":
         combat_freeze = 0.0
         hurt_flash = 0.0
@@ -135,34 +167,78 @@ func _on_section(section: String) -> void:
         "final":
             game.announce("The seal is open. Keep moving; turn its light against it.", 3.0)
 
+func _load_friend_section(section: String) -> void:
+    friend_director.invalidate()
+    _friend_last_beat = -1
+    _friend_used_cues.clear()
+    _friend_section_origin = int(game.music.total_beats) if bool(game.music.running) else 0
+    if section == "rest":
+        return
+    var charts: Dictionary = _friend_config.get("charts", {})
+    var document: Dictionary = charts.get(section, {})
+    if not friend_director.load_document(document, float(game.music.bpm)):
+        push_error("Original placeholder cue chart invalid: %s" % [friend_director.chart.errors])
+
 func _on_beat(index: int) -> void:
-    if dead or not _active or game.story_safe or _stagger_timer > 0.0 or _reaction_blocks_attacks or _posture_lockout > 0.0:
+    if dead or not _active or game.story_safe or phase == "rest":
+        friend_director.invalidate()
+        return
+    var lengths: Dictionary = _friend_config.get("loop_beats", {})
+    var length: int = maxi(1, int(lengths.get(phase, 16)))
+    var local_beat: int = posmod(index - _friend_section_origin, length)
+    _friend_current_beat = local_beat
+    var at: float = float(local_beat) * game.music.seconds_per_beat()
+    if local_beat < _friend_last_beat or not friend_director.running:
+        friend_director.restart_at(at)
+        _friend_used_cues.clear()
+    _friend_last_beat = local_beat
+    # Consume due events even while the actor is busy. They never become delayed
+    # off-beat attacks when recoil or local hit-stop finishes.
+    friend_director.advance_to(at)
+
+func _on_friend_group(group: Dictionary, phase_index: int, version: int) -> void:
+    if version != friend_director.generation or not friend_director.running:
+        return
+    if dead or not _active or game.story_safe or combat_freeze > 0.0 or _stagger_timer > 0.0 or _reaction_blocks_attacks or _posture_lockout > 0.0:
         return
     if _windup_timer > 0.0 or _charge_timer > 0.0 or _recovery_timer > 0.0 or _combo_pending:
         return
-    if index % 2 != 0:
+    if not is_equal_approx(float(group["beat_float"]), float(_friend_current_beat)):
         return
-    var fixed_patterns: Array[String] = ["slash", "fan", "charge", "ring"]
-    var patterns: Array[String] = ["slash", "fan", "charge", "rain", "ring"]
-    var attack: String
-    if phase == "fixed":
-        attack = fixed_patterns[_attack_count % fixed_patterns.size()]
-    elif phase == "random":
-        var choices: Array[String] = []
-        for candidate: String in patterns:
-            if candidate != _last_pattern:
-                choices.append(candidate)
-        attack = choices[randi_range(0, choices.size() - 1)]
+    var key: String = "%d:%s" % [version, str(group["beat_key"])]
+    if _friend_used_cues.has(key):
+        return
+    _friend_used_cues[key] = true
+    var context: Dictionary = {"group": group, "generation": version, "section": phase, "beat": group["beat_float"]}
+    var explicit: Dictionary = _friend_config.get("explicit_slots", {}).get(phase, {})
+    var fixed_slot: String = str(explicit.get(str(_friend_current_beat), ""))
+    if not fixed_slot.is_empty():
+        # Explicit fixed requests take priority over a normal group on the same beat.
+        _friend_slots.request_slot(StringName(fixed_slot), context)
     else:
-        var final_patterns: Array[String] = ["armored_slash", "fan", "charge", "rain", "ring"]
-        attack = final_patterns[_attack_count % final_patterns.size()]
-    _last_pattern = attack
-    _attack_count += 1
-    _begin_attack(attack)
+        var normal_period: float = maxf(1.0, float(_friend_config.get("normal_cycle_beats", 8)))
+        _friend_slots.select_for_timing_group(phase_index, fmod(float(group["beat_float"]), normal_period), context)
 
-func _begin_attack(attack: String) -> void:
+func _on_friend_slot(slot: Dictionary, context: Dictionary) -> void:
+    if int(context.get("generation", -1)) != friend_director.generation or not friend_director.running or dead or game.story_safe:
+        return
+    var pattern: String = str(slot.get("pattern_id", ""))
+    friend_last_slot = str(slot["move_slot"])
+    friend_cues_started += 1
+    friend_trace.append({"slot": friend_last_slot, "pattern": pattern, "beat": _friend_current_beat, "section": phase, "generation": friend_director.generation})
+    if friend_trace.size() > 64:
+        friend_trace.pop_front()
+    _last_pattern = pattern
+    _attack_count += 1
+    _begin_attack(pattern, slot.get("parameters", {}))
+
+func _begin_attack(attack: String, parameters: Dictionary = {}) -> void:
     if dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
         return
+    _attack_parameters = parameters.duplicate(true)
+    _action_kind = attack
+    _present_strike = 0
+    _release_elapsed = 0.0
     attack_serial += 1
     contact_token = attack_serial * 8
     attack_parryable = attack in ["slash", "armored_slash"]
@@ -172,10 +248,16 @@ func _begin_attack(attack: String) -> void:
     _combo_pending = false
     _combo_timer = 0.0
     _pending_attack = attack
-    _windup_timer = game.music.seconds_per_beat() * 0.8
+    _windup_duration = game.music.seconds_per_beat() * clampf(float(_attack_parameters.get("windup_beats", 0.8)), 0.25, 2.0)
+    _windup_timer = _windup_duration
     var toward: Vector2 = game.player.global_position + Vector2(0, -14) - global_position - Vector2(0, -25)
     facing = 1 if toward.x >= 0.0 else -1
     _aim = toward.normalized()
+    _locked_target = game.player.global_position + Vector2(0, -14)
+    _warning_geometry.clear()
+    if attack == "rain":
+        # Warning and release own one immutable set of actual columns/vectors.
+        _warning_geometry = _friend_pattern_geometry("rain", global_position + Vector2(0, -26))
     _contact_resolved = false
     var warning_at: Vector2 = global_position + Vector2(facing * 35, -22)
     if attack == "rain":
@@ -205,6 +287,10 @@ func _physics_process(delta: float) -> void:
         queue_redraw()
         return
     _animation_clock += delta
+    if _present_strike > 0:
+        _release_elapsed += delta
+    if dead:
+        _death_elapsed += delta
     _hurt_timer = maxf(0.0, _hurt_timer - delta)
     _stagger_timer = maxf(0.0, _stagger_timer - delta)
     _recovery_timer = maxf(0.0, _recovery_timer - delta)
@@ -281,6 +367,8 @@ func _release_attack() -> void:
     if attack.is_empty():
         return
     _recovery_timer = 0.24
+    _present_strike = 1
+    _release_elapsed = 0.0
     match attack:
         "slash":
             _try_melee_contact(78.0, true, false, contact_token)
@@ -299,27 +387,42 @@ func _release_attack() -> void:
             _charge_timer = 0.30
             velocity.y = -95.0
             game.emit_fx("enemy_dash", source, Vector2(facing, 0), 1.3)
-        "fan":
-            var count: int = 7 if phase == "final" else 5
-            for i: int in count:
-                var offset: float = lerpf(-0.5, 0.5, float(i) / float(count - 1))
-                game.spawn_projectile(source, _aim.rotated(offset) * 118.0)
-        "ring":
-            var count: int = 12 if phase == "final" else 10
-            for i: int in count:
-                # A clear upward gap prevents a solid unbroken wall of projectiles.
-                if i == count / 4:
-                    continue
-                var angle: float = TAU * float(i) / float(count)
-                game.spawn_projectile(source, Vector2.from_angle(angle) * 100.0)
-        "rain":
-            var middle: float = clampf(game.player.global_position.x, ARENA_LEFT + 80, ARENA_RIGHT - 80)
-            for i: int in 5:
-                var offset: float = float(i - 2) * 48.0
-                # Deliberate central safe lane; lateral drift makes the shower readable.
-                if i == 2:
-                    continue
-                game.spawn_projectile(Vector2(middle + offset, 112), Vector2(-facing * 12.0, 130.0))
+        "fan", "spread", "aimed", "ring", "radial", "rain":
+            _emit_friend_pattern(attack, source)
+
+func _friend_pattern_geometry(attack: String, source: Vector2) -> Dictionary:
+    var pattern: String = "spread" if attack == "fan" else ("radial" if attack == "ring" else attack)
+    var parameters: Dictionary = _attack_parameters.duplicate(true)
+    var defaults: Dictionary = {"count": 5, "speed": 118.0, "spread_degrees": 57.0}
+    if pattern == "radial":
+        defaults = {"count": 10, "speed": 100.0, "gap_center_degrees": -90.0, "gap_half_degrees": 22.0}
+    elif pattern == "rain":
+        defaults = {"count": 7, "speed": 130.0, "safe_lane_half_width": 30.0}
+        parameters["safe_lane_x"] = clampf(_locked_target.x, ARENA_LEFT + 40, ARENA_RIGHT - 40)
+    parameters.merge(defaults, false)
+    var arena := Rect2(ARENA_LEFT, 120.0, ARENA_RIGHT - ARENA_LEFT, 180.0)
+    var shots: Array[Dictionary] = FriendPatterns.vectors(pattern, parameters, source, _locked_target, arena)
+    var columns: Array[float] = []
+    for shot: Dictionary in shots:
+        columns.append(Vector2(shot["position"]).x)
+    return {"kind": pattern, "attack_serial": attack_serial, "contact_serial": contact_token, "origin": source, "locked_target": _locked_target, "columns": columns, "shots": shots}
+
+func get_warning_geometry(kind: String = "") -> Dictionary:
+    if _warning_geometry.is_empty() or int(_warning_geometry.get("attack_serial", -1)) != attack_serial:
+        return {}
+    if not kind.is_empty() and str(_warning_geometry.get("kind", "")) != kind:
+        return {}
+    return _warning_geometry.duplicate(true)
+
+func _emit_friend_pattern(attack: String, source: Vector2) -> void:
+    if dead or game.story_safe:
+        return
+    var geometry: Dictionary = get_warning_geometry("rain") if attack == "rain" else {}
+    if geometry.is_empty():
+        geometry = _friend_pattern_geometry(attack, source)
+    for shot: Dictionary in geometry.get("shots", []):
+        # Root keeps the only cap, collision, parry and rest-safe spawn authority.
+        game.spawn_projectile(shot["position"], shot["velocity"], false)
 
 func _release_combo_contact() -> void:
     if not _combo_pending or dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
@@ -327,6 +430,8 @@ func _release_combo_contact() -> void:
     _combo_pending = false
     _combo_timer = 0.0
     contact_token = attack_serial * 8 + 1
+    _present_strike = 2
+    _release_elapsed = 0.0
     _contact_resolved = false
     _recovery_timer = 0.24
     _try_melee_contact(78.0, true, true, contact_token)
@@ -372,6 +477,10 @@ func _try_melee_contact(reach: float, parryable: bool = true, armored: bool = fa
         game.damage_player(1, global_position)
 
 func _cancel_all_attacks() -> void:
+    friend_director.invalidate()
+    _present_strike = 0
+    _release_elapsed = 0.0
+    _warning_geometry.clear()
     _pending_attack = ""
     _windup_timer = 0.0
     _charge_timer = 0.0
@@ -421,6 +530,7 @@ func _die() -> void:
     if dead:
         return
     dead = true
+    _death_elapsed = 0.0
     _active = false
     _cancel_all_attacks()
     _clear_reaction()
@@ -428,6 +538,42 @@ func _die() -> void:
     game.music.stop_score()
     game.emit_fx("boss_defeat", global_position + Vector2(0, -28), Vector2.ZERO, 2.0)
     game.on_boss_defeated()
+
+func get_presentation_pose() -> Dictionary:
+    # Pure reads of the actor's actual local clocks. The first cut pose is already
+    # extended: damage/contact happens on _release_attack, not a later sprite frame.
+    var state: String = "idle"
+    var progress: float = 0.0
+    if dead:
+        state = "dead"
+        progress = _death_elapsed / 0.6
+    elif reaction_state != "none":
+        state = "armored_recoil" if reaction_state == "parry_recoil" and not _reaction_blocks_attacks else reaction_state
+        progress = reaction_progress
+    elif _windup_timer > 0.0:
+        state = "draw" if _action_kind in ["slash", "armored_slash", "charge"] else "cast"
+        progress = 1.0 - _windup_timer / maxf(0.001, _windup_duration)
+    elif _charge_timer > 0.0:
+        state = "shift"
+        progress = 1.0 - _charge_timer / 0.30
+    elif _present_strike > 0 and _release_elapsed < 0.10:
+        state = "cut_b" if _present_strike == 2 else "cut_a"
+        progress = _release_elapsed / 0.10
+    elif _combo_pending:
+        state = "draw"
+        progress = 1.0 - _combo_timer / ARMORED_CHAIN_GAP
+    elif _recovery_timer > 0.0 and _present_strike > 0:
+        state = "recover"
+        progress = (_release_elapsed - 0.10) / 0.14
+    elif _hurt_timer > 0.0:
+        # A normal hit does not mechanically interrupt this Boss. It cannot hide
+        # a live draw/cut behind a hurt pose; explicit parry/break reactions win above.
+        state = "hurt"
+        progress = 1.0 - _hurt_timer / 0.09
+    elif absf(velocity.x) > 6.0:
+        state = "approach"
+        progress = fmod(_animation_clock * 2.0, 1.0)
+    return {"state": state, "progress": clampf(progress, 0.0, 1.0), "strike": _present_strike, "armored": attack_armored, "contact_serial": contact_token}
 
 func _draw() -> void:
     Pixels.paint(self, "boss", animation_state, frame, facing)

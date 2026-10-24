@@ -15,3 +15,9 @@ The project's own MIT LICENSE remains intact. New frame art and synthesized impa
 ## Fusion Pixel Font
 
 The bundled 12px zh-Hans project font is from TakWolf/fusion-pixel-font release 2026.10.16 under SIL OFL 1.1. Full original OFL and component notices are retained in assets/fonts/. It is a project resource, not a system installation or a commercial game font. See docs/pixel-font.md for official source URL and file hash.
+
+## Friend Boss rhythm PR #1 (MIT source adaptation)
+
+Adapted from https://github.com/yosemitezz/AIgame-by-ncu/pull/1 by zjuan-ctrl, head 4e79620503bc9fd05a2154018ec97ec76f227557, merged upstream as 57f61ea993478d71e3de6d139597d976bb2b888b. The original subproject remains preserved upstream. Its exact beat grouping, cue cursor/generation, six-slot eligibility and projectile geometry algorithms are adapted in combat/friend_rhythm and used by the main Boss. Source license: third_party/friend-boss-pr1/LICENSE.
+
+Private audio/if_infinity.ogg and the reference chart are explicitly excluded from that source license and are not included in this branch or its ancestry. The runtime keeps the distributable generated music and original placeholder cue data. Final move parameters remain unprovided; data/boss_moves.json is our temporary original configuration, not the friend's finished six moves. No PR launcher, original player controls or independent damage/audio engine is executed.
