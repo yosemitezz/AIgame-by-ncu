@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "bpm": 112.0,
+  "phrase_beats": 8,
+  "fixed_beats": 8,
+  "random_loop_beats": 16,
+  "rest_beats": 8,
+  "final_loop_beats": 16,
+  "advance_health_ratio": 0.5,
+  "sample_rate": 16000,
+  "music_volume_db": -8.0,
+  "provenance": "Original procedural minor-mode score. Synthesized in memory by audio/music_director.gd; no external recording, commercial song, or borrowed melody.",
+  "rules": {
+    "fixed": "Boss attack windups are dispatched only by beat signals.",
+    "random": "Loop until health threshold queues advance; transition only at the end of a complete 16-beat phrase.",
+    "rest": "Both sides cannot deal damage; cancel pending attacks and clear hostile projectiles on entry.",
+    "parry": "Collision/contact and a short input window only. Missing a music beat never deals damage."
+  }
+}

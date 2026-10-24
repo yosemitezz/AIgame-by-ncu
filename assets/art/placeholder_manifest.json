@@ -1,0 +1,132 @@
+{
+  "hero": {
+    "size": [
+      240,
+      480
+    ],
+    "frame": [
+      40,
+      48
+    ],
+    "frames_per_state": 6,
+    "states": [
+      "idle",
+      "run",
+      "jump",
+      "fall",
+      "dash",
+      "attack",
+      "parry",
+      "hurt",
+      "dead",
+      "windup"
+    ],
+    "colors": 62,
+    "source": "original integer pixel drawing in tools/build_pixel_placeholders.py",
+    "license": "MIT"
+  },
+  "sentry": {
+    "size": [
+      240,
+      480
+    ],
+    "frame": [
+      40,
+      48
+    ],
+    "frames_per_state": 6,
+    "states": [
+      "idle",
+      "run",
+      "jump",
+      "fall",
+      "dash",
+      "attack",
+      "parry",
+      "hurt",
+      "dead",
+      "windup"
+    ],
+    "colors": 50,
+    "source": "original integer pixel drawing in tools/build_pixel_placeholders.py",
+    "license": "MIT"
+  },
+  "elite": {
+    "size": [
+      240,
+      480
+    ],
+    "frame": [
+      40,
+      48
+    ],
+    "frames_per_state": 6,
+    "states": [
+      "idle",
+      "run",
+      "jump",
+      "fall",
+      "dash",
+      "attack",
+      "parry",
+      "hurt",
+      "dead",
+      "windup"
+    ],
+    "colors": 43,
+    "source": "original integer pixel drawing in tools/build_pixel_placeholders.py",
+    "license": "MIT"
+  },
+  "wisp": {
+    "size": [
+      240,
+      480
+    ],
+    "frame": [
+      40,
+      48
+    ],
+    "frames_per_state": 6,
+    "states": [
+      "idle",
+      "run",
+      "jump",
+      "fall",
+      "dash",
+      "attack",
+      "parry",
+      "hurt",
+      "dead",
+      "windup"
+    ],
+    "colors": 6,
+    "source": "original integer pixel drawing in tools/build_pixel_placeholders.py",
+    "license": "MIT"
+  },
+  "boss": {
+    "size": [
+      480,
+      800
+    ],
+    "frame": [
+      80,
+      80
+    ],
+    "frames_per_state": 6,
+    "states": [
+      "idle",
+      "run",
+      "jump",
+      "fall",
+      "dash",
+      "attack",
+      "parry",
+      "hurt",
+      "dead",
+      "windup"
+    ],
+    "colors": 55,
+    "source": "original integer pixel drawing in tools/build_pixel_placeholders.py",
+    "license": "MIT"
+  }
+}
