@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "enabled": true,
+  "climax_windows": [
+    {
+      "start_seconds": 265.073,
+      "end_seconds": 302.905
+    }
+  ],
+  "provenance": "User confirmed only the 04:25–05:03 source-audio climax window. Exact boundaries stay configurable; other fast phrases are not climax windows.",
+  "windup_seconds": 0.32,
+  "vanish_seconds": 0.08,
+  "reveal_seconds": 0.28,
+  "cut_seconds": 0.16,
+  "cooldown_seconds": 8.0,
+  "max_uses_per_window_per_epoch": 1,
+  "source_margin_seconds": 0.08,
+  "laser_margin_seconds": 0.35,
+  "front_distances": [
+    72.0,
+    96.0,
+    48.0
+  ],
+  "max_layer_delta": 20.0,
+  "player_clearance": 10.0,
+  "window_status": "user_confirmed",
+  "timing": "Single climax adaptation of existing side_sweep_spray: prepare at least320ms before its teleport, disappear on the original teleport event, reveal after80ms, and begin active steel on the original dash event two source beats later. Only movement target and local cut duration are adapted; all original action and projectile timestamps remain unchanged.",
+  "safety_tail_seconds": 0.06,
+  "contact_properties": "Inherited from the adapted source side_sweep_spray: parryable armor, posture accumulation and three-contact guard break; no new reaction rule. Preparation and reveal publish that same armored flag.",
+  "cut_seconds_note": "Only the climax adaptation uses this short local dash/blade duration. Source action timestamps, projectile timestamps and all counts remain unchanged; existing source recovery presentation is retained."
+}

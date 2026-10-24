@@ -44,6 +44,30 @@ var _authored_actions: Array[Dictionary] = []
 var _authored_dash: Dictionary = {}
 var _authored_shift: Dictionary = {}
 var duel_profile: Dictionary = {}
+var blink_profile: Dictionary = {}
+var _blink_phase: String = ""
+var _blink_elapsed: float = 0.0
+var _blink_duration: float = 0.0
+var _blink_landing: Vector2 = Vector2.ZERO
+var _blink_hero_lock: Vector2 = Vector2.ZERO
+var _blink_facing: int = 1
+var _blink_window: int = -1
+var _blink_epoch: int = -1
+var _blink_window_uses: Dictionary = {}
+var _blink_next_score: float = 0.0
+var _blink_saved_alpha: float = 1.0
+var _blink_reason: String = "disabled"
+var _blink_hint_shown: bool = false
+var _blink_serial: int = 0
+var _blink_cut_score: float = 0.0
+var _blink_cut_chart: float = 0.0
+var _blink_source_owned: bool = false
+var _blink_source_release: float = 0.0
+var _blink_phase_score: float = 0.0
+var _blink_source_completed_token: int = -1
+var blink_starts: int = 0
+var blink_completed: int = 0
+var blink_cancelled: int = 0
 var _navigation_reason: String = "idle"
 var _duel_enabled: bool = true
 var _duel_state: String = ""
@@ -137,6 +161,10 @@ func configure(p_game: Node, at: Vector2) -> void:
         var duel_data: Variant = JSON.parse_string(duel_file.get_as_text())
         if duel_data is Dictionary:
             duel_profile = duel_data
+    var blink_file: FileAccess = FileAccess.open("res://data/boss_blink_profile.json", FileAccess.READ)
+    if blink_file:
+        var blink_data: Variant = JSON.parse_string(blink_file.get_as_text())
+        if blink_data is Dictionary: blink_profile = blink_data
     global_position = at
     collision_layer = 0
     collision_mask = 1
@@ -311,6 +339,7 @@ func _physics_process(delta: float) -> void:
         else:
             _dispatch_authored_clock(maxf(0.0, score - _section_origin_score), false)
         _prepare_upcoming(score)
+        _prepare_source_blink(score)
         _advance_authored_actions(score)
     _hurt_timer = maxf(0.0, _hurt_timer - delta)
     _stagger_timer = maxf(0.0, _stagger_timer - delta)
@@ -332,6 +361,13 @@ func _physics_process(delta: float) -> void:
     elif _stagger_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
         animation_state = "hurt"
+    elif _blink_source_owned and _blink_phase == "windup":
+        _advance_blink(delta)
+        if not _authored_dash.is_empty(): _advance_authored_dash(float(game.music.get_score_time()))
+        elif not _authored_shift.is_empty(): _advance_authored_shift(float(game.music.get_score_time()))
+        else: velocity.x = 0.0
+    elif not _blink_phase.is_empty():
+        _advance_blink(delta)
     elif not _duel_state.is_empty():
         _advance_duel(delta)
     elif not _authored_shift.is_empty():
@@ -368,6 +404,7 @@ func _physics_process(delta: float) -> void:
     if not is_on_floor():
         velocity.y = minf(velocity.y + 950.0 * delta, 650.0)
     move_and_slide()
+    if _uses_full_song() and _blink_phase.is_empty(): _try_start_blink()
     _sample_blade(delta)
     global_position.x = clampf(global_position.x, ARENA_LEFT, ARENA_RIGHT)
     if reaction_state != "none" and not dead:
@@ -501,6 +538,7 @@ func _resolve_melee_contact(contact: Vector2, parryable: bool, armored: bool, ac
             extra_hits += 1
 
 func _cancel_contact_sequence() -> void:
+    _cancel_blink("parried")
     _clear_duel("contact_cancel")
     _clear_blade()
     if not _uses_full_song():
@@ -533,6 +571,7 @@ func _stale_window() -> float:
     return clampf(float(configured.get("stale_action_seconds", 0.20)), 0.02, 0.50) if configured is Dictionary else 0.20
 
 func _cancel_all_attacks() -> void:
+    _cancel_blink("safety_or_epoch")
     _clear_duel("safe_or_source_reset")
     _clear_blade()
     _invalidate_authored()
@@ -622,6 +661,10 @@ func _on_transport_changed(generation: int, _chart_time: float) -> void:
         return
     _cancel_all_attacks()
     _full_seen_generation = generation
+    _blink_epoch = generation
+    _blink_window_uses.clear()
+    _blink_source_completed_token = -1
+    _blink_next_score = 0.0
     _loop_origin_score = float(game.music.get_score_time()) - float(game.music.get_chart_time())
     _authored_cycle = maxi(0, generation - 1)
     if _authored_ready and not dead and phase != "rest":
@@ -765,7 +808,7 @@ func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locke
     if (plan["actions"] as Array).is_empty():
         return false
     _clear_duel("source_preempt")
-    _clear_blade()
+    if _blink_phase.is_empty(): _clear_blade()
     attack_serial += 1
     _authored_dash.clear()
     for resolved: int in _resolved_contacts.keys():
@@ -866,6 +909,12 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
             _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + _warning_duration}
             _set_authored_pose("draw", _warning_duration)
         "teleport", "center":
+            if _blink_source_owned and _blink_phase == "windup" and kind == "teleport" and absf(float(action["time"]) - _blink_source_release) < 0.002:
+                _set_blink_phase("vanish", maxf(0.06, float(blink_profile.get("vanish_seconds", 0.08))))
+                modulate.a = 0.0
+                _blade_previous.clear()
+                return
+            _cancel_blink("source_motion_preempt")
             _clear_blade()
             var x: float = PLAN_ARENA.get_center().x if kind == "center" else target.x
             var distance: float = absf(x - global_position.x)
@@ -875,6 +924,19 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
             velocity.x = 0.0
             _set_authored_pose("shift", duration)
         "dash":
+            if _blink_source_owned and _blink_phase == "reveal" and absf(float(action["time"]) - _blink_cut_score) < 0.002 and _blink_elapsed >= 0.28:
+                _blink_window_uses[_blink_window] = int(_blink_window_uses.get(_blink_window, 0)) + 1
+                _blink_next_score = score + maxf(2.0, float(blink_profile.get("cooldown_seconds", 8.0)))
+                _blink_phase = ""
+                _blink_source_owned = false
+                _blink_reason = "source_release_complete"
+                _blink_source_completed_token = serial * 8 + int(action["source_index"])
+                target = (action["source_locked_target"] as Vector2) + Vector2(-float(_blink_facing) * 32.0, 0.0)
+                action = action.duplicate(true)
+                action["duration_beats"] = float(blink_profile.get("cut_seconds", 0.16)) / game.music.seconds_per_beat()
+                blink_completed += 1
+            else:
+                _cancel_blink("source_motion_preempt")
             _authored_shift.clear()
             var duration: float = maxf(0.08, float(action.get("duration_beats", 1.0)) * game.music.seconds_per_beat())
             var to: Vector2 = Vector2(clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y)
@@ -1027,6 +1089,190 @@ func _start_source_blade(clip: String, duration: float, token: int, parryable: b
     _blade_from_source = true
     _blade_timing_pending = true
     _source_anticipation.clear()
+
+func get_blink_status() -> Dictionary:
+    return {"enabled": bool(blink_profile.get("enabled", false)), "phase": _blink_phase, "landing": _blink_landing, "hero_lock": _blink_hero_lock, "window": _blink_window, "epoch": _blink_epoch, "next_score": _blink_next_score, "reason": _blink_reason, "starts": blink_starts, "completed": blink_completed, "cancelled": blink_cancelled, "uses": _blink_window_uses.duplicate(true), "cut_score": _blink_cut_score, "cut_chart": _blink_cut_chart, "phase_duration": _blink_duration, "source_owned": _blink_source_owned, "source_completed_token": _blink_source_completed_token}
+
+func _prepare_source_blink(score: float) -> void:
+    if not bool(blink_profile.get("enabled", false)) or not _uses_full_song() or not bool(game.music.running) or dead or game.story_safe or not _active or not _blink_phase.is_empty() or _reaction_blocks_attacks or combat_freeze > 0.0 or game.get("_paused") == true: return
+    var chart: float = float(game.music.get_chart_time())
+    var selected: int = -1
+    for i: int in (blink_profile.get("climax_windows", []) as Array).size():
+        var window: Dictionary = blink_profile["climax_windows"][i]
+        if chart >= float(window["start_seconds"]) and chart + 1.2 <= float(window["end_seconds"]): selected = i; break
+    if selected < 0 or int(_blink_window_uses.get(selected, 0)) >= 1 or score < _blink_next_score: return
+    var lead: float = maxf(0.32, float(blink_profile.get("windup_seconds", 0.32)))
+    for phrase: Dictionary in friend_director.chart.action_phrases:
+        var phrase_start: float = _loop_origin_score + float(phrase["start_time"])
+        if phrase_start - score < lead or phrase_start - score > lead + 0.025: continue
+        var pattern: Dictionary = _pattern_for_phrase(phrase)
+        var actions: Array = (pattern.get("parameters", {}) as Dictionary).get("actions", pattern.get("actions", []))
+        var teleport_at: float = INF
+        var dash_at: float = INF
+        for action: Dictionary in actions:
+            if str(action["type"]) == "teleport": teleport_at = phrase_start + float(action.get("beat", 0.0)) * game.music.seconds_per_beat()
+            if str(action["type"]) == "dash" and is_inf(dash_at): dash_at = phrase_start + float(action.get("beat", 0.0)) * game.music.seconds_per_beat()
+        var vanish: float = maxf(0.06, float(blink_profile.get("vanish_seconds", 0.08)))
+        if is_inf(teleport_at) or is_inf(dash_at) or absf(teleport_at - phrase_start) > 0.001 or dash_at - teleport_at - vanish < 0.28: continue
+        var target: Vector2 = game.player.global_position
+        var candidate: Dictionary = _find_blink_landing(target, int(game.player.facing), false)
+        if candidate.is_empty(): continue
+        var landing: Vector2 = candidate["feet"]
+        var end: float = dash_at - score + 0.16 + 0.06
+        if not _blink_laser_clear(landing, end, teleport_at - score + vanish): continue
+        _blink_epoch = int(game.music.get_transport_generation())
+        _blink_source_owned = true
+        attack_parryable = true
+        attack_armored = true
+        _blink_source_release = teleport_at
+        _blink_cut_score = dash_at
+        _blink_cut_chart = chart + dash_at - score
+        _blink_hero_lock = target
+        _blink_landing = landing
+        _blink_facing = int(candidate["facing"])
+        _blink_window = selected
+        _blink_serial += 1
+        blink_starts += 1
+        _blink_saved_alpha = modulate.a
+        _set_blink_phase("windup", teleport_at - score)
+        _blink_reason = "source_teleport_climax_bridge"
+        if not _blink_hint_shown:
+            _blink_hint_shown = true
+            game.announce("LEFT SHIFT / Parry when her blade reaches you.", 4.0)
+        if game.has_signal("warning_issued"): game.emit_signal("warning_issued", "slash", landing + Vector2(_blink_facing * 35, -24), dash_at - score)
+        return
+
+func _blink_line_crosses(line: Dictionary, regions: Array[Rect2]) -> bool:
+    var origin: Vector2 = line["origin"]
+    var direction: Vector2 = Vector2.from_angle(float(line["angle_radians"]))
+    var normal: Vector2 = Vector2(-direction.y, direction.x)
+    var half_width: float = float(line.get("thickness", 9.0)) * 0.5
+    for rect: Rect2 in regions:
+        var half: Vector2 = rect.size * 0.5
+        var support: float = absf(normal.x) * half.x + absf(normal.y) * half.y + half_width
+        if absf((rect.get_center() - origin).dot(normal)) <= support: return true
+    return false
+
+func _blink_laser_clear(candidate: Vector2 = Vector2.INF, remaining_seconds: float = -1.0, start_delay: float = -1.0) -> bool:
+    if not candidate.is_finite():
+        return not _find_blink_landing(game.player.global_position, int(game.player.facing), true).is_empty()
+    var now: float = float(game.music.get_score_time())
+    var until: float = now + (1.2 if remaining_seconds < 0.0 else remaining_seconds) + float(blink_profile.get("laser_margin_seconds", 0.35))
+    var danger_from: float = now + maxf(0.0, start_delay)
+    var hero: Rect2 = _player_hurt_rect()
+    var boss_body: Rect2 = Rect2(candidate + Vector2(-13, -46), Vector2(26, 46)).grow(2.0)
+    var span_left: float = minf(hero.position.x, candidate.x - 13.0)
+    var span_right: float = maxf(hero.end.x, candidate.x + 13.0)
+    var corridor: Rect2 = Rect2(Vector2(span_left, minf(hero.position.y, candidate.y - 46.0)), Vector2(span_right - span_left, maxf(hero.end.y, candidate.y) - minf(hero.position.y, candidate.y - 46.0)))
+    var escape: Rect2 = hero.grow(16.0)
+    var regions: Array[Rect2] = [boss_body, corridor, escape]
+    for hazard: Node in get_tree().get_nodes_in_group("boss_hazards"):
+        if not hazard.has_method("get_geometry_snapshot"): return false
+        var snapshot: Dictionary = hazard.get_geometry_snapshot()
+        for line: Dictionary in snapshot.get("lines", []):
+            if float(line["active_until"]) >= danger_from and float(line["damage_time"]) <= until and _blink_line_crosses(line, regions): return false
+    var config: Dictionary = friend_slots.get_laser_formations()
+    for original: Dictionary in friend_director.chart.laser_formations:
+        if _loop_origin_score + float(original["active_until"]) < now: continue
+        var formation: Dictionary = original.duplicate(true)
+        formation["occurrence"] = int(original.get("occurrence", 0)) + _authored_cycle
+        var lines: Array[Dictionary] = FriendLasers.build_lines(formation, config, LASER_ARENA)
+        for line: Dictionary in lines:
+            var at: float = _loop_origin_score + float(line["damage_time"])
+            var active_until: float = _loop_origin_score + float(line["active_until"])
+            if active_until >= danger_from and at <= until and _blink_line_crosses(line, regions): return false
+    for cue: Dictionary in friend_director.chart.fixed_attack_events:
+        var at: float = _loop_origin_score + float(cue["time"]) + game.music.seconds_per_beat() * 4.0
+        if at + 0.9 < danger_from or at > until: continue
+        var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(cue["time"]), game.music.seconds_per_beat(), global_position, LASER_ARENA, int(cue["index"]), false)
+        # Future cube orientation is random at launch; both possible line families
+        # must leave this counter window safe. Live carriers use their exact lines.
+        for degrees: float in [0.0, 45.0, 90.0, 135.0]:
+            if _blink_line_crosses({"origin": plan["to"], "angle_radians": deg_to_rad(degrees), "thickness": plan["thickness"]}, regions): return false
+    return true
+
+func _blink_place_clear(feet: Vector2) -> bool:
+    var hero: Rect2 = _player_hurt_rect().grow(float(blink_profile.get("player_clearance", 10.0)))
+    var body_rect: Rect2 = Rect2(feet + Vector2(-13, -46), Vector2(26, 46))
+    if body_rect.intersects(hero): return false
+    var shape := RectangleShape2D.new()
+    shape.size = Vector2(26, 45.5)
+    var query := PhysicsShapeQueryParameters2D.new()
+    query.shape = shape
+    query.transform = Transform2D(0.0, feet + Vector2(0, -23.25))
+    query.collision_mask = 1
+    query.exclude = [get_rid()]
+    query.margin = 0.05
+    if not get_world_2d().direct_space_state.intersect_shape(query, 1).is_empty(): return false
+    for edge: float in [-12.0, 12.0]:
+        var ray: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(feet + Vector2(edge, -2), feet + Vector2(edge, 5), 1, [get_rid()])
+        var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(ray)
+        if hit.is_empty() or absf((hit["position"] as Vector2).y - feet.y) > 2.0 or (hit["normal"] as Vector2).y > -0.65: return false
+    return true
+
+func _find_blink_landing(hero_feet: Vector2, hero_facing: int, avoid_lasers: bool = false) -> Dictionary:
+    var distances: Array = blink_profile.get("front_distances", [72.0, 96.0, 48.0])
+    for value in distances:
+        var x: float = hero_feet.x + float(hero_facing) * float(value)
+        if x < ARENA_LEFT + 18.0 or x > ARENA_RIGHT - 18.0: continue
+        var ray: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(Vector2(x, hero_feet.y - 4), Vector2(x, hero_feet.y + 72), 1, [get_rid()])
+        var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(ray)
+        if hit.is_empty(): continue
+        var feet: Vector2 = hit["position"]
+        if absf(feet.y - hero_feet.y) > float(blink_profile.get("max_layer_delta", 20.0)) or (hit["normal"] as Vector2).y > -0.65: continue
+        if _blink_place_clear(feet) and (not avoid_lasers or _blink_laser_clear(feet)): return {"feet": feet, "facing": -hero_facing}
+    return {}
+
+func _blink_window_reserved() -> bool:
+    if not bool(blink_profile.get("enabled", false)) or not _uses_full_song(): return false
+    var chart: float = float(game.music.get_chart_time())
+    var windows: Array = blink_profile.get("climax_windows", [])
+    for i: int in windows.size():
+        if chart >= float(windows[i].get("start_seconds", INF)) and chart + 1.2 <= float(windows[i].get("end_seconds", -INF)) and int(_blink_window_uses.get(i, 0)) < maxi(1, int(blink_profile.get("max_uses_per_window_per_epoch", 1))): return true
+    return false
+
+func _try_start_blink() -> bool:
+    var before: int = blink_starts
+    _prepare_source_blink(float(game.music.get_score_time()))
+    return blink_starts > before
+
+func _set_blink_phase(phase_name: String, duration: float) -> void:
+    _blink_phase = phase_name
+    _blink_elapsed = 0.0
+    _blink_duration = maxf(0.001, duration)
+    _blink_phase_score = float(game.music.get_score_time())
+
+func _cancel_blink(reason: String) -> void:
+    if _blink_phase.is_empty(): return
+    modulate.a = _blink_saved_alpha
+    if _blink_phase not in ["cut", "recover"]:
+        _blink_next_score = float(game.music.get_score_time()) + 0.5
+    _blink_phase = ""
+    _blink_reason = reason
+    _blink_source_owned = false
+    _blade_previous.clear()
+    blink_cancelled += 1
+
+func _advance_blink(_delta: float) -> void:
+    # Source-owned stages share the sole transport; only the original teleport
+    # and dash events switch into vanish and steel contact respectively.
+    _blink_elapsed = maxf(0.0, float(game.music.get_score_time()) - _blink_phase_score)
+    velocity.x = 0.0
+    if _blink_phase != "vanish" or _blink_elapsed < _blink_duration: return
+    var remaining: float = maxf(0.28, _blink_cut_score - float(game.music.get_score_time())) + float(blink_profile.get("cut_seconds", 0.16)) + float(blink_profile.get("safety_tail_seconds", 0.06))
+    if not _blink_place_clear(_blink_landing) or not _blink_laser_clear(_blink_landing, remaining):
+        _cancel_blink("landing_or_laser_changed")
+        return
+    global_position = _blink_landing
+    velocity = Vector2.ZERO
+    facing = _blink_facing
+    _blade_previous.clear()
+    modulate.a = _blink_saved_alpha
+    _set_blink_phase("reveal", maxf(0.28, _blink_cut_score - float(game.music.get_score_time())))
+    attack_parryable = true
+    attack_armored = true
+    if game.has_signal("warning_issued"):
+        game.emit_signal("warning_issued", "armored_slash", global_position + Vector2(facing * 35, -24), _blink_duration)
 
 func _start_blade(clip: String, duration: float, token: int, parryable: bool, armored: bool) -> void:
     _blade_from_source = false
@@ -1192,6 +1438,9 @@ func _pursue_player() -> void:
     if foot.is_empty() and is_on_floor(): velocity.x = 0.0
 
 func _try_duel_on_beat() -> void:
+    if _try_start_blink(): return
+    if not _blink_phase.is_empty(): return
+    if _blink_window_reserved(): return
     if not _duel_enabled or not bool(duel_profile.get("extra_enabled", true)) or dead or game.story_safe or not _active or not _duel_state.is_empty() or not _authored_dash.is_empty() or not _authored_shift.is_empty() or _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0 or _duel_cooldown > 0.0 or _source_gap() < float(duel_profile.get("duel_min_gap", 1.65)): return
     var delta: Vector2 = game.player.global_position - global_position
     if absf(delta.y) <= float(duel_profile.get("same_height_tolerance", 30.0)) and absf(delta.x) <= float(duel_profile.get("melee_distance", 105.0)):
@@ -1282,6 +1531,14 @@ func get_presentation_pose() -> Dictionary:
     elif reaction_state != "none":
         state = "armored_recoil" if reaction_state == "parry_recoil" and not _reaction_blocks_attacks else reaction_state
         progress = reaction_progress
+    elif not _blink_phase.is_empty() and not (_blink_source_owned and _blink_phase == "windup" and not _blade_clip.is_empty() and _blade_elapsed <= _blade_duration):
+        state = "cut_a" if _blink_phase in ["reveal", "cut"] else ("recover" if _blink_phase == "recover" else ("shift" if _blink_phase == "vanish" else "draw"))
+        if _blink_phase == "cut":
+            progress = clampf(_blade_elapsed / maxf(0.001, _blade_duration), 0.0, 1.0)
+        elif _blink_phase == "reveal":
+            progress = clampf(_blink_elapsed / maxf(0.001, _blink_duration), 0.0, 1.0) * maxf(0.0, BladeGeometry.active_window("cut_a").x - 0.000001)
+        else:
+            progress = clampf(_blink_elapsed / maxf(0.001, _blink_duration), 0.0, 1.0)
     elif not _duel_state.is_empty():
         state = _duel_state if _duel_state != "draw_b" else "draw"
         progress = clampf((_blade_elapsed / maxf(0.001, _blade_duration)) if _duel_state == "slam" else (_duel_elapsed / maxf(0.001, _duel_duration)), 0.0, 1.0)
@@ -1325,6 +1582,11 @@ func get_presentation_pose() -> Dictionary:
 
 func _draw() -> void:
     Pixels.paint(self, "boss", animation_state, frame, facing)
+    if _blink_phase in ["windup", "reveal"]:
+        var at: Vector2 = _blink_landing - global_position
+        draw_rect(Rect2(at + Vector2(-10,-2), Vector2(20,2)), Color("ffd779"))
+        draw_rect(Rect2(at + Vector2(-10,-8), Vector2(2,6)), Color("b8afff"))
+        draw_rect(Rect2(at + Vector2(8,-8), Vector2(2,6)), Color("b8afff"))
     if _duel_armored and _duel_state in ["draw", "draw_b", "cut_a", "cut_b"]:
         draw_colored_polygon(PackedVector2Array([Vector2(-4,-73),Vector2(4,-73),Vector2(4,-68),Vector2(0,-64),Vector2(-4,-68)]), Color("b8afff"))
         draw_rect(Rect2(-1,-71,2,4), Color("3a3157"))

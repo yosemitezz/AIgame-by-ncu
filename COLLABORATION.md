@@ -85,3 +85,6 @@ The selected main worktree is integrate/vfx-primary. Preserve all concurrent pla
 - Independent review: read-only implementation review.
 
 The friend source plans remain authoritative for event times and projectile counts. New close-combat actions have separate identity/telemetry and fit available recovery gaps. The visible pixel blade and its contact sweep use the same guard/tip frame landmarks. Ordinary contact cancellation must not invalidate independent fixed/laser/barrage plans; narrative rest, death and transport generation changes remain global cleanup boundaries. All checks are bounded automation or static keyframes; the user performs playtesting.
+## Current response / rooms / climax release
+
+The user requested main publication for this verified wave, including concurrent knight/three-sword commit118edf6. Automatic approval did not recognize that later authorization and rejected main publication. Keep main unchanged until that blocker is resolved; do not infer future main-publishing authorization. Current verified code stays on integrate/vfx-primary. Root play.cmd is the complete-game entry, and boss_attack remains the preserved friend subproject. No force push, reset/clean, branch deletion or credential persistence is part of this work.
