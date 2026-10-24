@@ -33,3 +33,5 @@ The crescent geometry and start/update/end blade-trail lifecycle were adapted fr
 ## Evidence and limits
 
 Local ignored evidence is generated to `artifacts/feel-*`: combo/motion/VFX contact sheets, native-pose before/after comparison, asset hashes/palette/unique-frame report, and Godot parse log. These are fixed pose inspections rather than gameplay. Parent integration verifies runtime capture, local hit-stop and timing logic. Actual responsiveness and difficulty remain for the user's own play test.
+
+Slash and hit sheets (slash_1..3.png, hit.png) are angular: faceted blade crescents, a crystal lance for the finisher and a hexagram impact, written by 	ools/generate_angular_fx.py. Run it after 	ools/generate_combat_frames.py, which writes the older rounded versions. Live effects in fx/fx_layer.gd use hexagon rings plus hexagram and crystal shapes.

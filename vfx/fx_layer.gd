@@ -698,7 +698,7 @@ func _arc(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	var ys: float = -1.0 if bool(s["flip"]) else 1.0
 	var head: float = clampf(t / 0.4, 0.0, 1.0) * 1.2
 	var tail: float = clampf((t - 0.25) / 0.75, 0.0, 1.0) * 1.2
-	var n: int = 9   # few facets: the crescent reads as cut crystal, not as a smooth curve
+	var n: int = 6   # few facets: the crescent reads as cut crystal, not as a smooth curve
 	var outer: Array[Vector2] = []
 	var inner: Array[Vector2] = []
 	var cols_o: Array[Color] = []
