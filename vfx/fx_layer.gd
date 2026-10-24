@@ -59,6 +59,7 @@ class Ghost extends Node2D:
 	var impact_flash: float = 0.0
 	var source_id: int = 0
 	var airborne: bool = false
+	var dash_direction: Vector2 = Vector2.ZERO
 	var weapon: String = "light"
 	var boss_pose_snapshot: Dictionary = {}
 
@@ -379,6 +380,8 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 	g.max_life = g.life
 	g.source_id = id
 	g.airborne = source.has_method("is_on_floor") and not bool(source.call("is_on_floor"))
+	var captured_direction: Variant = source.get("dash_direction")
+	g.dash_direction = captured_direction if captured_direction is Vector2 and captured_direction.is_finite() else Vector2.ZERO
 	if kind == "boss" and _katana_visual != null:
 		var snapshot: Variant = _katana_visual.call("describe", source, g.state, g.frame_index)
 		if snapshot is Dictionary:

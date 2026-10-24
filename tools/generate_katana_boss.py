@@ -1,7 +1,7 @@
 """Original adult katana swordswoman: editable native-pixel seed candidates.
 All points are authored on a 128x128 integer grid. No source images, 3D renders,
 commercial character assets, resampled body parts or API credentials are used.
-A is approved; full poses follow the pure PR1 state/progress contract, never a wall clock.
+Current A is an original tall adult red-haired duelist. All poses follow the actual Boss state/progress contract, never a wall clock.
 """
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -10,13 +10,13 @@ ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'presentation/katana_frames'
 SIZE=128
 ANCHOR=(48,116)
-P={'ink':'#111420','deep':'#202535','hair_dark':'#34394e','hair_mid':'#7c8797',
-   'silver':'#bdc8cf','hair_light':'#e1e3d4','armor':'#293341','armor_light':'#536374',
+P={'ink':'#141522','deep':'#252b3d','hair_dark':'#341521','hair_mid':'#6e2330',
+   'silver':'#ae3d3e','hair_light':'#e66c4e','hair_hot':'#ffc382','armor':'#3a4559','armor_light':'#7a8997',
    'gold_dark':'#765644','gold':'#b89159','gold_light':'#e3c286','cloth_dark':'#352331',
    'wine':'#713d50','wine_light':'#ad6372','skin_shadow':'#b58b83','skin':'#e4bd9d',
    'white':'#f6efdb','steel':'#9eb7c7','edge':'#dcebf0','eye':'#a3e3df'}
-# Main body height 65-68 px, face/head about 10-11 px: approximately 6.5 heads. Adult proportions,
-# covered torso/legs and restrained 1px eyes keep the face from reading as a child.
+# Adult facial planes, 82 px standing silhouette and reconstructed limb proportions.
+# Body joints change independently; feet and every combat hand/blade landmark stay exact.
 POSES={
  'A':{'name':'INK-SILVER / TWIN HEM','head':(48,55),'shoulder':(47,69),'hip':(47,86),
       'far_knee':(39,100),'far_foot':(36,115),'near_knee':(56,101),'near_foot':(60,115),
@@ -44,10 +44,19 @@ def seed(candidate, pose=None, state="idle", frame=0):
     hx,hy=pose['head'];sx,sy=pose['shoulder'];px,py=pose['hip'];hand=pose['hand'];support=pose['support'];wind=pose.get('hair_swing',0)
     # Separate hair masses with a tied silhouette; each candidate changes the outline.
     if candidate=='A':
-        poly([(hx-8,hy-8),(hx-12,hy-5),(hx-13,hy+5),(hx-18-wind,hy+14),(hx-17-wind,hy+25),(hx-10-wind*.5,hy+19),(hx-8,hy+9),(hx-4,hy-2)],'hair_dark')
-        poly([(hx-10,hy-5),(hx-10,hy+7),(hx-15-wind,hy+16),(hx-15-wind,hy+21),(hx-11-wind*.5,hy+16),(hx-7,hy+4)],'silver')
-        line([(hx-11,hy+3),(hx-15-wind,hy+14)],'hair_light')
-        rect((hx-12,hy-2,hx-8,hy),'gold')
+        # Four red masses and sparse copper glints read against the cold dungeon.
+        root_x=hx-6;root_y=hy-3;trail=wind*.65
+        tail_tip=(max(4,hx-19-trail),min(113,hy+27+abs(wind)*.18))
+        poly([(root_x-2,root_y-3),(root_x-6,root_y-1),(hx-11-trail*.3,hy+7),
+              (tail_tip[0]-2,tail_tip[1]-7),tail_tip,(tail_tip[0]+5,tail_tip[1]-4),
+              (hx-9-trail*.25,hy+9),(root_x+1,root_y+1)],'hair_dark')
+        poly([(root_x-3,root_y-1),(hx-8-trail*.2,hy+7),(tail_tip[0]+1,tail_tip[1]-8),
+              (tail_tip[0]+1,tail_tip[1]-3),(tail_tip[0]+4,tail_tip[1]-7),(hx-6,hy+5)],'hair_mid')
+        poly([(root_x-4,root_y),(hx-9-trail*.2,hy+8),(tail_tip[0],tail_tip[1]-7),
+              (tail_tip[0]+2,tail_tip[1]-6),(hx-7,hy+6)],'silver')
+        line([(root_x-3,root_y),(hx-8-trail*.2,hy+8),(tail_tip[0]+1,tail_tip[1]-8)],'hair_light')
+        rect((root_x-4,root_y-1,root_x-1,root_y+1),'gold_dark')
+        rect((root_x-3,root_y-1,root_x-2,root_y-1),'gold_light')
     elif candidate=='B':
         poly([(hx-6,hy-8),(hx-10,hy-12),(hx-8,hy-15),(hx-3,hy-15),(hx,hy-11),(hx-1,hy-7)],'hair_dark')
         line([(hx-8,hy-13),(hx-4,hy-13)],'silver');rect((hx-7,hy-9,hx-2,hy-8),'gold')
@@ -57,7 +66,7 @@ def seed(candidate, pose=None, state="idle", frame=0):
         line([(hx-10,hy+7),(hx-10,hy+17),(hx-16,hy+29)],'silver')
         rect((hx-11,hy+6,hx-7,hy+7),'wine_light')
     # Far leg is opaque cloth; fitted greaves and steel-toed boots define the stance.
-    limb((px-5,py),pose['far_knee'],6,'deep');limb(pose['far_knee'],pose['far_foot'],5,'armor')
+    limb((px-4,py),pose['far_knee'],5,'deep');limb(pose['far_knee'],pose['far_foot'],4,'armor')
     fx,fy=pose['far_foot'];poly([(fx-3,fy-3),(fx+2,fy-4),(fx+5,fy),(fx+5,fy+1),(fx-4,fy+1)],'deep');line([(fx-2,fy),(fx+4,fy)],'gold_dark')
     # Two tailored long coat tails with a central negative space. No skirt fan/cone.
     if candidate=='A':
@@ -75,7 +84,7 @@ def seed(candidate, pose=None, state="idle", frame=0):
         poly([(px-8,py-2),(px-13,py+7),(px-21,py+26),(px-17,py+28),(px-8,py+19),(px-2,py+7)],'wine')
         poly([(px+2,py),(px+10,py),(px+20,py+24),(px+21,py+28),(px+13,py+25),(px+6,py+13)],'wine')
         line([(px-12,py+7),(px-18,py+26)],'gold');line([(px+10,py+5),(px+19,py+27)],'wine_light')
-    limb((px+5,py),pose['near_knee'],7,'deep');limb(pose['near_knee'],pose['near_foot'],6,'armor')
+    limb((px+4,py),pose['near_knee'],6,'deep');limb(pose['near_knee'],pose['near_foot'],5,'armor')
     nx,ny=pose['near_knee'];line([(nx+1,ny+2),(pose['near_foot'][0]+1,pose['near_foot'][1]-3)],'armor_light')
     fx,fy=pose['near_foot'];poly([(fx-3,fy-4),(fx+2,fy-3),(fx+6,fy),(fx+6,fy+1),(fx-3,fy+1)],'armor');line([(fx-1,fy-1),(fx+4,fy)],'steel')
     # Duel cuts rebuild the shoulder/waist plane into a low narrow side stance.
@@ -86,25 +95,32 @@ def seed(candidate, pose=None, state="idle", frame=0):
         line([(sx-2,sy+1),(px-2,py-4)],'gold' if back else 'armor_light')
         poly([(sx-9 if back else sx+2,sy-3),(sx-4 if back else sx+7,sy-4),(sx+1 if back else sx+10,sy+1),(sx-3 if back else sx+5,sy+5),(sx-9 if back else sx+1,sy+3)],'armor')
         line([(sx-5 if back else sx+4,sy-2),(sx-1 if back else sx+7,sy)],'gold')
-        rect((px-7,py-3,px+6,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
+        rect((px-6,py-3,px+5,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
     else:
         poly([(sx-7,sy-3),(sx+5,sy-3),(sx+9,sy+5),(px+5,py+2),(px-6,py+2),(sx-9,sy+5)],'deep')
         poly([(sx-4,sy),(sx+3,sy-1),(sx+5,sy+7),(px+1,py-2),(px-4,py-3),(sx-5,sy+7)],'armor')
         line([(sx-3,sy+1),(sx-2,sy+8),(px-1,py-4)],'armor_light')
         line([(sx+3,sy+2),(sx+5,sy+7)],'gold');rect((sx+1,sy+3,sx+1,sy+3),'gold_light')
-        rect((px-7,py-3,px+6,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
+        rect((px-6,py-3,px+5,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
         poly([(sx-7,sy-4),(sx-2,sy-5),(sx+1,sy-1),(sx-5,sy+5),(sx-11,sy+4)],'armor')
         line([(sx-8,sy-2),(sx-4,sy-3)],'gold')
     if candidate=='B':
         poly([(sx-8,sy-5),(sx-14,sy-1),(sx-21,sy+12),(sx-20,sy+22),(sx-11,sy+15),(sx-7,sy+4)],'cloth_dark')
         line([(sx-13,sy+2),(sx-18,sy+14)],'gold')
-    # Neck, adult face profile and long bangs: one narrow eye, no large anime eye clusters.
-    rect((hx-1,hy+5,hx+2,sy-3),'skin_shadow')
-    poly([(hx-5,hy-4),(hx+2,hy-5),(hx+6,hy-2),(hx+7,hy+1),(hx+5,hy+2),(hx+5,hy+3),(hx+1,hy+5),(hx-3,hy+4),(hx-5,hy+1)],'skin')
-    poly([(hx-7,hy-4),(hx-4,hy-6),(hx+2,hy-6),(hx+6,hy-4),(hx+6,hy-2),(hx+2,hy-3),(hx,hy),(hx-2,hy-2),(hx-3,hy+3),(hx-6,hy+3)],'hair_dark')
-    poly([(hx-5,hy-4),(hx-3,hy-5),(hx+2,hy-5),(hx+4,hy-4),(hx+1,hy-4),(hx-1,hy-1),(hx-2,hy-3),(hx-4,hy+1)],'silver')
-    line([(hx-3,hy-5),(hx+1,hy-5)],'hair_light');rect((hx+3,hy,hx+5,hy),'deep');rect((hx+4,hy,hx+4,hy),'eye');rect((hx+3,hy+3,hx+4,hy+3),'skin_shadow')
-    rect((hx-4,hy+3,hx-3,hy+4),'skin_shadow')
+    # A narrow adult face: visible bridge, cheek, chin and one-pixel jade eye.
+    rect((hx-1,hy+4,hx+1,sy-3),'skin_shadow')
+    poly([(hx-4,hy-4),(hx+1,hy-5),(hx+4,hy-3),(hx+5,hy-1),(hx+6,hy),
+          (hx+5,hy+1),(hx+4,hy+1),(hx+4,hy+3),(hx+1,hy+5),(hx-2,hy+4),(hx-4,hy+1)],'skin')
+    line([(hx-3,hy+1),(hx-2,hy+3),(hx+1,hy+4)],'skin_shadow')
+    poly([(hx-6,hy-4),(hx-3,hy-7),(hx+1,hy-7),(hx+5,hy-4),(hx+5,hy-2),
+          (hx+2,hy-3),(hx,hy-1),(hx-1,hy-3),(hx-2,hy),(hx-3,hy+3),(hx-5,hy+2)],'hair_dark')
+    poly([(hx-5,hy-4),(hx-3,hy-6),(hx+1,hy-6),(hx+3,hy-4),(hx+1,hy-4),
+          (hx-1,hy-1),(hx-2,hy-3),(hx-4,hy+1)],'silver')
+    line([(hx-3,hy-6),(hx+1,hy-6),(hx+3,hy-4)],'hair_light')
+    rect((hx-2,hy-6,hx-1,hy-6),'hair_hot')
+    line([(hx+1,hy-1),(hx+4,hy-1)],'hair_dark')
+    rect((hx+2,hy,hx+4,hy),'deep');rect((hx+3,hy,hx+3,hy),'eye')
+    rect((hx+3,hy+3,hx+3,hy+3),'skin_shadow')
     # A plain collar and one original diamond fastener; no imported insignia or ear ornament.
     poly([(sx-4,sy-5),(sx,sy-6),(sx+4,sy-3),(sx+1,sy),(sx-4,sy-1)],'wine')
     rect((sx+1,sy-3,sx+1,sy-2),'gold_light')
@@ -113,9 +129,9 @@ def seed(candidate, pose=None, state="idle", frame=0):
     poly([(px-3,py+2),(px-5,py),(px-30,sheath_y-2),(px-28,sheath_y+1)],'deep')
     line([(px-6,py+4),(px-27,sheath_y-1)],'gold_dark');rect((px-29,sheath_y-1,px-27,sheath_y+1),'gold')
     # Two covered arms brace the hilt; fingers are small and the sleeve is fully closed.
-    limb((sx-4,sy+2),pose['far_elbow'],5,'deep');limb(pose['far_elbow'],support,5,'armor')
+    limb((sx-4,sy+2),pose['far_elbow'],4,'deep');limb(pose['far_elbow'],support,4,'armor')
     rect((support[0]-2,support[1]-1,support[0]+2,support[1]+2),'skin_shadow')
-    limb((sx+6,sy),pose['near_elbow'],6,'armor');limb(pose['near_elbow'],hand,5,'deep')
+    limb((sx+6,sy),pose['near_elbow'],5,'armor');limb(pose['near_elbow'],hand,4,'deep')
     ex,ey=pose['near_elbow'];rect((ex-1,ey-1,ex+1,ey+1),'gold_dark')
     # Slightly curved, genuinely thin katana. Its source hand/guard/tip are explicit landmarks.
     gx,gy=pose['guard'];tx,ty=pose['weapon_tip'];dx=tx-gx;dy=ty-gy
@@ -139,32 +155,38 @@ def seed(candidate, pose=None, state="idle", frame=0):
 
 def local(point):return [point[0]-ANCHOR[0],point[1]-ANCHOR[1]]
 def make_seeds():
-    OUT.mkdir(parents=True,exist_ok=True);manifest={'version':1,'status':'SEED_ONLY_WAITING_FOR_VISUAL_AND_PR1_TIMING_REVIEW','canvas':[128,128],'anchor':list(ANCHOR),'body_height_px':[65,68],'native_filter':'nearest','license':'MIT','source':'Original integer-grid drawing and editable pose dictionaries in tools/generate_katana_boss.py. No external raster or 3D source.','selected_candidate':None,'candidates':{},'pending_states':['idle','approach','shift','draw','cut_a','cut_b','retreat','cast','parry_recoil','armored_recoil','guard_break','guard_recover','hurt','dead'],'pending_timing':'PR1 get_presentation_pose returns state/progress/strike/armored/contact_serial. Cut A/B frame zero must already extend to contact; never inherit old Boss timing.'}
-    board=Image.new('RGB',(3*272,740),'#101321');d=ImageDraw.Draw(board)
-    d.text((12,8),'ORIGINAL ADULT KATANA BOSS / 128px SOURCE / SEEDS ONLY',fill=P['gold_light'])
-    report={}
-    for index,(candidate,pose) in enumerate(POSES.items()):
-        im=seed(candidate);im.save(OUT/f'seed_{candidate.lower()}.png')
-        alpha=im.getchannel('A');body_box=alpha.getbbox()
-        record={'file':f'seed_{candidate.lower()}.png','name':pose['name'],'state':'representative_ready','frame':0,'hit_window':False,'hand':local(pose['hand']),'support_hand':local(pose['support']),'guard':local(pose['guard']),'weapon_tip':local(pose['weapon_tip']),'guard_point':local(pose['guard_point']),'joints':{key:local(value) for key,value in pose.items() if isinstance(value,tuple)},'bbox':list(body_box)}
-        manifest['candidates'][candidate]=record
-        report[candidate]={'sha256':hashlib.sha256(im.tobytes()).hexdigest(),'opaque_colors':len({pixel[:3] for pixel in im.get_flattened_data() if pixel[3]}),'alpha_values':sorted(set(alpha.get_flattened_data())),'bbox':body_box,'hand_guard_tip_in_bounds':all(0<=x<128 and 0<=y<128 for x,y in [pose['hand'],pose['guard'],pose['weapon_tip']]),'forward_tip_distance_px':record['weapon_tip'][0],'main_body_height_px':ANCHOR[1]-(pose['head'][1]-6),'feet_anchor_preserved':body_box[3]==117}
-        x=index*272+8;d.text((x,30),candidate+'  '+pose['name'],fill=P['gold_light'])
-        scaled=im.resize((256,256),Image.Resampling.NEAREST);board.paste(scaled,(x,48),scaled)
-        white=Image.new('RGBA',im.size,'#dfe8de');white.putalpha(alpha);white=white.resize((256,256),Image.Resampling.NEAREST);board.paste(white,(x,310),white)
-        board.paste(im,(x+64,576),im)
-        d.text((x,716),'TOP: 2x COLOUR / MID: SILHOUETTE',fill='#a0adbc')
+    """Current A only. B/C remain archived original seed files, outside runtime selection."""
+    OUT.mkdir(parents=True,exist_ok=True)
+    pose=POSES['A'];im=seed('A');im.save(OUT/'seed_a.png')
+    manifest={'version':2,'status':'CURRENT_A_REDHAIR_NATIVE_PIXEL','canvas':[128,128],
+              'anchor':list(ANCHOR),'body_height_px':[80,84],'native_filter':'nearest',
+              'license':'MIT','source':'Original adult red-haired duelist; independent native-pixel joints and fabrics.',
+              'selected_candidate':'A','candidates':{'A':{'file':'seed_a.png','name':pose['name'],'state':'representative_ready',
+              'hand':local(pose['hand']),'support_hand':local(pose['support']),'guard':local(pose['guard']),
+              'weapon_tip':local(pose['weapon_tip']),'guard_point':local(pose['guard_point'])}},
+              'archived_candidates':{'B':{'file':'seed_b.png','status':'archived earlier silver seed; not runtime'},
+                                     'C':{'file':'seed_c.png','status':'archived earlier silver seed; not runtime'}}}
+    alpha=im.getchannel('A');report={'A':{'sha256':hashlib.sha256(im.tobytes()).hexdigest(),
+          'opaque_colors':len({p[:3] for p in im.get_flattened_data() if p[3]}),
+          'alpha_values':sorted(set(alpha.get_flattened_data())),'bbox':alpha.getbbox(),
+          'main_body_height_px':ANCHOR[1]-(pose['head'][1]-7),'feet_anchor_preserved':alpha.getbbox()[3]==117}}
+    board=Image.new('RGB',(816,440),'#101321');d=ImageDraw.Draw(board)
+    d.text((12,8),'CURRENT A: CRIMSON OATH / B,C: ARCHIVED SEEDS, NOT RUNTIME',fill=P['gold_light'])
+    for i,candidate in enumerate(['A','B','C']):
+        candidate_image=im if candidate=='A' else Image.open(OUT/f'seed_{candidate.lower()}.png').convert('RGBA')
+        enlarged=candidate_image.resize((256,256),Image.Resampling.NEAREST)
+        board.paste(enlarged,(i*272+8,46),enlarged)
+        d.text((i*272+8,28),'A CURRENT' if candidate=='A' else candidate+' ARCHIVED',fill=P['gold_light'])
+        board.paste(candidate_image,(i*272+72,306),candidate_image)
     board.save(OUT/'seed-candidates-contact.png')
-    (OUT/'seed-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
-    (OUT/'seed-report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-    print(json.dumps(report))
-
+    (OUT/'seed-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf8')
+    (OUT/'seed-report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf8')
 
 
 STATES=[('idle',4),('approach',6),('shift',4),('draw',4),('cut_a',4),('cut_b',4),('recover',4),('cast',4),('parry_recoil',4),('parry_recover',4),('armored_recoil',4),('guard_break',4),('guard_recover',4),('hurt',4),('dead',4),('retreat',4),('jump',4),('slam',4),('land',4)]
 
 def body(head=(48,55),shoulder=(47,69),hip=(47,86),far_knee=(39,100),far_foot=(36,115),near_knee=(56,101),near_foot=(60,115),hand=(64,91),support=(57,89),guard=(68,91),tip=(121,94),near_elbow=(58,80),far_elbow=(48,81),hair=0,hem=0,lift=0,side=0):
-    return dict(name='A / INK-SILVER TWIN HEM',head=head,shoulder=shoulder,hip=hip,far_knee=far_knee,far_foot=far_foot,near_knee=near_knee,near_foot=near_foot,hand=hand,support=support,guard=guard,weapon_tip=tip,guard_point=(guard[0]+1,guard[1]-1),near_elbow=near_elbow,far_elbow=far_elbow,hair_swing=hair,hem_swing=hem,hem_lift=lift,side_profile=side)
+    return dict(name='A / CRIMSON OATH TWIN HEM',head=head,shoulder=shoulder,hip=hip,far_knee=far_knee,far_foot=far_foot,near_knee=near_knee,near_foot=near_foot,hand=hand,support=support,guard=guard,weapon_tip=tip,guard_point=(guard[0]+1,guard[1]-1),near_elbow=near_elbow,far_elbow=far_elbow,hair_swing=hair,hem_swing=hem,hem_lift=lift,side_profile=side)
 
 # Keyed joint drawings. Changes are in anatomy, wrists, knee support and cloth, never image transforms.
 FAMILY={
@@ -266,38 +288,88 @@ FAMILY['land']=[
  body(head=(50,58),shoulder=(49,72),hip=(47,88),far_knee=(35,101),far_foot=(31,115),near_knee=(56,101),near_foot=(61,115),hand=(63,93),support=(56,91),guard=(67,93),tip=(120,103),near_elbow=(57,82),far_elbow=(46,83),hair=4,hem=5,lift=3),
  body(hand=(65,91),support=(58,89),guard=(69,91),tip=(121,94),near_elbow=(59,80),hair=1,hem=1)]
 
+def arm_elbow(start,end,old,upper=19.0,fore=18.0):
+    """Solve the new long sleeve around an immutable hand, picking the old elbow side."""
+    dx=end[0]-start[0];dy=end[1]-start[1];distance=max(.001,math.hypot(dx,dy))
+    if distance>=upper+fore-.1:
+        scale=distance/(upper+fore-.1);upper*=scale;fore*=scale
+    along=(upper*upper-fore*fore+distance*distance)/(2*distance)
+    height=math.sqrt(max(0,upper*upper-along*along))
+    unit=(dx/distance,dy/distance);base=(start[0]+unit[0]*along,start[1]+unit[1]*along)
+    options=[(base[0]-unit[1]*height,base[1]+unit[0]*height),
+             (base[0]+unit[1]*height,base[1]-unit[0]*height)]
+    return tuple(round(v) for v in min(options,key=lambda q:(q[0]-old[0])**2+(q[1]-old[1])**2))
+
+
+def tall_redhair_pose(original,state):
+    p=dict(original)
+    # Collapse blends preserve kneeling/prone support instead of stretching a fallen body upright.
+    stand=max(0,min(1,(100-original['head'][1])/45))
+    for key,dy in [('head',-13),('shoulder',-14),('hip',-5),('far_knee',-2),('near_knee',-2)]:
+        x,y=original[key];p[key]=(x,round(y+dy*stand))
+    sx,sy=p['shoulder']
+    p['near_elbow']=arm_elbow((sx+6,sy),p['hand'],original['near_elbow'])
+    p['far_elbow']=arm_elbow((sx-4,sy+2),p['support'],original['far_elbow'],18,17)
+    p['name']='A / CRIMSON OATH, TALL ADULT DUELIST'
+    return p
+
+
+for _state,_poses in FAMILY.items():
+    FAMILY[_state]=[tall_redhair_pose(p,_state) for p in _poses]
+POSES['A']=dict(FAMILY['idle'][0]);POSES['A']['name']='CRIMSON OATH / REDHAIR TWIN HEM'
+
+
 def prone(pose,frame):
-    # Explicit horizontal collapse drawings; no rotation of a standing frame.
+    # Re-authored horizontal adult silhouette, never a rotated standing image.
     im=Image.new('RGBA',(128,128));d=ImageDraw.Draw(im)
-    def poly(pts,key):d.polygon(pts,fill=P[key],outline=P['ink'])
+    def poly(pts,key):d.polygon([(round(x),round(y)) for x,y in pts],fill=P[key],outline=P['ink'])
     hx,hy=pose['head'];sx,sy=pose['shoulder'];px,py=pose['hip'];gx,gy=pose['guard'];tx,ty=pose['weapon_tip']
     poly([(20,111),(32,108),(48,106),(61,108),(65,114),(55,116),(27,116)],'cloth_dark')
     poly([(24,109),(37,106),(49,108),(47,112),(30,114),(18,115)],'wine')
     d.line([(24,111),(39,108),(47,110)],fill=P['wine_light'])
     for knee,foot in [(pose['far_knee'],pose['far_foot']),(pose['near_knee'],pose['near_foot'])]:
-        d.line([(px,py),knee,foot],fill=P['ink'],width=7);d.line([(px,py),knee,foot],fill=P['armor'],width=5)
+        path=[(px,py),knee,foot]
+        d.line(path,fill=P['ink'],width=6);d.line(path,fill=P['armor'],width=4)
         fx,fy=foot;d.rectangle((fx-4,fy-2,fx+3,fy+1),fill=P['deep']);d.line([(fx-3,fy),(fx+2,fy)],fill=P['gold_dark'])
-    poly([(px-4,py-6),(sx-2,sy-7),(sx+7,sy-2),(sx+5,sy+4),(px-3,py+4)],'deep')
-    poly([(sx-5,sy-6),(sx+3,sy-5),(sx+6,sy),(sx-1,sy+3),(sx-7,sy+1)],'armor')
-    d.line([(sx-4,sy-4),(sx+2,sy-3)],fill=P['gold'])
-    poly([(hx-8,hy-4),(hx-3,hy-8),(hx+4,hy-6),(hx+8,hy-1),(hx+7,hy+4),(hx,hy+6),(hx-7,hy+3)],'hair_dark')
-    poly([(hx-2,hy-4),(hx+4,hy-3),(hx+6,hy+1),(hx+3,hy+4),(hx-1,hy+2)],'skin')
+    poly([(px-4,py-5),(sx-2,sy-6),(sx+7,sy-2),(sx+5,sy+4),(px-3,py+3)],'deep')
+    poly([(sx-5,sy-5),(sx+3,sy-4),(sx+6,sy),(sx-1,sy+3),(sx-7,sy+1)],'armor')
+    d.line([(sx-4,sy-3),(sx+2,sy-2)],fill=P['armor_light'])
+    # Hair folds across the stone in red layers. The narrow face rests sideways with closed eye.
+    poly([(hx-7,hy-4),(hx-3,hy-7),(hx+3,hy-5),(hx+7,hy-1),(hx+6,hy+3),(hx,hy+5),(hx-6,hy+3)],'hair_dark')
+    poly([(hx-1,hy-3),(hx+4,hy-2),(hx+5,hy),(hx+4,hy+1),(hx+2,hy+3),(hx-1,hy+1)],'skin')
     d.line([(hx+1,hy-1),(hx+4,hy)],fill=P['skin_shadow'])
-    poly([(hx-8,hy-3),(hx-4,hy-6),(hx+2,hy-5),(hx-1,hy-2),(hx-3,hy+2),(hx-7,hy+1)],'silver')
-    poly([(hx-8,hy),(hx-17,hy+2),(hx-23,hy+5),(hx-13,hy+6),(hx-7,hy+4)],'hair_dark')
-    d.line([(hx-10,hy+2),(hx-18,hy+4)],fill=P['silver'])
+    poly([(hx-7,hy-3),(hx-4,hy-6),(hx+1,hy-5),(hx-1,hy-2),(hx-3,hy+2),(hx-6,hy+1)],'silver')
+    poly([(hx-7,hy),(hx-16,hy+1),(hx-24,hy+4),(hx-17,hy+6),(hx-7,hy+4)],'hair_dark')
+    poly([(hx-8,hy+1),(hx-17,hy+2),(hx-21,hy+4),(hx-14,hy+5),(hx-8,hy+3)],'hair_mid')
+    d.line([(hx-9,hy+2),(hx-18,hy+4)],fill=P['silver'])
+    d.line([(hx-5,hy-5),(hx-2,hy-4),(hx-4,hy-2)],fill=P['hair_light'])
+    d.point((hx-4,hy-5),fill=P['hair_hot'])
     for hand in [pose['support'],pose['hand']]:
-        d.line([(sx+1,sy-1),(hand[0]-7,hand[1]-2),hand],fill=P['ink'],width=6)
-        d.line([(sx+1,sy-1),(hand[0]-7,hand[1]-2),hand],fill=P['armor'],width=4)
+        d.line([(sx+1,sy-1),(hand[0]-7,hand[1]-2),hand],fill=P['ink'],width=5)
+        d.line([(sx+1,sy-1),(hand[0]-7,hand[1]-2),hand],fill=P['armor'],width=3)
         d.rectangle((hand[0]-2,hand[1]-1,hand[0]+2,min(116,hand[1]+1)),fill=P['skin'])
     d.line([(gx-8,gy),(gx,gy)],fill=P['gold_dark'],width=2);d.line([(gx,gy-2),(gx,gy+2)],fill=P['gold'],width=1)
     d.line([(gx+1,gy),(tx,ty)],fill=P['steel'],width=2);d.line([(gx+1,gy-1),(tx,ty-1)],fill=P['edge'],width=1)
     return im
 
+
+def assert_contract(manifest):
+    reference=json.loads((ROOT/'tests/fixtures/boss_blade_contract_7c536d1.json').read_text(encoding='utf8'))
+    for key in ['canvas','anchor','columns','total_frames']:
+        assert manifest[key]==reference[key],('immutable grid',key)
+    assert list(manifest['states'])==list(reference['states']), 'immutable state order'
+    for state,old in reference['states'].items():
+        now=manifest['states'][state]
+        assert now['start']==old['start'] and now['count']==old['count'],('immutable clip',state)
+        for frame,original in zip(now['frames'],old['frames']):
+            for key in ['name','state','frame','progress','hand','support_hand','guard','weapon_tip','guard_point','hit_window']:
+                assert frame[key]==original[key],('immutable combat',state,key,frame['frame'])
+            for key in ['near_foot','far_foot']:
+                assert frame['joints'][key]==original['baseline_joints'][key],('immutable foot',state,key,frame['frame'])
+    return True
+
+
 def make_family():
-    old_report_path=OUT/'family-report.json'
-    baseline=json.loads(old_report_path.read_text(encoding='utf-8')) if old_report_path.exists() else {}
-    protected={entry['name']:entry['sha256'] for entry in baseline.get('frame_checks',[]) if entry['name'].startswith(('parry_','armored_','guard_','hurt_','dead_'))}
     frames=[];mapping={};qa=[]
     for state,count in STATES:
         poses=FAMILY[state];assert len(poses)==count,(state,len(poses),count)
@@ -308,12 +380,15 @@ def make_family():
             frames.append((state,index,im,record));records.append(record)
             alpha=im.getchannel('A');qa.append({'name':record['name'],'bbox':alpha.getbbox(),'colors':len({rgb[:3] for rgb in im.get_flattened_data() if rgb[3]}),'alpha_values':sorted(set(alpha.get_flattened_data())),'landmarks_in_bounds':all(0<=x<128 and 0<=y<128 for x,y in [pose['hand'],pose['guard'],pose['weapon_tip'],pose['guard_point']]),'no_cell_edge_clipping':alpha.getbbox()[0]>0 and alpha.getbbox()[1]>0 and alpha.getbbox()[2]<128 and alpha.getbbox()[3]<128,'sha256':hashlib.sha256(im.tobytes()).hexdigest()})
         mapping[state]={'start':start,'count':count,'frames':records}
+    assert_contract({'canvas':[128,128],'anchor':list(ANCHOR),'columns':8,'total_frames':len(frames),'states':mapping})
     columns=8;atlas=Image.new('RGBA',(128*columns,128*math.ceil(len(frames)/columns)))
     for index,(_,_,im,_) in enumerate(frames):atlas.alpha_composite(im,((index%columns)*128,(index//columns)*128))
     atlas.save(OUT/'boss_atlas.png')
     for filename,color in [('boss_flash.png','#e8fff0'),('boss_silhouette.png','#73d7df')]:
         flash=Image.new('RGBA',atlas.size,color);flash.putalpha(atlas.getchannel('A'));flash.save(OUT/filename)
-    manifest={'version':2,'status':'APPROVED_A_COMPLETE_KEYFRAME_FAMILY','license':'MIT','selected_candidate':'A','source':'Original integer-pixel joint/clothing/blade drawing in tools/generate_katana_boss.py; no imported image or 3D input.','canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'atlas':'boss_atlas.png','flash':'boss_flash.png','total_frames':len(frames),'states':mapping,'boss':{'canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'states':mapping,'total_frames':len(frames)},'pose_contract':{'method':'get_presentation_pose','fields':['state','progress','strike','armored','contact_serial'],'clock':'Actual controller stage; local freeze holds progress. No fixed animation seconds.','aliases':{'leap':'jump','landing':'land'},'advisory_contact_frames':{'cut_a':[1,2],'cut_b':[1,2],'slam':[2,3],'jump':[],'retreat':[],'land':[]},'cut_contact':'cut_a/b frames 0 and 3 anticipate/recover, frames 1 and 2 carry contact hints. All blade poses are read from this same manifest.'},'constraints':{'antialias':False,'whole_frame_rotation':False,'native_scale':1,'max_colors':32,'alpha_values':[0,255]}}
+    manifest={'version':2,'status':'CURRENT_REDHAIR_A_COMPLETE_KEYFRAME_FAMILY','license':'MIT','selected_candidate':'A','source':'Original tall adult red-haired duelist, rebuilt integer-pixel joints/clothing in tools/generate_katana_boss.py; immutable combat landmarks; no image or 3D input.','canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'atlas':'boss_atlas.png','flash':'boss_flash.png','total_frames':len(frames),'states':mapping,'boss':{'canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'states':mapping,'total_frames':len(frames)},'pose_contract':{'method':'get_presentation_pose','fields':['state','progress','strike','armored','contact_serial'],'clock':'Actual controller stage; local freeze holds progress. No fixed animation seconds.','aliases':{'leap':'jump','landing':'land'},'advisory_contact_frames':{'cut_a':[1,2],'cut_b':[1,2],'slam':[2,3],'jump':[],'retreat':[],'land':[]},'cut_contact':'cut_a/b frames 0 and 3 anticipate/recover, frames 1 and 2 carry contact hints. All blade poses are read from this same manifest.'},'constraints':{'antialias':False,'whole_frame_rotation':False,'native_scale':1,'max_colors':32,'alpha_values':[0,255]}}
+    manifest['design']={'id':'adult-redhair-katana','standing_body_height_px':82,'hair_palette':[P[k] for k in ['hair_dark','hair_mid','silver','hair_light','hair_hot']], 'immutable_contract':'tests/fixtures/boss_blade_contract_7c536d1.json','anatomy':'head -13px, shoulder -14px, hip -5px, knees -2px in upright poses; feet/hands/blade unchanged; independent elbow IK; collapse-weighted anatomy'}
+    assert_contract(manifest)
     (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
     contacts={}
     blade_colors={tuple(bytes.fromhex(P[key][1:])) for key in ['steel','edge','white','gold','gold_light']}
@@ -329,8 +404,8 @@ def make_family():
     report={'frames':len(frames),'unique_frames':len({im.tobytes() for _,_,im,_ in frames}),'all_alpha_binary':all(q['alpha_values']==[0,255] for q in qa),'all_landmarks_in_bounds':all(q['landmarks_in_bounds'] for q in qa),'all_frames_no_clipping':all(q['no_cell_edge_clipping'] for q in qa),'max_frame_colors':max(q['colors'] for q in qa),'cut_contact_frames':contacts,'states':{name:count for name,count in STATES},'frame_checks':qa}
     assert report['all_alpha_binary'] and report['all_landmarks_in_bounds'] and report['all_frames_no_clipping'] and report['max_frame_colors']<=32
     assert all(frame['actual_blade_samples']==25 for frames in contacts.values() for frame in frames)
-    report['preserved_reaction_and_dead']=all(protected.get(entry['name'],entry['sha256'])==entry['sha256'] for entry in qa if entry['name'] in protected)
-    assert report['preserved_reaction_and_dead']
+    report['preserved_combat_contract']=True  # asserted against immutable original fixture below
+    assert_contract(manifest)
     (OUT/'family-report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     # Contact sheets have all authored frames, with native-pixel source and nearest-only previews.
     for filename,names in [('katana-motion-contact.png',['idle','approach','shift','draw','cut_a','cut_b','recover','cast']),('katana-reaction-contact.png',['parry_recoil','parry_recover','armored_recoil','guard_break','guard_recover','hurt','dead'])]:
@@ -365,7 +440,34 @@ def make_family():
     print(json.dumps({key:value for key,value in report.items() if key!='frame_checks'}))
 
 
+def make_redhair_evidence():
+    evidence=ROOT/'artifacts/boss-redhair';evidence.mkdir(parents=True,exist_ok=True)
+    sheet=Image.new('RGB',(6*128+132,len(STATES)*128+28),'#101321');d=ImageDraw.Draw(sheet)
+    d.text((6,7),'ALL19 CLIPS / ALL78 ORIGINAL REDHAIR FRAMES / NATIVE128, FEET48,116',fill=P['gold_light'])
+    for row,(state,count) in enumerate(STATES):
+        d.text((4,row*128+48),state,fill=P['gold_light'])
+        for frame,pose in enumerate(FAMILY[state]):
+            im=prone(pose,frame) if state=='dead' and frame>0 else seed('A',pose,state,frame)
+            sheet.paste(im,(132+frame*128,28+row*128),im)
+    sheet.resize((sheet.width*3,sheet.height*3),Image.Resampling.NEAREST).save(evidence/'all78-contact-3x.png')
+    if (evidence/'before-atlas.png').exists() and (evidence/'before-manifest.json').exists():
+        before=Image.open(evidence/'before-atlas.png').convert('RGBA')
+        old=json.loads((evidence/'before-manifest.json').read_text(encoding='utf8'))
+        pairs=[('idle',0),('approach',2),('draw',3),('cut_a',1),('parry_recoil',2),('guard_break',3)]
+        comparison=Image.new('RGB',(128*4,152*3+22),'#101321');d=ImageDraw.Draw(comparison)
+        for sample,(state,frame) in enumerate(pairs):
+            col=(sample%2)*256;row=sample//2
+            index=old['states'][state]['start']+frame;x=(index%8)*128;y=(index//8)*128
+            original=before.crop((x,y,x+128,y+128));current=seed('A',FAMILY[state][frame],state,frame)
+            d.text((col+4,row*152+4),f'BEFORE {state}/{frame}',fill='#a3aebc')
+            d.text((col+132,row*152+4),'AFTER REDHAIR',fill=P['hair_light'])
+            comparison.paste(original,(col,row*152+22),original)
+            comparison.paste(current,(col+128,row*152+22),current)
+        comparison.resize((comparison.width*3,comparison.height*3),Image.Resampling.NEAREST).save(evidence/'before-after-3x.png')
+
+
 def main():
     make_seeds()
     make_family()
+    make_redhair_evidence()
 if __name__=='__main__':main()

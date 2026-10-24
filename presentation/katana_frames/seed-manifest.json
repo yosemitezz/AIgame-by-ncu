@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "status": "SEED_ONLY_WAITING_FOR_VISUAL_AND_PR1_TIMING_REVIEW",
+  "version": 2,
+  "status": "CURRENT_A_REDHAIR_NATIVE_PIXEL",
   "canvas": [
     128,
     128
@@ -10,20 +10,18 @@
     116
   ],
   "body_height_px": [
-    65,
-    68
+    80,
+    84
   ],
   "native_filter": "nearest",
   "license": "MIT",
-  "source": "Original integer-grid drawing and editable pose dictionaries in tools/generate_katana_boss.py. No external raster or 3D source.",
-  "selected_candidate": null,
+  "source": "Original adult red-haired duelist; independent native-pixel joints and fabrics.",
+  "selected_candidate": "A",
   "candidates": {
     "A": {
       "file": "seed_a.png",
-      "name": "INK-SILVER / TWIN HEM",
+      "name": "CRIMSON OATH / REDHAIR TWIN HEM",
       "state": "representative_ready",
-      "frame": 0,
-      "hit_window": false,
       "hand": [
         16,
         -25
@@ -43,270 +41,17 @@
       "guard_point": [
         21,
         -26
-      ],
-      "joints": {
-        "head": [
-          0,
-          -61
-        ],
-        "shoulder": [
-          -1,
-          -47
-        ],
-        "hip": [
-          -1,
-          -30
-        ],
-        "far_knee": [
-          -9,
-          -16
-        ],
-        "far_foot": [
-          -12,
-          -1
-        ],
-        "near_knee": [
-          8,
-          -15
-        ],
-        "near_foot": [
-          12,
-          -1
-        ],
-        "near_elbow": [
-          10,
-          -36
-        ],
-        "far_elbow": [
-          0,
-          -35
-        ],
-        "hand": [
-          16,
-          -25
-        ],
-        "support": [
-          9,
-          -27
-        ],
-        "guard": [
-          20,
-          -25
-        ],
-        "weapon_tip": [
-          73,
-          -22
-        ],
-        "guard_point": [
-          21,
-          -26
-        ]
-      },
-      "bbox": [
-        17,
-        47,
-        122,
-        117
-      ]
-    },
-    "B": {
-      "file": "seed_b.png",
-      "name": "CHARCOAL KNOT / ONE MANTLE",
-      "state": "representative_ready",
-      "frame": 0,
-      "hit_window": false,
-      "hand": [
-        17,
-        -27
-      ],
-      "support_hand": [
-        9,
-        -28
-      ],
-      "guard": [
-        21,
-        -27
-      ],
-      "weapon_tip": [
-        74,
-        -24
-      ],
-      "guard_point": [
-        22,
-        -27
-      ],
-      "joints": {
-        "head": [
-          0,
-          -62
-        ],
-        "shoulder": [
-          -1,
-          -48
-        ],
-        "hip": [
-          0,
-          -30
-        ],
-        "far_knee": [
-          -6,
-          -15
-        ],
-        "far_foot": [
-          -10,
-          -1
-        ],
-        "near_knee": [
-          8,
-          -15
-        ],
-        "near_foot": [
-          14,
-          -1
-        ],
-        "near_elbow": [
-          11,
-          -37
-        ],
-        "far_elbow": [
-          1,
-          -36
-        ],
-        "hand": [
-          17,
-          -27
-        ],
-        "support": [
-          9,
-          -28
-        ],
-        "guard": [
-          21,
-          -27
-        ],
-        "weapon_tip": [
-          74,
-          -24
-        ],
-        "guard_point": [
-          22,
-          -27
-        ]
-      },
-      "bbox": [
-        18,
-        39,
-        123,
-        117
-      ]
-    },
-    "C": {
-      "file": "seed_c.png",
-      "name": "WINE TAIL / LOW DRAW",
-      "state": "representative_ready",
-      "frame": 0,
-      "hit_window": false,
-      "hand": [
-        19,
-        -24
-      ],
-      "support_hand": [
-        11,
-        -27
-      ],
-      "guard": [
-        23,
-        -24
-      ],
-      "weapon_tip": [
-        74,
-        -19
-      ],
-      "guard_point": [
-        23,
-        -25
-      ],
-      "joints": {
-        "head": [
-          1,
-          -60
-        ],
-        "shoulder": [
-          0,
-          -46
-        ],
-        "hip": [
-          -1,
-          -29
-        ],
-        "far_knee": [
-          -11,
-          -15
-        ],
-        "far_foot": [
-          -17,
-          -1
-        ],
-        "near_knee": [
-          8,
-          -14
-        ],
-        "near_foot": [
-          15,
-          -1
-        ],
-        "near_elbow": [
-          13,
-          -34
-        ],
-        "far_elbow": [
-          1,
-          -33
-        ],
-        "hand": [
-          19,
-          -24
-        ],
-        "support": [
-          11,
-          -27
-        ],
-        "guard": [
-          23,
-          -24
-        ],
-        "weapon_tip": [
-          74,
-          -19
-        ],
-        "guard_point": [
-          23,
-          -25
-        ]
-      },
-      "bbox": [
-        17,
-        50,
-        123,
-        117
       ]
     }
   },
-  "pending_states": [
-    "idle",
-    "approach",
-    "shift",
-    "draw",
-    "cut_a",
-    "cut_b",
-    "retreat",
-    "cast",
-    "parry_recoil",
-    "armored_recoil",
-    "guard_break",
-    "guard_recover",
-    "hurt",
-    "dead"
-  ],
-  "pending_timing": "PR1 get_presentation_pose returns state/progress/strike/armored/contact_serial. Cut A/B frame zero must already extend to contact; never inherit old Boss timing."
+  "archived_candidates": {
+    "B": {
+      "file": "seed_b.png",
+      "status": "archived earlier silver seed; not runtime"
+    },
+    "C": {
+      "file": "seed_c.png",
+      "status": "archived earlier silver seed; not runtime"
+    }
+  }
 }

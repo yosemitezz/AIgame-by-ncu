@@ -36,7 +36,7 @@ func _initialize() -> void:
     var indices_ok: bool = true
     for i: int in names.size(): indices_ok = indices_ok and states[names[i]]["start"] == starts[i]
     check(indices_ok, "old fifteen clip indices retained; movement clips appended")
-    check(report["preserved_reaction_and_dead"], "reaction and death pixel drawings retain prior hashes")
+    check(report.get("preserved_combat_contract",false), "all reactions and death retain the original blade contact contract")
     check(report["all_alpha_binary"] and report["max_frame_colors"] <= 32 and report["all_frames_no_clipping"], "binary alpha / limited native palette / no frame-edge clipping")
     check(report["unique_frames"] >= 70, "family contains independent pixel poses")
     var colors: Array[Color] = [Color("9eb7c7"),Color("dcebf0"),Color("f6efdb"),Color("b89159"),Color("e3c286")]

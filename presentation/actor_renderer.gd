@@ -51,12 +51,49 @@ static func _combo(actor: Object) -> int:
     var value: Variant = actor.get("combo")
     return clampi(int(value), 1, 3) if value != null else 1
 
-static func hero_region(state: String, frame: int, combo: int = 1, airborne: bool = false) -> Rect2:
+static func air_dash_clip(direction: Vector2 = Vector2.ZERO) -> String:
+    if absf(direction.y) > absf(direction.x):
+        return "air_dash_up" if direction.y < 0.0 else "air_dash_down"
+    return "air_dash_side"
+
+static func dash_direction_of(actor: Object) -> Vector2:
+    var value: Variant = actor.get("dash_direction") if actor != null else null
+    return value if value is Vector2 and value.is_finite() else Vector2.ZERO
+
+static func hero_region_for(actor: Object, state: String, frame: int) -> Rect2:
+    return hero_region(state,frame,_combo(actor),is_airborne(actor),dash_direction_of(actor))
+
+static func flight_pose(actor: Object) -> Dictionary:
+    var state: Variant = actor.get("animation_state") if actor != null else null
+    var key: String = str(state) if state != null else "idle"
+    if key == "dash" and is_airborne(actor): key=air_dash_clip(dash_direction_of(actor))
+    var weapon: Dictionary = _data().get("hero",{}).get("weapons",{}).get(weapon_of(actor),{})
+    var entries: Dictionary = weapon.get("flight_pose_joints",{})
+    var poses: Array = entries.get(key,[])
+    if poses.is_empty() and key in ["windup","attack","recover"]:
+        var cut_key: String = "%scut_%d_%s" % ["air_" if is_airborne(actor) else "",_combo(actor),key]
+        poses = weapon.get("pose_joints",{}).get(cut_key,[])
+    if poses.is_empty(): return {}
+    var value: Variant = actor.get("frame")
+    var index: int = int(value) if value != null else 0
+    var pose: Dictionary = poses[clampi(index,0,poses.size()-1)].duplicate()
+    if not pose.has("wing_root") and pose.has("shoulder"):
+        var shoulder: Array = pose["shoulder"]
+        pose["wing_root"] = [float(shoulder[0])-3.36,float(shoulder[1])+2.52]
+    return pose
+
+static func wing_anchor(actor: Object) -> Vector2:
+    var value: Array = flight_pose(actor).get("wing_root",[-3,-35])
+    return Vector2(float(value[0]),float(value[1]))
+
+static func hero_region(state: String, frame: int, combo: int = 1, airborne: bool = false, dash_direction: Vector2 = Vector2.ZERO) -> Rect2:
     var data: Dictionary = _data()
     var states: Dictionary = data.get("hero", {}).get("states", {})
     var key: String = state
     if state in ["windup", "attack", "recover"]:
         key = "%scut_%d_%s" % ["air_" if airborne else "", clampi(combo, 1, 3), state]
+    elif state == "dash" and airborne:
+        key = air_dash_clip(dash_direction)
     elif state == "death":
         key = "dead"
     if not states.has(key):
@@ -156,7 +193,7 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
         texture = _texture(hero_sheet("res://presentation/feel_frames/hero_flash.png" if flashing else "res://presentation/feel_frames/hero_atlas.png", weapon_of(canvas)))
         frame_size = HERO_SIZE
         anchor = HERO_ANCHOR
-        region = hero_region(state, frame, _combo(canvas), is_airborne(canvas))
+        region = hero_region_for(canvas, state, frame)
     else:
         var key: String = kind if kind in ["sentry", "elite", "wisp", "boss"] else "sentry"
         texture = _texture("res://presentation/feel_frames/%s_flash.png" % key if flashing else "res://assets/art/placeholder_%s.png" % key)

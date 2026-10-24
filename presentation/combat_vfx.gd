@@ -137,7 +137,7 @@ func _snapshot_ghost() -> void:
         return
     _last_ghost_clock = _clock
     _last_ghost_at = position_now
-    var region: Rect2 = ActorRenderer.hero_region(str(actor.animation_state), int(actor.frame), int(actor.combo), ActorRenderer.is_airborne(actor))
+    var region: Rect2 = ActorRenderer.hero_region_for(actor,str(actor.animation_state),int(actor.frame))
     _ghosts.append({"weapon": ActorRenderer.weapon_of(actor), "at": actor.global_position.round(), "region": region, "facing": int(actor.facing), "age": 0.0, "duration": 0.15})
     while _ghosts.size() > MAX_GHOSTS:
         _ghosts.pop_front()

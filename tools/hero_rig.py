@@ -526,23 +526,26 @@ def crouch_walk(f, n=6):
 
 
 def jump_rise(f):
-    k = [1.0, 0.55, 0.15][f]
-    return airborne(front_up=lerp(-17, -23, 1 - k), back_up=lerp(2.0, -6, 1 - k), hip=(0, lerp(-31, -34, 1 - k)), lean=lerp(10, 2, 1 - k),
-                    curve=3, arm=lerp(-118, -70, 1 - k), ext=0.8, blade=lerp(-128, -80, 1 - k), hb=(lerp(-8, 6, 1 - k), lerp(-6, -2, 1 - k)),
-                    wind=(-0.35, 0.95), scarf=1.2, phase=f * 1.4, twist=0.3)
+    # Upright lift: the shoulder leads, trailing boot extends rather than tucking into a roll.
+    k = [1.0, .55, .15][f]
+    return airborne(front_up=lerp(-17,-13,1-k), back_up=lerp(-5,-2,1-k),
+                    hip=(lerp(0,2,1-k),lerp(-33,-35,1-k)), lean=lerp(8,15,1-k), curve=2,
+                    arm=lerp(-62,-30,1-k), ext=.62, blade=lerp(-66,-22,1-k), hb=(-7,8),
+                    wind=(-.6,1.0), scarf=1.3, phase=f*1.4, twist=.18, head=-6)
 
 
 def apex(f):
-    t = f * 1.1
-    return airborne(front_up=-20 + f, back_up=-15, hip=(0, -37), lean=-2, curve=4, arm=-35, ext=0.7, blade=-12, hb=(5, 10),
-                    wind=(-0.9, 0.05), phase=t, scarf=1.0, twist=0.15, head=2)
+    return airborne(front_up=-13+f, back_up=-4-f, hip=(1,-36), lean=12-f*2, curve=2,
+                    arm=-16+f*3, ext=.65, blade=5+f*3, hb=(-6,11),
+                    wind=(-1,.12), phase=f*1.1, scarf=1.2, twist=.12, head=-4)
 
 
 def fall(f):
-    k = [0.2, 0.6, 1.0][f]
-    return airborne(front_up=lerp(-8, 3, k), back_up=lerp(-3, 6, k), hip=(0, lerp(-36, -31, k)), lean=lerp(0, -4, k), curve=0,
-                    arm=lerp(-70, -112, k), ext=0.9, blade=lerp(-52, -95, k), hb=(-6, -8), wind=(-0.25, -1.0), scarf=1.3,
-                    phase=f * 1.3, twist=0.2, head=3, droop=-1.5)
+    k = [.2,.6,1.0][f]
+    return airborne(front_up=lerp(-12,-4,k), back_up=lerp(-8,-2,k),
+                    hip=(0,lerp(-36,-31,k)), lean=lerp(14,5,k), curve=2,
+                    arm=lerp(12,36,k), ext=.65, blade=lerp(22,45,k), hb=(-7,9),
+                    wind=(-.6,-1), scarf=1.3, phase=f*1.3, twist=.15, head=-4, droop=-.8)
 
 
 def land(f):
@@ -552,10 +555,37 @@ def land(f):
 
 
 def air_jump(f, n=6):
-    u = f / (n - 1)
-    ang = -360.0 * smooth(u) * 0.97
-    return airborne(front_up=-24, back_up=-20, hip=(0, -36), lean=18, curve=8, arm=lerp(-20, 30, u), ext=0.5, blade=lerp(10, 60, u),
-                    hb=(6, 8), rot=ang, wind=(-0.5, 0.6), phase=f * 1.8, scarf=1.4, head=-8)
+    # Wing-powered launch, drive, then balance. No whole-body spin or upside-down frame.
+    u = f / (n-1)
+    drive = math.sin(math.pi*u)
+    return airborne(front_up=-14-7*drive, back_up=-4-5*drive,
+                    hip=(2*drive,-34-3*drive), lean=12+18*drive, curve=3+3*drive,
+                    arm=lerp(-38,10,u), ext=.65+.18*drive, blade=lerp(-28,18,u),
+                    hb=(-8,8), rot=0, wind=(-.8,.9-.7*u), phase=f*1.2,
+                    scarf=1.25+.2*drive, head=-6-10*drive, twist=.18+.2*drive)
+
+
+def air_dash(mode, f):
+    # Re-articulated poses keep the head above the hip in every cardinal flight.
+    # The feet anchor/collider is unchanged; only the air-only atlas cells are new.
+    drive = [0.55,1.0,.9,.45][f]
+    if mode == 'up':
+        return base_pose(hip=(0,-35), lean=-7+8*drive, curve=2,
+                         ff=(5,-16-3*drive), fb=(-8,-4), ffa=24, fba=18,
+                         arm=-65-5*drive, ext=.72, blade=-84, hb=(-5,3),
+                         wind=(-.3,1), scarf=1.5, phase=f*1.25, head=3,
+                         twist=.18, glow=True, rot=0)
+    if mode == 'down':
+        return base_pose(hip=(0,-40), lean=18+13*drive, curve=3,
+                         ff=(9,-10-4*drive), fb=(-13,-8), ffa=34, fba=20,
+                         arm=15, ext=.3, blade=68, hb=(-5,7),
+                         wind=(-.2,-1), scarf=1.45, phase=f*1.25,
+                         head=-14, twist=.25, glow=True, rot=0)
+    return base_pose(hip=(2,-34), lean=30+20*drive, curve=3,
+                     ff=(9-7*drive,-13-4*drive), fb=(-17-3*drive,-6-3*drive),
+                     ffa=34, fba=22, arm=-7, ext=.85+.08*drive, blade=-3,
+                     hb=(-8,7), wind=(-1,.03), scarf=1.65,
+                     phase=f*1.25, head=-24, twist=.45, glow=True, rot=0)
 
 
 def dash(f):
@@ -779,6 +809,9 @@ def atlas_states():
     for combo in (1, 2, 3):
         for phase in ('windup', 'attack', 'recover'):
             out.append((f'air_cut_{combo}_{phase}', 8 if phase == 'attack' else 4, lambda f, c=combo, ph=phase: cut(c, ph, f, air=True)))
+    # Append only: original 155 frame indices remain stable for all weapon actions.
+    for mode in ('side','up','down'):
+        out.append((f'air_dash_{mode}',4,lambda f,m=mode:air_dash(m,f)))
     return out
 
 

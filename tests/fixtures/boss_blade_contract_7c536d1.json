@@ -1,0 +1,6837 @@
+{
+  "source_commit": "7c536d1121c792093711992e4056b57a443856ff",
+  "canvas": [
+    128,
+    128
+  ],
+  "anchor": [
+    48,
+    116
+  ],
+  "columns": 8,
+  "total_frames": 78,
+  "states": {
+    "idle": {
+      "start": 0,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            16,
+            -25
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            20,
+            -25
+          ],
+          "weapon_tip": [
+            73,
+            -22
+          ],
+          "guard_point": [
+            21,
+            -26
+          ],
+          "hit_window": false,
+          "name": "idle_00",
+          "state": "idle",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              16,
+              -25
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              20,
+              -25
+            ],
+            "weapon_tip": [
+              73,
+              -22
+            ],
+            "guard_point": [
+              21,
+              -26
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "a5878ac6a1ea356d31436921b613af67a9b65d19c3c274db32fec6adc5595b5a"
+        },
+        {
+          "hand": [
+            16,
+            -26
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            20,
+            -26
+          ],
+          "weapon_tip": [
+            73,
+            -23
+          ],
+          "guard_point": [
+            21,
+            -27
+          ],
+          "hit_window": false,
+          "name": "idle_01",
+          "state": "idle",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              0,
+              -62
+            ],
+            "shoulder": [
+              -1,
+              -48
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              16,
+              -26
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              20,
+              -26
+            ],
+            "weapon_tip": [
+              73,
+              -23
+            ],
+            "guard_point": [
+              21,
+              -27
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "c89b749236f0f8972dda1d0954242ef262282cde01f48d08023c9a29130a47e5"
+        },
+        {
+          "hand": [
+            16,
+            -24
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            20,
+            -24
+          ],
+          "weapon_tip": [
+            72,
+            -21
+          ],
+          "guard_point": [
+            21,
+            -25
+          ],
+          "hit_window": false,
+          "name": "idle_02",
+          "state": "idle",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -46
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              16,
+              -24
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              20,
+              -24
+            ],
+            "weapon_tip": [
+              72,
+              -21
+            ],
+            "guard_point": [
+              21,
+              -25
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "9271adfd3004d39a1451acccc0feae61e2e8f3de62a28f55331ac11bbc095c17"
+        },
+        {
+          "hand": [
+            17,
+            -25
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            21,
+            -25
+          ],
+          "weapon_tip": [
+            73,
+            -22
+          ],
+          "guard_point": [
+            22,
+            -26
+          ],
+          "hit_window": false,
+          "name": "idle_03",
+          "state": "idle",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              17,
+              -25
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              21,
+              -25
+            ],
+            "weapon_tip": [
+              73,
+              -22
+            ],
+            "guard_point": [
+              22,
+              -26
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "5dee5664a04c6670c7ab2c2658b62d0bc17e9993a671e6be8a2c975c45b95dd2"
+        }
+      ]
+    },
+    "approach": {
+      "start": 4,
+      "count": 6,
+      "frames": [
+        {
+          "hand": [
+            18,
+            -28
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            22,
+            -28
+          ],
+          "weapon_tip": [
+            73,
+            -29
+          ],
+          "guard_point": [
+            23,
+            -29
+          ],
+          "hit_window": false,
+          "name": "approach_00",
+          "state": "approach",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              3,
+              -62
+            ],
+            "shoulder": [
+              2,
+              -48
+            ],
+            "hip": [
+              0,
+              -31
+            ],
+            "far_knee": [
+              -10,
+              -19
+            ],
+            "far_foot": [
+              -18,
+              -3
+            ],
+            "near_knee": [
+              10,
+              -17
+            ],
+            "near_foot": [
+              17,
+              -1
+            ],
+            "hand": [
+              18,
+              -28
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              22,
+              -28
+            ],
+            "weapon_tip": [
+              73,
+              -29
+            ],
+            "guard_point": [
+              23,
+              -29
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "1cd7a75992badf6fc5d0790a7b146d4f73b0d23153e76cfd495e5df51573f96a"
+        },
+        {
+          "hand": [
+            17,
+            -29
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            21,
+            -29
+          ],
+          "weapon_tip": [
+            73,
+            -28
+          ],
+          "guard_point": [
+            22,
+            -30
+          ],
+          "hit_window": false,
+          "name": "approach_01",
+          "state": "approach",
+          "frame": 1,
+          "progress": 0.2,
+          "baseline_joints": {
+            "head": [
+              4,
+              -63
+            ],
+            "shoulder": [
+              3,
+              -49
+            ],
+            "hip": [
+              1,
+              -32
+            ],
+            "far_knee": [
+              -7,
+              -15
+            ],
+            "far_foot": [
+              -5,
+              -1
+            ],
+            "near_knee": [
+              11,
+              -21
+            ],
+            "near_foot": [
+              14,
+              -11
+            ],
+            "hand": [
+              17,
+              -29
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              21,
+              -29
+            ],
+            "weapon_tip": [
+              73,
+              -28
+            ],
+            "guard_point": [
+              22,
+              -30
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "a24d34bc0f193eb7539a980948381db2e64ed76eca8b00ca456816b320619f15"
+        },
+        {
+          "hand": [
+            16,
+            -28
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            20,
+            -28
+          ],
+          "weapon_tip": [
+            72,
+            -26
+          ],
+          "guard_point": [
+            21,
+            -29
+          ],
+          "hit_window": false,
+          "name": "approach_02",
+          "state": "approach",
+          "frame": 2,
+          "progress": 0.4,
+          "baseline_joints": {
+            "head": [
+              4,
+              -62
+            ],
+            "shoulder": [
+              3,
+              -48
+            ],
+            "hip": [
+              1,
+              -31
+            ],
+            "far_knee": [
+              4,
+              -15
+            ],
+            "far_foot": [
+              10,
+              -2
+            ],
+            "near_knee": [
+              0,
+              -21
+            ],
+            "near_foot": [
+              -5,
+              -10
+            ],
+            "hand": [
+              16,
+              -28
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              20,
+              -28
+            ],
+            "weapon_tip": [
+              72,
+              -26
+            ],
+            "guard_point": [
+              21,
+              -29
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "c5919beee769adf94a3c6a1be82cfad0f2784afbb24721c2d737eaa34f8d73eb"
+        },
+        {
+          "hand": [
+            17,
+            -27
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            21,
+            -27
+          ],
+          "weapon_tip": [
+            73,
+            -25
+          ],
+          "guard_point": [
+            22,
+            -28
+          ],
+          "hit_window": false,
+          "name": "approach_03",
+          "state": "approach",
+          "frame": 3,
+          "progress": 0.6,
+          "baseline_joints": {
+            "head": [
+              3,
+              -62
+            ],
+            "shoulder": [
+              2,
+              -48
+            ],
+            "hip": [
+              0,
+              -31
+            ],
+            "far_knee": [
+              10,
+              -17
+            ],
+            "far_foot": [
+              17,
+              -1
+            ],
+            "near_knee": [
+              -10,
+              -19
+            ],
+            "near_foot": [
+              -18,
+              -3
+            ],
+            "hand": [
+              17,
+              -27
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              21,
+              -27
+            ],
+            "weapon_tip": [
+              73,
+              -25
+            ],
+            "guard_point": [
+              22,
+              -28
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "1fc9656073d053fb838e3018071e9ad70c8db8c67aa8df30167f4dcc180d9778"
+        },
+        {
+          "hand": [
+            19,
+            -28
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            23,
+            -28
+          ],
+          "weapon_tip": [
+            74,
+            -28
+          ],
+          "guard_point": [
+            24,
+            -29
+          ],
+          "hit_window": false,
+          "name": "approach_04",
+          "state": "approach",
+          "frame": 4,
+          "progress": 0.8,
+          "baseline_joints": {
+            "head": [
+              4,
+              -63
+            ],
+            "shoulder": [
+              3,
+              -49
+            ],
+            "hip": [
+              1,
+              -32
+            ],
+            "far_knee": [
+              11,
+              -21
+            ],
+            "far_foot": [
+              14,
+              -11
+            ],
+            "near_knee": [
+              -7,
+              -15
+            ],
+            "near_foot": [
+              -5,
+              -1
+            ],
+            "hand": [
+              19,
+              -28
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              23,
+              -28
+            ],
+            "weapon_tip": [
+              74,
+              -28
+            ],
+            "guard_point": [
+              24,
+              -29
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "0f8f3683311a6d646f648f05314be190e2f3b760654e4ddddf22ecf3f73d9726"
+        },
+        {
+          "hand": [
+            19,
+            -27
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            23,
+            -27
+          ],
+          "weapon_tip": [
+            74,
+            -26
+          ],
+          "guard_point": [
+            24,
+            -28
+          ],
+          "hit_window": false,
+          "name": "approach_05",
+          "state": "approach",
+          "frame": 5,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              4,
+              -62
+            ],
+            "shoulder": [
+              3,
+              -48
+            ],
+            "hip": [
+              1,
+              -31
+            ],
+            "far_knee": [
+              0,
+              -21
+            ],
+            "far_foot": [
+              -5,
+              -10
+            ],
+            "near_knee": [
+              4,
+              -15
+            ],
+            "near_foot": [
+              10,
+              -2
+            ],
+            "hand": [
+              19,
+              -27
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              23,
+              -27
+            ],
+            "weapon_tip": [
+              74,
+              -26
+            ],
+            "guard_point": [
+              24,
+              -28
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "523dbb897dd85933998eaa6c586111397104bbf9721c08ec883c75a738edf2df"
+        }
+      ]
+    },
+    "shift": {
+      "start": 10,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            13,
+            -28
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            17,
+            -28
+          ],
+          "weapon_tip": [
+            65,
+            -43
+          ],
+          "guard_point": [
+            18,
+            -29
+          ],
+          "hit_window": false,
+          "name": "shift_00",
+          "state": "shift",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              -1,
+              -59
+            ],
+            "shoulder": [
+              -2,
+              -45
+            ],
+            "hip": [
+              -2,
+              -28
+            ],
+            "far_knee": [
+              -13,
+              -15
+            ],
+            "far_foot": [
+              -21,
+              -1
+            ],
+            "near_knee": [
+              7,
+              -17
+            ],
+            "near_foot": [
+              17,
+              -4
+            ],
+            "hand": [
+              13,
+              -28
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              17,
+              -28
+            ],
+            "weapon_tip": [
+              65,
+              -43
+            ],
+            "guard_point": [
+              18,
+              -29
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "ef231dfdcd5e516283fb6248d50e9953ca88ef80a0aaecae23c8047b6decd67f"
+        },
+        {
+          "hand": [
+            9,
+            -32
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            13,
+            -32
+          ],
+          "weapon_tip": [
+            63,
+            -46
+          ],
+          "guard_point": [
+            14,
+            -33
+          ],
+          "hit_window": false,
+          "name": "shift_01",
+          "state": "shift",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -5,
+              -60
+            ],
+            "shoulder": [
+              -6,
+              -46
+            ],
+            "hip": [
+              -5,
+              -29
+            ],
+            "far_knee": [
+              -17,
+              -18
+            ],
+            "far_foot": [
+              -23,
+              -4
+            ],
+            "near_knee": [
+              6,
+              -15
+            ],
+            "near_foot": [
+              15,
+              -1
+            ],
+            "hand": [
+              9,
+              -32
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              13,
+              -32
+            ],
+            "weapon_tip": [
+              63,
+              -46
+            ],
+            "guard_point": [
+              14,
+              -33
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "86dd3ea21d0125b8703e1d8d53c484c64574c0b84d58b44336c272cd1946afac"
+        },
+        {
+          "hand": [
+            10,
+            -30
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            14,
+            -30
+          ],
+          "weapon_tip": [
+            65,
+            -38
+          ],
+          "guard_point": [
+            15,
+            -31
+          ],
+          "hit_window": false,
+          "name": "shift_02",
+          "state": "shift",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -4,
+              -60
+            ],
+            "shoulder": [
+              -5,
+              -46
+            ],
+            "hip": [
+              -5,
+              -29
+            ],
+            "far_knee": [
+              -14,
+              -15
+            ],
+            "far_foot": [
+              -18,
+              -1
+            ],
+            "near_knee": [
+              4,
+              -18
+            ],
+            "near_foot": [
+              11,
+              -6
+            ],
+            "hand": [
+              10,
+              -30
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              14,
+              -30
+            ],
+            "weapon_tip": [
+              65,
+              -38
+            ],
+            "guard_point": [
+              15,
+              -31
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "69be3589a6d22f1eac6705d6cb1afa08d30e5c3dc808351ada9f5ef2eae3c56b"
+        },
+        {
+          "hand": [
+            14,
+            -26
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            18,
+            -26
+          ],
+          "weapon_tip": [
+            71,
+            -25
+          ],
+          "guard_point": [
+            19,
+            -27
+          ],
+          "hit_window": false,
+          "name": "shift_03",
+          "state": "shift",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              -1,
+              -61
+            ],
+            "shoulder": [
+              -2,
+              -47
+            ],
+            "hip": [
+              -2,
+              -30
+            ],
+            "far_knee": [
+              -10,
+              -16
+            ],
+            "far_foot": [
+              -14,
+              -1
+            ],
+            "near_knee": [
+              6,
+              -16
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              14,
+              -26
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              18,
+              -26
+            ],
+            "weapon_tip": [
+              71,
+              -25
+            ],
+            "guard_point": [
+              19,
+              -27
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "8e4ce95497cb59ed3059d9d0b21ee6e75f693f9bf1774df609d64fdf6a85b9e4"
+        }
+      ]
+    },
+    "draw": {
+      "start": 14,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            11,
+            -31
+          ],
+          "support_hand": [
+            1,
+            -29
+          ],
+          "guard": [
+            15,
+            -31
+          ],
+          "weapon_tip": [
+            64,
+            -41
+          ],
+          "guard_point": [
+            16,
+            -32
+          ],
+          "hit_window": false,
+          "name": "draw_00",
+          "state": "draw",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -60
+            ],
+            "shoulder": [
+              -1,
+              -46
+            ],
+            "hip": [
+              -1,
+              -29
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              11,
+              -31
+            ],
+            "support": [
+              1,
+              -29
+            ],
+            "guard": [
+              15,
+              -31
+            ],
+            "weapon_tip": [
+              64,
+              -41
+            ],
+            "guard_point": [
+              16,
+              -32
+            ],
+            "near_elbow": [
+              8,
+              -40
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "e1343c1376200bb4995747c8f571de5087f6fc582600ddaa0bce8ab1cf0ae26f"
+        },
+        {
+          "hand": [
+            6,
+            -37
+          ],
+          "support_hand": [
+            0,
+            -33
+          ],
+          "guard": [
+            10,
+            -37
+          ],
+          "weapon_tip": [
+            55,
+            -59
+          ],
+          "guard_point": [
+            11,
+            -38
+          ],
+          "hit_window": false,
+          "name": "draw_01",
+          "state": "draw",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -59
+            ],
+            "shoulder": [
+              -3,
+              -45
+            ],
+            "hip": [
+              -2,
+              -28
+            ],
+            "far_knee": [
+              -12,
+              -14
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              9,
+              -14
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              6,
+              -37
+            ],
+            "support": [
+              0,
+              -33
+            ],
+            "guard": [
+              10,
+              -37
+            ],
+            "weapon_tip": [
+              55,
+              -59
+            ],
+            "guard_point": [
+              11,
+              -38
+            ],
+            "near_elbow": [
+              4,
+              -45
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "79e2f489ca548fafc583ead7b7fe80694fd80ea0b6645cc92abb2490340cccdc"
+        },
+        {
+          "hand": [
+            1,
+            -41
+          ],
+          "support_hand": [
+            -3,
+            -37
+          ],
+          "guard": [
+            5,
+            -41
+          ],
+          "weapon_tip": [
+            36,
+            -77
+          ],
+          "guard_point": [
+            6,
+            -42
+          ],
+          "hit_window": false,
+          "name": "draw_02",
+          "state": "draw",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -4,
+              -58
+            ],
+            "shoulder": [
+              -5,
+              -44
+            ],
+            "hip": [
+              -3,
+              -27
+            ],
+            "far_knee": [
+              -14,
+              -14
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              9,
+              -14
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              1,
+              -41
+            ],
+            "support": [
+              -3,
+              -37
+            ],
+            "guard": [
+              5,
+              -41
+            ],
+            "weapon_tip": [
+              36,
+              -77
+            ],
+            "guard_point": [
+              6,
+              -42
+            ],
+            "near_elbow": [
+              0,
+              -48
+            ],
+            "far_elbow": [
+              -6,
+              -38
+            ]
+          },
+          "baseline_raster_sha256": "c1cdca1128c8b6b2fdb537929bb8165638f50042105cf75debd5342823544d3f"
+        },
+        {
+          "hand": [
+            2,
+            -43
+          ],
+          "support_hand": [
+            -3,
+            -39
+          ],
+          "guard": [
+            6,
+            -43
+          ],
+          "weapon_tip": [
+            40,
+            -79
+          ],
+          "guard_point": [
+            7,
+            -44
+          ],
+          "hit_window": false,
+          "name": "draw_03",
+          "state": "draw",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              -3,
+              -58
+            ],
+            "shoulder": [
+              -4,
+              -44
+            ],
+            "hip": [
+              -3,
+              -27
+            ],
+            "far_knee": [
+              -14,
+              -14
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              10,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              2,
+              -43
+            ],
+            "support": [
+              -3,
+              -39
+            ],
+            "guard": [
+              6,
+              -43
+            ],
+            "weapon_tip": [
+              40,
+              -79
+            ],
+            "guard_point": [
+              7,
+              -44
+            ],
+            "near_elbow": [
+              0,
+              -49
+            ],
+            "far_elbow": [
+              -6,
+              -39
+            ]
+          },
+          "baseline_raster_sha256": "5deaae75a6ab2e4e1e13e87fd12784d0c13c6b19e000274fa153f62cfe2a519c"
+        }
+      ]
+    },
+    "cut_a": {
+      "start": 18,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            6,
+            -44
+          ],
+          "support_hand": [
+            10,
+            -39
+          ],
+          "guard": [
+            3,
+            -48
+          ],
+          "weapon_tip": [
+            -28,
+            -87
+          ],
+          "guard_point": [
+            4,
+            -49
+          ],
+          "hit_window": false,
+          "name": "cut_a_00",
+          "state": "cut_a",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              -3,
+              -52
+            ],
+            "shoulder": [
+              -5,
+              -38
+            ],
+            "hip": [
+              -1,
+              -22
+            ],
+            "far_knee": [
+              -14,
+              -12
+            ],
+            "far_foot": [
+              -23,
+              -1
+            ],
+            "near_knee": [
+              13,
+              -13
+            ],
+            "near_foot": [
+              24,
+              -1
+            ],
+            "hand": [
+              6,
+              -44
+            ],
+            "support": [
+              10,
+              -39
+            ],
+            "guard": [
+              3,
+              -48
+            ],
+            "weapon_tip": [
+              -28,
+              -87
+            ],
+            "guard_point": [
+              4,
+              -49
+            ],
+            "near_elbow": [
+              8,
+              -40
+            ],
+            "far_elbow": [
+              -1,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "bbfea2bd1ecbd5aaa2da1494718a1111ad5e2acaef724504e1128e6b52aac573"
+        },
+        {
+          "hand": [
+            15,
+            -25
+          ],
+          "support_hand": [
+            8,
+            -25
+          ],
+          "guard": [
+            19,
+            -25
+          ],
+          "weapon_tip": [
+            75,
+            -27
+          ],
+          "guard_point": [
+            20,
+            -26
+          ],
+          "hit_window": true,
+          "name": "cut_a_01",
+          "state": "cut_a",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              12,
+              -51
+            ],
+            "shoulder": [
+              10,
+              -37
+            ],
+            "hip": [
+              2,
+              -22
+            ],
+            "far_knee": [
+              -14,
+              -10
+            ],
+            "far_foot": [
+              -26,
+              -1
+            ],
+            "near_knee": [
+              19,
+              -12
+            ],
+            "near_foot": [
+              32,
+              -1
+            ],
+            "hand": [
+              15,
+              -25
+            ],
+            "support": [
+              8,
+              -25
+            ],
+            "guard": [
+              19,
+              -25
+            ],
+            "weapon_tip": [
+              75,
+              -27
+            ],
+            "guard_point": [
+              20,
+              -26
+            ],
+            "near_elbow": [
+              18,
+              -31
+            ],
+            "far_elbow": [
+              1,
+              -29
+            ]
+          },
+          "baseline_raster_sha256": "203b07adff236a205a4c6caf196fa64bbb30abc3b96b8d9d78414442a32332ab"
+        },
+        {
+          "hand": [
+            15,
+            -32
+          ],
+          "support_hand": [
+            10,
+            -36
+          ],
+          "guard": [
+            18,
+            -29
+          ],
+          "weapon_tip": [
+            57,
+            5
+          ],
+          "guard_point": [
+            19,
+            -30
+          ],
+          "hit_window": true,
+          "name": "cut_a_02",
+          "state": "cut_a",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              13,
+              -43
+            ],
+            "shoulder": [
+              11,
+              -29
+            ],
+            "hip": [
+              3,
+              -17
+            ],
+            "far_knee": [
+              -13,
+              -8
+            ],
+            "far_foot": [
+              -23,
+              -1
+            ],
+            "near_knee": [
+              19,
+              -9
+            ],
+            "near_foot": [
+              32,
+              -1
+            ],
+            "hand": [
+              15,
+              -32
+            ],
+            "support": [
+              10,
+              -36
+            ],
+            "guard": [
+              18,
+              -29
+            ],
+            "weapon_tip": [
+              57,
+              5
+            ],
+            "guard_point": [
+              19,
+              -30
+            ],
+            "near_elbow": [
+              19,
+              -34
+            ],
+            "far_elbow": [
+              5,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "d6f891fb99c0f5daf90f329b56c3494ab3976e33a7b9019b2450696aed1135f1"
+        },
+        {
+          "hand": [
+            8,
+            -18
+          ],
+          "support_hand": [
+            3,
+            -21
+          ],
+          "guard": [
+            11,
+            -16
+          ],
+          "weapon_tip": [
+            42,
+            3
+          ],
+          "guard_point": [
+            12,
+            -17
+          ],
+          "hit_window": false,
+          "name": "cut_a_03",
+          "state": "cut_a",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              4,
+              -51
+            ],
+            "shoulder": [
+              2,
+              -37
+            ],
+            "hip": [
+              1,
+              -22
+            ],
+            "far_knee": [
+              -12,
+              -12
+            ],
+            "far_foot": [
+              -19,
+              -1
+            ],
+            "near_knee": [
+              13,
+              -12
+            ],
+            "near_foot": [
+              21,
+              -1
+            ],
+            "hand": [
+              8,
+              -18
+            ],
+            "support": [
+              3,
+              -21
+            ],
+            "guard": [
+              11,
+              -16
+            ],
+            "weapon_tip": [
+              42,
+              3
+            ],
+            "guard_point": [
+              12,
+              -17
+            ],
+            "near_elbow": [
+              10,
+              -27
+            ],
+            "far_elbow": [
+              -2,
+              -28
+            ]
+          },
+          "baseline_raster_sha256": "a443a369147a7097301fabfe889cc125527ded52091d9f7b149c7a42bf69bd4e"
+        }
+      ]
+    },
+    "cut_b": {
+      "start": 22,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            7,
+            -19
+          ],
+          "support_hand": [
+            2,
+            -22
+          ],
+          "guard": [
+            10,
+            -17
+          ],
+          "weapon_tip": [
+            47,
+            6
+          ],
+          "guard_point": [
+            11,
+            -18
+          ],
+          "hit_window": false,
+          "name": "cut_b_00",
+          "state": "cut_b",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -51
+            ],
+            "shoulder": [
+              -2,
+              -37
+            ],
+            "hip": [
+              0,
+              -22
+            ],
+            "far_knee": [
+              -14,
+              -12
+            ],
+            "far_foot": [
+              -21,
+              -1
+            ],
+            "near_knee": [
+              14,
+              -12
+            ],
+            "near_foot": [
+              24,
+              -1
+            ],
+            "hand": [
+              7,
+              -19
+            ],
+            "support": [
+              2,
+              -22
+            ],
+            "guard": [
+              10,
+              -17
+            ],
+            "weapon_tip": [
+              47,
+              6
+            ],
+            "guard_point": [
+              11,
+              -18
+            ],
+            "near_elbow": [
+              4,
+              -29
+            ],
+            "far_elbow": [
+              -4,
+              -29
+            ]
+          },
+          "baseline_raster_sha256": "88bf70a5388f83e367dd3218e50269da09d6739909cb73ca6f7f17fdfeef4f23"
+        },
+        {
+          "hand": [
+            12,
+            -20
+          ],
+          "support_hand": [
+            6,
+            -17
+          ],
+          "guard": [
+            16,
+            -22
+          ],
+          "weapon_tip": [
+            71,
+            -56
+          ],
+          "guard_point": [
+            17,
+            -23
+          ],
+          "hit_window": true,
+          "name": "cut_b_01",
+          "state": "cut_b",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              6,
+              -52
+            ],
+            "shoulder": [
+              4,
+              -38
+            ],
+            "hip": [
+              2,
+              -23
+            ],
+            "far_knee": [
+              -13,
+              -12
+            ],
+            "far_foot": [
+              -21,
+              -1
+            ],
+            "near_knee": [
+              16,
+              -13
+            ],
+            "near_foot": [
+              28,
+              -1
+            ],
+            "hand": [
+              12,
+              -20
+            ],
+            "support": [
+              6,
+              -17
+            ],
+            "guard": [
+              16,
+              -22
+            ],
+            "weapon_tip": [
+              71,
+              -56
+            ],
+            "guard_point": [
+              17,
+              -23
+            ],
+            "near_elbow": [
+              9,
+              -29
+            ],
+            "far_elbow": [
+              0,
+              -27
+            ]
+          },
+          "baseline_raster_sha256": "36c39835158be0df90cb09e3a69b6ee000197dc7b20180f5890bb29da85bee49"
+        },
+        {
+          "hand": [
+            9,
+            -32
+          ],
+          "support_hand": [
+            8,
+            -25
+          ],
+          "guard": [
+            10,
+            -36
+          ],
+          "weapon_tip": [
+            18,
+            -93
+          ],
+          "guard_point": [
+            11,
+            -37
+          ],
+          "hit_window": true,
+          "name": "cut_b_02",
+          "state": "cut_b",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              3,
+              -59
+            ],
+            "shoulder": [
+              1,
+              -45
+            ],
+            "hip": [
+              1,
+              -29
+            ],
+            "far_knee": [
+              -11,
+              -15
+            ],
+            "far_foot": [
+              -18,
+              -1
+            ],
+            "near_knee": [
+              11,
+              -16
+            ],
+            "near_foot": [
+              20,
+              -1
+            ],
+            "hand": [
+              9,
+              -32
+            ],
+            "support": [
+              8,
+              -25
+            ],
+            "guard": [
+              10,
+              -36
+            ],
+            "weapon_tip": [
+              18,
+              -93
+            ],
+            "guard_point": [
+              11,
+              -37
+            ],
+            "near_elbow": [
+              6,
+              -38
+            ],
+            "far_elbow": [
+              1,
+              -33
+            ]
+          },
+          "baseline_raster_sha256": "cfdfc74c8419852ba1282ae2a198b1a220f9374d0f7aa10084e17e083d48f444"
+        },
+        {
+          "hand": [
+            12,
+            -28
+          ],
+          "support_hand": [
+            6,
+            -24
+          ],
+          "guard": [
+            15,
+            -30
+          ],
+          "weapon_tip": [
+            63,
+            -59
+          ],
+          "guard_point": [
+            16,
+            -31
+          ],
+          "hit_window": false,
+          "name": "cut_b_03",
+          "state": "cut_b",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              1,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              0,
+              -30
+            ],
+            "far_knee": [
+              -10,
+              -16
+            ],
+            "far_foot": [
+              -15,
+              -1
+            ],
+            "near_knee": [
+              9,
+              -16
+            ],
+            "near_foot": [
+              14,
+              -1
+            ],
+            "hand": [
+              12,
+              -28
+            ],
+            "support": [
+              6,
+              -24
+            ],
+            "guard": [
+              15,
+              -30
+            ],
+            "weapon_tip": [
+              63,
+              -59
+            ],
+            "guard_point": [
+              16,
+              -31
+            ],
+            "near_elbow": [
+              7,
+              -37
+            ],
+            "far_elbow": [
+              -3,
+              -34
+            ]
+          },
+          "baseline_raster_sha256": "e7d0913ec6c9c6a4430c771a815f7fd4a9aeffca63d71ff326240c7a08d6dc09"
+        }
+      ]
+    },
+    "recover": {
+      "start": 26,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            12,
+            -23
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            16,
+            -23
+          ],
+          "weapon_tip": [
+            67,
+            -17
+          ],
+          "guard_point": [
+            17,
+            -24
+          ],
+          "hit_window": false,
+          "name": "recover_00",
+          "state": "recover",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              2,
+              -61
+            ],
+            "shoulder": [
+              1,
+              -47
+            ],
+            "hip": [
+              0,
+              -30
+            ],
+            "far_knee": [
+              -11,
+              -16
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              10,
+              -15
+            ],
+            "near_foot": [
+              17,
+              -1
+            ],
+            "hand": [
+              12,
+              -23
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              16,
+              -23
+            ],
+            "weapon_tip": [
+              67,
+              -17
+            ],
+            "guard_point": [
+              17,
+              -24
+            ],
+            "near_elbow": [
+              10,
+              -34
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "80a444d020473d24a899cd5700b164840c4c48de79fdb76507b2466ab9c3b22e"
+        },
+        {
+          "hand": [
+            9,
+            -27
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            13,
+            -27
+          ],
+          "weapon_tip": [
+            54,
+            -4
+          ],
+          "guard_point": [
+            14,
+            -28
+          ],
+          "hit_window": false,
+          "name": "recover_01",
+          "state": "recover",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -60
+            ],
+            "shoulder": [
+              -3,
+              -46
+            ],
+            "hip": [
+              -3,
+              -29
+            ],
+            "far_knee": [
+              -15,
+              -15
+            ],
+            "far_foot": [
+              -21,
+              -1
+            ],
+            "near_knee": [
+              6,
+              -16
+            ],
+            "near_foot": [
+              12,
+              -3
+            ],
+            "hand": [
+              9,
+              -27
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              13,
+              -27
+            ],
+            "weapon_tip": [
+              54,
+              -4
+            ],
+            "guard_point": [
+              14,
+              -28
+            ],
+            "near_elbow": [
+              6,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "5df5cabd4a24e9401ccea8f43119f87a84e1f650c23df272e36ce6cee59bb54d"
+        },
+        {
+          "hand": [
+            6,
+            -29
+          ],
+          "support_hand": [
+            -1,
+            -28
+          ],
+          "guard": [
+            10,
+            -29
+          ],
+          "weapon_tip": [
+            43,
+            -1
+          ],
+          "guard_point": [
+            11,
+            -30
+          ],
+          "hit_window": false,
+          "name": "recover_02",
+          "state": "recover",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -3,
+              -61
+            ],
+            "shoulder": [
+              -4,
+              -47
+            ],
+            "hip": [
+              -4,
+              -30
+            ],
+            "far_knee": [
+              -13,
+              -16
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              5,
+              -15
+            ],
+            "near_foot": [
+              9,
+              -1
+            ],
+            "hand": [
+              6,
+              -29
+            ],
+            "support": [
+              -1,
+              -28
+            ],
+            "guard": [
+              10,
+              -29
+            ],
+            "weapon_tip": [
+              43,
+              -1
+            ],
+            "guard_point": [
+              11,
+              -30
+            ],
+            "near_elbow": [
+              3,
+              -38
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "7867cbdf7a7d9c86d47de8a44b8bb23624e6209a74e1ed8a6cf2ef30426d2dd0"
+        },
+        {
+          "hand": [
+            11,
+            -27
+          ],
+          "support_hand": [
+            4,
+            -28
+          ],
+          "guard": [
+            15,
+            -27
+          ],
+          "weapon_tip": [
+            61,
+            -12
+          ],
+          "guard_point": [
+            16,
+            -28
+          ],
+          "hit_window": false,
+          "name": "recover_03",
+          "state": "recover",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              -1,
+              -61
+            ],
+            "shoulder": [
+              -2,
+              -47
+            ],
+            "hip": [
+              -2,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              11,
+              -27
+            ],
+            "support": [
+              4,
+              -28
+            ],
+            "guard": [
+              15,
+              -27
+            ],
+            "weapon_tip": [
+              61,
+              -12
+            ],
+            "guard_point": [
+              16,
+              -28
+            ],
+            "near_elbow": [
+              7,
+              -37
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "5f4b9e3b6b563ca127ec07ce4e0baf1bf8ba27c5ad4e8dd0c842766d59dfafd7"
+        }
+      ]
+    },
+    "cast": {
+      "start": 30,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            15,
+            -34
+          ],
+          "support_hand": [
+            3,
+            -39
+          ],
+          "guard": [
+            19,
+            -34
+          ],
+          "weapon_tip": [
+            65,
+            -11
+          ],
+          "guard_point": [
+            20,
+            -35
+          ],
+          "hit_window": false,
+          "name": "cast_00",
+          "state": "cast",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              15,
+              -34
+            ],
+            "support": [
+              3,
+              -39
+            ],
+            "guard": [
+              19,
+              -34
+            ],
+            "weapon_tip": [
+              65,
+              -11
+            ],
+            "guard_point": [
+              20,
+              -35
+            ],
+            "near_elbow": [
+              8,
+              -43
+            ],
+            "far_elbow": [
+              -5,
+              -44
+            ]
+          },
+          "baseline_raster_sha256": "6006de24f10aca2304238e2b3a0af266f46aa413a3681de8f73e497a91f21a9b"
+        },
+        {
+          "hand": [
+            14,
+            -37
+          ],
+          "support_hand": [
+            6,
+            -48
+          ],
+          "guard": [
+            18,
+            -37
+          ],
+          "weapon_tip": [
+            62,
+            -10
+          ],
+          "guard_point": [
+            19,
+            -38
+          ],
+          "hit_window": false,
+          "name": "cast_01",
+          "state": "cast",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              0,
+              -62
+            ],
+            "shoulder": [
+              -1,
+              -48
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              14,
+              -37
+            ],
+            "support": [
+              6,
+              -48
+            ],
+            "guard": [
+              18,
+              -37
+            ],
+            "weapon_tip": [
+              62,
+              -10
+            ],
+            "guard_point": [
+              19,
+              -38
+            ],
+            "near_elbow": [
+              8,
+              -44
+            ],
+            "far_elbow": [
+              -3,
+              -49
+            ]
+          },
+          "baseline_raster_sha256": "abd51661ce1f7339c1e5172122f23b9c3ce7133d121a1fc90b9806d4177d9bdb"
+        },
+        {
+          "hand": [
+            15,
+            -37
+          ],
+          "support_hand": [
+            10,
+            -50
+          ],
+          "guard": [
+            19,
+            -37
+          ],
+          "weapon_tip": [
+            63,
+            -10
+          ],
+          "guard_point": [
+            20,
+            -38
+          ],
+          "hit_window": false,
+          "name": "cast_02",
+          "state": "cast",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              1,
+              -62
+            ],
+            "shoulder": [
+              0,
+              -48
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              15,
+              -37
+            ],
+            "support": [
+              10,
+              -50
+            ],
+            "guard": [
+              19,
+              -37
+            ],
+            "weapon_tip": [
+              63,
+              -10
+            ],
+            "guard_point": [
+              20,
+              -38
+            ],
+            "near_elbow": [
+              9,
+              -44
+            ],
+            "far_elbow": [
+              -1,
+              -52
+            ]
+          },
+          "baseline_raster_sha256": "95a98b4e95cc9318ce84307b4d2b95ebbb538b413fd2bde78ea651eed208093c"
+        },
+        {
+          "hand": [
+            16,
+            -32
+          ],
+          "support_hand": [
+            8,
+            -42
+          ],
+          "guard": [
+            20,
+            -32
+          ],
+          "weapon_tip": [
+            66,
+            -10
+          ],
+          "guard_point": [
+            21,
+            -33
+          ],
+          "hit_window": false,
+          "name": "cast_03",
+          "state": "cast",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              1,
+              -61
+            ],
+            "shoulder": [
+              0,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              16,
+              -32
+            ],
+            "support": [
+              8,
+              -42
+            ],
+            "guard": [
+              20,
+              -32
+            ],
+            "weapon_tip": [
+              66,
+              -10
+            ],
+            "guard_point": [
+              21,
+              -33
+            ],
+            "near_elbow": [
+              10,
+              -40
+            ],
+            "far_elbow": [
+              -1,
+              -46
+            ]
+          },
+          "baseline_raster_sha256": "04d3a623781b07f343cf2a5a398cc3ef386e648c509c07a177d4d62f91ce5393"
+        }
+      ]
+    },
+    "parry_recoil": {
+      "start": 34,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            13,
+            -29
+          ],
+          "support_hand": [
+            6,
+            -30
+          ],
+          "guard": [
+            17,
+            -29
+          ],
+          "weapon_tip": [
+            57,
+            -55
+          ],
+          "guard_point": [
+            18,
+            -30
+          ],
+          "hit_window": false,
+          "name": "parry_recoil_00",
+          "state": "parry_recoil",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              -1,
+              -60
+            ],
+            "shoulder": [
+              -2,
+              -46
+            ],
+            "hip": [
+              -2,
+              -29
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              13,
+              -29
+            ],
+            "support": [
+              6,
+              -30
+            ],
+            "guard": [
+              17,
+              -29
+            ],
+            "weapon_tip": [
+              57,
+              -55
+            ],
+            "guard_point": [
+              18,
+              -30
+            ],
+            "near_elbow": [
+              7,
+              -39
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "9ca4e4217541ac68680278f0454b62995c85fdf937a37308cdbbd03541f248b7"
+        },
+        {
+          "hand": [
+            7,
+            -35
+          ],
+          "support_hand": [
+            0,
+            -34
+          ],
+          "guard": [
+            11,
+            -35
+          ],
+          "weapon_tip": [
+            39,
+            -73
+          ],
+          "guard_point": [
+            12,
+            -36
+          ],
+          "hit_window": false,
+          "name": "parry_recoil_01",
+          "state": "parry_recoil",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -4,
+              -58
+            ],
+            "shoulder": [
+              -5,
+              -44
+            ],
+            "hip": [
+              -4,
+              -27
+            ],
+            "far_knee": [
+              -13,
+              -14
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              7,
+              -14
+            ],
+            "near_foot": [
+              13,
+              -1
+            ],
+            "hand": [
+              7,
+              -35
+            ],
+            "support": [
+              0,
+              -34
+            ],
+            "guard": [
+              11,
+              -35
+            ],
+            "weapon_tip": [
+              39,
+              -73
+            ],
+            "guard_point": [
+              12,
+              -36
+            ],
+            "near_elbow": [
+              1,
+              -43
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "ec0181f111cc045bba74dc4262973e153cc5eecd39e4654ceb4f6b804ba85f2a"
+        },
+        {
+          "hand": [
+            2,
+            -36
+          ],
+          "support_hand": [
+            -4,
+            -35
+          ],
+          "guard": [
+            6,
+            -36
+          ],
+          "weapon_tip": [
+            27,
+            -78
+          ],
+          "guard_point": [
+            7,
+            -37
+          ],
+          "hit_window": false,
+          "name": "parry_recoil_02",
+          "state": "parry_recoil",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -7,
+              -56
+            ],
+            "shoulder": [
+              -8,
+              -42
+            ],
+            "hip": [
+              -6,
+              -26
+            ],
+            "far_knee": [
+              -16,
+              -13
+            ],
+            "far_foot": [
+              -21,
+              -1
+            ],
+            "near_knee": [
+              5,
+              -14
+            ],
+            "near_foot": [
+              11,
+              -1
+            ],
+            "hand": [
+              2,
+              -36
+            ],
+            "support": [
+              -4,
+              -35
+            ],
+            "guard": [
+              6,
+              -36
+            ],
+            "weapon_tip": [
+              27,
+              -78
+            ],
+            "guard_point": [
+              7,
+              -37
+            ],
+            "near_elbow": [
+              -3,
+              -43
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "e42c84b4fa273f5e0cbca4e281238e4da35001160752ae85a4b991342278b8e1"
+        },
+        {
+          "hand": [
+            5,
+            -32
+          ],
+          "support_hand": [
+            -1,
+            -33
+          ],
+          "guard": [
+            9,
+            -32
+          ],
+          "weapon_tip": [
+            42,
+            -68
+          ],
+          "guard_point": [
+            10,
+            -33
+          ],
+          "hit_window": false,
+          "name": "parry_recoil_03",
+          "state": "parry_recoil",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              -5,
+              -57
+            ],
+            "shoulder": [
+              -6,
+              -43
+            ],
+            "hip": [
+              -5,
+              -27
+            ],
+            "far_knee": [
+              -15,
+              -13
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              6,
+              -14
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              5,
+              -32
+            ],
+            "support": [
+              -1,
+              -33
+            ],
+            "guard": [
+              9,
+              -32
+            ],
+            "weapon_tip": [
+              42,
+              -68
+            ],
+            "guard_point": [
+              10,
+              -33
+            ],
+            "near_elbow": [
+              0,
+              -40
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "5f0a80b0eafb4a351dd6e1a51741cc4cd20c1ed2e779bdbe2fa601254fb4eaec"
+        }
+      ]
+    },
+    "parry_recover": {
+      "start": 38,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            5,
+            -32
+          ],
+          "support_hand": [
+            -1,
+            -33
+          ],
+          "guard": [
+            9,
+            -32
+          ],
+          "weapon_tip": [
+            42,
+            -68
+          ],
+          "guard_point": [
+            10,
+            -33
+          ],
+          "hit_window": false,
+          "name": "parry_recover_00",
+          "state": "parry_recover",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              -5,
+              -57
+            ],
+            "shoulder": [
+              -6,
+              -43
+            ],
+            "hip": [
+              -5,
+              -27
+            ],
+            "far_knee": [
+              -15,
+              -13
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              6,
+              -14
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              5,
+              -32
+            ],
+            "support": [
+              -1,
+              -33
+            ],
+            "guard": [
+              9,
+              -32
+            ],
+            "weapon_tip": [
+              42,
+              -68
+            ],
+            "guard_point": [
+              10,
+              -33
+            ],
+            "near_elbow": [
+              0,
+              -40
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "5f0a80b0eafb4a351dd6e1a51741cc4cd20c1ed2e779bdbe2fa601254fb4eaec"
+        },
+        {
+          "hand": [
+            7,
+            -35
+          ],
+          "support_hand": [
+            0,
+            -34
+          ],
+          "guard": [
+            11,
+            -35
+          ],
+          "weapon_tip": [
+            39,
+            -73
+          ],
+          "guard_point": [
+            12,
+            -36
+          ],
+          "hit_window": false,
+          "name": "parry_recover_01",
+          "state": "parry_recover",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -4,
+              -58
+            ],
+            "shoulder": [
+              -5,
+              -44
+            ],
+            "hip": [
+              -4,
+              -27
+            ],
+            "far_knee": [
+              -13,
+              -14
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              7,
+              -14
+            ],
+            "near_foot": [
+              13,
+              -1
+            ],
+            "hand": [
+              7,
+              -35
+            ],
+            "support": [
+              0,
+              -34
+            ],
+            "guard": [
+              11,
+              -35
+            ],
+            "weapon_tip": [
+              39,
+              -73
+            ],
+            "guard_point": [
+              12,
+              -36
+            ],
+            "near_elbow": [
+              1,
+              -43
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "ec0181f111cc045bba74dc4262973e153cc5eecd39e4654ceb4f6b804ba85f2a"
+        },
+        {
+          "hand": [
+            12,
+            -28
+          ],
+          "support_hand": [
+            5,
+            -29
+          ],
+          "guard": [
+            16,
+            -28
+          ],
+          "weapon_tip": [
+            62,
+            -44
+          ],
+          "guard_point": [
+            17,
+            -29
+          ],
+          "hit_window": false,
+          "name": "parry_recover_02",
+          "state": "parry_recover",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -60
+            ],
+            "shoulder": [
+              -3,
+              -46
+            ],
+            "hip": [
+              -3,
+              -29
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              12,
+              -28
+            ],
+            "support": [
+              5,
+              -29
+            ],
+            "guard": [
+              16,
+              -28
+            ],
+            "weapon_tip": [
+              62,
+              -44
+            ],
+            "guard_point": [
+              17,
+              -29
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "133eabee92f589ad835c8318c9cf72c2cdd56f0e28364d84c9a07dc468b6ec1b"
+        },
+        {
+          "hand": [
+            16,
+            -25
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            20,
+            -25
+          ],
+          "weapon_tip": [
+            73,
+            -22
+          ],
+          "guard_point": [
+            21,
+            -26
+          ],
+          "hit_window": false,
+          "name": "parry_recover_03",
+          "state": "parry_recover",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              16,
+              -25
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              20,
+              -25
+            ],
+            "weapon_tip": [
+              73,
+              -22
+            ],
+            "guard_point": [
+              21,
+              -26
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "a5878ac6a1ea356d31436921b613af67a9b65d19c3c274db32fec6adc5595b5a"
+        }
+      ]
+    },
+    "armored_recoil": {
+      "start": 42,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            13,
+            -29
+          ],
+          "support_hand": [
+            6,
+            -30
+          ],
+          "guard": [
+            17,
+            -29
+          ],
+          "weapon_tip": [
+            56,
+            -55
+          ],
+          "guard_point": [
+            18,
+            -30
+          ],
+          "hit_window": false,
+          "name": "armored_recoil_00",
+          "state": "armored_recoil",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              13,
+              -29
+            ],
+            "support": [
+              6,
+              -30
+            ],
+            "guard": [
+              17,
+              -29
+            ],
+            "weapon_tip": [
+              56,
+              -55
+            ],
+            "guard_point": [
+              18,
+              -30
+            ],
+            "near_elbow": [
+              7,
+              -39
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "ee4418b8a4898b779b497cb9540506fa0691d7fb00a69ad050cd4a317201a054"
+        },
+        {
+          "hand": [
+            9,
+            -34
+          ],
+          "support_hand": [
+            2,
+            -34
+          ],
+          "guard": [
+            13,
+            -34
+          ],
+          "weapon_tip": [
+            44,
+            -73
+          ],
+          "guard_point": [
+            14,
+            -35
+          ],
+          "hit_window": false,
+          "name": "armored_recoil_01",
+          "state": "armored_recoil",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -1,
+              -60
+            ],
+            "shoulder": [
+              -2,
+              -46
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              9,
+              -34
+            ],
+            "support": [
+              2,
+              -34
+            ],
+            "guard": [
+              13,
+              -34
+            ],
+            "weapon_tip": [
+              44,
+              -73
+            ],
+            "guard_point": [
+              14,
+              -35
+            ],
+            "near_elbow": [
+              3,
+              -42
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "fd1c1314869f5715237dc6a6e806ca180bff8caec4539fdf48a670ba10eab0c8"
+        },
+        {
+          "hand": [
+            11,
+            -32
+          ],
+          "support_hand": [
+            4,
+            -32
+          ],
+          "guard": [
+            15,
+            -32
+          ],
+          "weapon_tip": [
+            50,
+            -68
+          ],
+          "guard_point": [
+            16,
+            -33
+          ],
+          "hit_window": false,
+          "name": "armored_recoil_02",
+          "state": "armored_recoil",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -1,
+              -61
+            ],
+            "shoulder": [
+              -2,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              11,
+              -32
+            ],
+            "support": [
+              4,
+              -32
+            ],
+            "guard": [
+              15,
+              -32
+            ],
+            "weapon_tip": [
+              50,
+              -68
+            ],
+            "guard_point": [
+              16,
+              -33
+            ],
+            "near_elbow": [
+              5,
+              -41
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "387d83696d8cd885d32718ccb7a77500e2374320948ab9d43ecd9b5a5ec01f59"
+        },
+        {
+          "hand": [
+            15,
+            -27
+          ],
+          "support_hand": [
+            8,
+            -28
+          ],
+          "guard": [
+            19,
+            -27
+          ],
+          "weapon_tip": [
+            66,
+            -44
+          ],
+          "guard_point": [
+            20,
+            -28
+          ],
+          "hit_window": false,
+          "name": "armored_recoil_03",
+          "state": "armored_recoil",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              15,
+              -27
+            ],
+            "support": [
+              8,
+              -28
+            ],
+            "guard": [
+              19,
+              -27
+            ],
+            "weapon_tip": [
+              66,
+              -44
+            ],
+            "guard_point": [
+              20,
+              -28
+            ],
+            "near_elbow": [
+              9,
+              -37
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "bc0064b0e7d260f9e81ba11e7035e2033fd4cf2dc4c241187bf8aa7dc5b137c5"
+        }
+      ]
+    },
+    "guard_break": {
+      "start": 46,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            13,
+            -21
+          ],
+          "support_hand": [
+            5,
+            -22
+          ],
+          "guard": [
+            17,
+            -21
+          ],
+          "weapon_tip": [
+            69,
+            -11
+          ],
+          "guard_point": [
+            18,
+            -22
+          ],
+          "hit_window": false,
+          "name": "guard_break_00",
+          "state": "guard_break",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -55
+            ],
+            "shoulder": [
+              -3,
+              -41
+            ],
+            "hip": [
+              -3,
+              -25
+            ],
+            "far_knee": [
+              -14,
+              -11
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              9,
+              -11
+            ],
+            "near_foot": [
+              16,
+              -1
+            ],
+            "hand": [
+              13,
+              -21
+            ],
+            "support": [
+              5,
+              -22
+            ],
+            "guard": [
+              17,
+              -21
+            ],
+            "weapon_tip": [
+              69,
+              -11
+            ],
+            "guard_point": [
+              18,
+              -22
+            ],
+            "near_elbow": [
+              6,
+              -31
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "dadc8e6ad2a17dff24fed00440f73abaa2d1d5af48bfab206ab6013257c59ba4"
+        },
+        {
+          "hand": [
+            13,
+            -13
+          ],
+          "support_hand": [
+            5,
+            -14
+          ],
+          "guard": [
+            17,
+            -13
+          ],
+          "weapon_tip": [
+            68,
+            -5
+          ],
+          "guard_point": [
+            18,
+            -14
+          ],
+          "hit_window": false,
+          "name": "guard_break_01",
+          "state": "guard_break",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -46
+            ],
+            "shoulder": [
+              -3,
+              -32
+            ],
+            "hip": [
+              -4,
+              -18
+            ],
+            "far_knee": [
+              -16,
+              -5
+            ],
+            "far_foot": [
+              -19,
+              -1
+            ],
+            "near_knee": [
+              11,
+              -4
+            ],
+            "near_foot": [
+              17,
+              -1
+            ],
+            "hand": [
+              13,
+              -13
+            ],
+            "support": [
+              5,
+              -14
+            ],
+            "guard": [
+              17,
+              -13
+            ],
+            "weapon_tip": [
+              68,
+              -5
+            ],
+            "guard_point": [
+              18,
+              -14
+            ],
+            "near_elbow": [
+              7,
+              -22
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "aad26525d2f06616781916b123164d1797ea1defd04aa215af6dda40f6cc99fb"
+        },
+        {
+          "hand": [
+            14,
+            -6
+          ],
+          "support_hand": [
+            6,
+            -8
+          ],
+          "guard": [
+            18,
+            -6
+          ],
+          "weapon_tip": [
+            69,
+            -1
+          ],
+          "guard_point": [
+            19,
+            -7
+          ],
+          "hit_window": false,
+          "name": "guard_break_02",
+          "state": "guard_break",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              0,
+              -36
+            ],
+            "shoulder": [
+              -1,
+              -22
+            ],
+            "hip": [
+              -4,
+              -12
+            ],
+            "far_knee": [
+              -16,
+              -3
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              12,
+              -2
+            ],
+            "near_foot": [
+              19,
+              -1
+            ],
+            "hand": [
+              14,
+              -6
+            ],
+            "support": [
+              6,
+              -8
+            ],
+            "guard": [
+              18,
+              -6
+            ],
+            "weapon_tip": [
+              69,
+              -1
+            ],
+            "guard_point": [
+              19,
+              -7
+            ],
+            "near_elbow": [
+              8,
+              -14
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "c517151385a6c015596bfbecc9499d153ff1250ff449ea1c2d44ef831b458ad9"
+        },
+        {
+          "hand": [
+            14,
+            -4
+          ],
+          "support_hand": [
+            7,
+            -6
+          ],
+          "guard": [
+            18,
+            -4
+          ],
+          "weapon_tip": [
+            70,
+            -1
+          ],
+          "guard_point": [
+            19,
+            -5
+          ],
+          "hit_window": false,
+          "name": "guard_break_03",
+          "state": "guard_break",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              2,
+              -32
+            ],
+            "shoulder": [
+              1,
+              -18
+            ],
+            "hip": [
+              -4,
+              -10
+            ],
+            "far_knee": [
+              -16,
+              -3
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              13,
+              -2
+            ],
+            "near_foot": [
+              20,
+              -1
+            ],
+            "hand": [
+              14,
+              -4
+            ],
+            "support": [
+              7,
+              -6
+            ],
+            "guard": [
+              18,
+              -4
+            ],
+            "weapon_tip": [
+              70,
+              -1
+            ],
+            "guard_point": [
+              19,
+              -5
+            ],
+            "near_elbow": [
+              9,
+              -11
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "b6d692e216678ef4faf6468fa128db8e2ea201e25006a650d00d96a6f2d775cf"
+        }
+      ]
+    },
+    "guard_recover": {
+      "start": 50,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            14,
+            -4
+          ],
+          "support_hand": [
+            7,
+            -6
+          ],
+          "guard": [
+            18,
+            -4
+          ],
+          "weapon_tip": [
+            70,
+            -1
+          ],
+          "guard_point": [
+            19,
+            -5
+          ],
+          "hit_window": false,
+          "name": "guard_recover_00",
+          "state": "guard_recover",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              2,
+              -32
+            ],
+            "shoulder": [
+              1,
+              -18
+            ],
+            "hip": [
+              -4,
+              -10
+            ],
+            "far_knee": [
+              -16,
+              -3
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              13,
+              -2
+            ],
+            "near_foot": [
+              20,
+              -1
+            ],
+            "hand": [
+              14,
+              -4
+            ],
+            "support": [
+              7,
+              -6
+            ],
+            "guard": [
+              18,
+              -4
+            ],
+            "weapon_tip": [
+              70,
+              -1
+            ],
+            "guard_point": [
+              19,
+              -5
+            ],
+            "near_elbow": [
+              9,
+              -11
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "b6d692e216678ef4faf6468fa128db8e2ea201e25006a650d00d96a6f2d775cf"
+        },
+        {
+          "hand": [
+            13,
+            -13
+          ],
+          "support_hand": [
+            5,
+            -14
+          ],
+          "guard": [
+            17,
+            -13
+          ],
+          "weapon_tip": [
+            68,
+            -5
+          ],
+          "guard_point": [
+            18,
+            -14
+          ],
+          "hit_window": false,
+          "name": "guard_recover_01",
+          "state": "guard_recover",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -46
+            ],
+            "shoulder": [
+              -3,
+              -32
+            ],
+            "hip": [
+              -4,
+              -18
+            ],
+            "far_knee": [
+              -16,
+              -5
+            ],
+            "far_foot": [
+              -19,
+              -1
+            ],
+            "near_knee": [
+              11,
+              -4
+            ],
+            "near_foot": [
+              17,
+              -1
+            ],
+            "hand": [
+              13,
+              -13
+            ],
+            "support": [
+              5,
+              -14
+            ],
+            "guard": [
+              17,
+              -13
+            ],
+            "weapon_tip": [
+              68,
+              -5
+            ],
+            "guard_point": [
+              18,
+              -14
+            ],
+            "near_elbow": [
+              7,
+              -22
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "aad26525d2f06616781916b123164d1797ea1defd04aa215af6dda40f6cc99fb"
+        },
+        {
+          "hand": [
+            13,
+            -21
+          ],
+          "support_hand": [
+            5,
+            -22
+          ],
+          "guard": [
+            17,
+            -21
+          ],
+          "weapon_tip": [
+            69,
+            -11
+          ],
+          "guard_point": [
+            18,
+            -22
+          ],
+          "hit_window": false,
+          "name": "guard_recover_02",
+          "state": "guard_recover",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -55
+            ],
+            "shoulder": [
+              -3,
+              -41
+            ],
+            "hip": [
+              -3,
+              -25
+            ],
+            "far_knee": [
+              -14,
+              -11
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              9,
+              -11
+            ],
+            "near_foot": [
+              16,
+              -1
+            ],
+            "hand": [
+              13,
+              -21
+            ],
+            "support": [
+              5,
+              -22
+            ],
+            "guard": [
+              17,
+              -21
+            ],
+            "weapon_tip": [
+              69,
+              -11
+            ],
+            "guard_point": [
+              18,
+              -22
+            ],
+            "near_elbow": [
+              6,
+              -31
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "dadc8e6ad2a17dff24fed00440f73abaa2d1d5af48bfab206ab6013257c59ba4"
+        },
+        {
+          "hand": [
+            15,
+            -24
+          ],
+          "support_hand": [
+            9,
+            -27
+          ],
+          "guard": [
+            19,
+            -24
+          ],
+          "weapon_tip": [
+            72,
+            -19
+          ],
+          "guard_point": [
+            20,
+            -25
+          ],
+          "hit_window": false,
+          "name": "guard_recover_03",
+          "state": "guard_recover",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              15,
+              -24
+            ],
+            "support": [
+              9,
+              -27
+            ],
+            "guard": [
+              19,
+              -24
+            ],
+            "weapon_tip": [
+              72,
+              -19
+            ],
+            "guard_point": [
+              20,
+              -25
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "b4098b8be4ea8c521781398b41632477c5dc4c146bb7fac830cb11f19331ce4a"
+        }
+      ]
+    },
+    "hurt": {
+      "start": 54,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            10,
+            -22
+          ],
+          "support_hand": [
+            3,
+            -24
+          ],
+          "guard": [
+            14,
+            -22
+          ],
+          "weapon_tip": [
+            63,
+            -9
+          ],
+          "guard_point": [
+            15,
+            -23
+          ],
+          "hit_window": false,
+          "name": "hurt_00",
+          "state": "hurt",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              -3,
+              -59
+            ],
+            "shoulder": [
+              -4,
+              -45
+            ],
+            "hip": [
+              -3,
+              -28
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              10,
+              -22
+            ],
+            "support": [
+              3,
+              -24
+            ],
+            "guard": [
+              14,
+              -22
+            ],
+            "weapon_tip": [
+              63,
+              -9
+            ],
+            "guard_point": [
+              15,
+              -23
+            ],
+            "near_elbow": [
+              5,
+              -33
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "2ef6c157071dbdccf9f88ae7cc4e544ce8a75d7061390fbf560ad337d09e68bb"
+        },
+        {
+          "hand": [
+            5,
+            -18
+          ],
+          "support_hand": [
+            -1,
+            -22
+          ],
+          "guard": [
+            9,
+            -18
+          ],
+          "weapon_tip": [
+            57,
+            -1
+          ],
+          "guard_point": [
+            10,
+            -19
+          ],
+          "hit_window": false,
+          "name": "hurt_01",
+          "state": "hurt",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -7,
+              -56
+            ],
+            "shoulder": [
+              -8,
+              -42
+            ],
+            "hip": [
+              -5,
+              -26
+            ],
+            "far_knee": [
+              -15,
+              -13
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              7,
+              -13
+            ],
+            "near_foot": [
+              14,
+              -1
+            ],
+            "hand": [
+              5,
+              -18
+            ],
+            "support": [
+              -1,
+              -22
+            ],
+            "guard": [
+              9,
+              -18
+            ],
+            "weapon_tip": [
+              57,
+              -1
+            ],
+            "guard_point": [
+              10,
+              -19
+            ],
+            "near_elbow": [
+              0,
+              -30
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "a7cfe7a87eaf40c6a167b3b215c5367729dce6ead805e0e9a090cf89dfe919f5"
+        },
+        {
+          "hand": [
+            7,
+            -20
+          ],
+          "support_hand": [
+            1,
+            -23
+          ],
+          "guard": [
+            11,
+            -20
+          ],
+          "weapon_tip": [
+            61,
+            -5
+          ],
+          "guard_point": [
+            12,
+            -21
+          ],
+          "hit_window": false,
+          "name": "hurt_02",
+          "state": "hurt",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -5,
+              -57
+            ],
+            "shoulder": [
+              -6,
+              -43
+            ],
+            "hip": [
+              -4,
+              -27
+            ],
+            "far_knee": [
+              -13,
+              -14
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              7,
+              -20
+            ],
+            "support": [
+              1,
+              -23
+            ],
+            "guard": [
+              11,
+              -20
+            ],
+            "weapon_tip": [
+              61,
+              -5
+            ],
+            "guard_point": [
+              12,
+              -21
+            ],
+            "near_elbow": [
+              2,
+              -32
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "547c4b91cb03ab729733e6d8962aea2435228f6692482bb5a43f4cf67c215a5f"
+        },
+        {
+          "hand": [
+            13,
+            -23
+          ],
+          "support_hand": [
+            6,
+            -25
+          ],
+          "guard": [
+            17,
+            -23
+          ],
+          "weapon_tip": [
+            69,
+            -16
+          ],
+          "guard_point": [
+            18,
+            -24
+          ],
+          "hit_window": false,
+          "name": "hurt_03",
+          "state": "hurt",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              -2,
+              -60
+            ],
+            "shoulder": [
+              -3,
+              -46
+            ],
+            "hip": [
+              -2,
+              -29
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              13,
+              -23
+            ],
+            "support": [
+              6,
+              -25
+            ],
+            "guard": [
+              17,
+              -23
+            ],
+            "weapon_tip": [
+              69,
+              -16
+            ],
+            "guard_point": [
+              18,
+              -24
+            ],
+            "near_elbow": [
+              8,
+              -35
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "d8e4fba6e0bd0afce0ef614d7eab30ea58fb058d8c7cf60b1b0e582a2f46fc6c"
+        }
+      ]
+    },
+    "dead": {
+      "start": 58,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            14,
+            -6
+          ],
+          "support_hand": [
+            6,
+            -8
+          ],
+          "guard": [
+            18,
+            -6
+          ],
+          "weapon_tip": [
+            69,
+            -1
+          ],
+          "guard_point": [
+            19,
+            -7
+          ],
+          "hit_window": false,
+          "name": "dead_00",
+          "state": "dead",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -36
+            ],
+            "shoulder": [
+              -1,
+              -22
+            ],
+            "hip": [
+              -4,
+              -12
+            ],
+            "far_knee": [
+              -16,
+              -3
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              12,
+              -2
+            ],
+            "near_foot": [
+              19,
+              -1
+            ],
+            "hand": [
+              14,
+              -6
+            ],
+            "support": [
+              6,
+              -8
+            ],
+            "guard": [
+              18,
+              -6
+            ],
+            "weapon_tip": [
+              69,
+              -1
+            ],
+            "guard_point": [
+              19,
+              -7
+            ],
+            "near_elbow": [
+              8,
+              -14
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "c517151385a6c015596bfbecc9499d153ff1250ff449ea1c2d44ef831b458ad9"
+        },
+        {
+          "hand": [
+            38,
+            -4
+          ],
+          "support_hand": [
+            29,
+            -4
+          ],
+          "guard": [
+            42,
+            -4
+          ],
+          "weapon_tip": [
+            75,
+            -2
+          ],
+          "guard_point": [
+            43,
+            -5
+          ],
+          "hit_window": false,
+          "name": "dead_01",
+          "state": "dead",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              21,
+              -16
+            ],
+            "shoulder": [
+              15,
+              -9
+            ],
+            "hip": [
+              -5,
+              -6
+            ],
+            "far_knee": [
+              -17,
+              -4
+            ],
+            "far_foot": [
+              -27,
+              -1
+            ],
+            "near_knee": [
+              -8,
+              -3
+            ],
+            "near_foot": [
+              -20,
+              -1
+            ],
+            "hand": [
+              38,
+              -4
+            ],
+            "support": [
+              29,
+              -4
+            ],
+            "guard": [
+              42,
+              -4
+            ],
+            "weapon_tip": [
+              75,
+              -2
+            ],
+            "guard_point": [
+              43,
+              -5
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "9a8ae50d7230f8993d867a6e3622675525c9a66aeef1619f231ad4088563e4ee"
+        },
+        {
+          "hand": [
+            41,
+            -3
+          ],
+          "support_hand": [
+            31,
+            -2
+          ],
+          "guard": [
+            45,
+            -3
+          ],
+          "weapon_tip": [
+            75,
+            -1
+          ],
+          "guard_point": [
+            46,
+            -4
+          ],
+          "hit_window": false,
+          "name": "dead_02",
+          "state": "dead",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              26,
+              -11
+            ],
+            "shoulder": [
+              16,
+              -6
+            ],
+            "hip": [
+              -5,
+              -5
+            ],
+            "far_knee": [
+              -18,
+              -3
+            ],
+            "far_foot": [
+              -28,
+              -1
+            ],
+            "near_knee": [
+              -9,
+              -2
+            ],
+            "near_foot": [
+              -21,
+              -1
+            ],
+            "hand": [
+              41,
+              -3
+            ],
+            "support": [
+              31,
+              -2
+            ],
+            "guard": [
+              45,
+              -3
+            ],
+            "weapon_tip": [
+              75,
+              -1
+            ],
+            "guard_point": [
+              46,
+              -4
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "4004ac8f3f6b2f591d3094ebd4b6f57f0fd8af3a40fe1d2c0f35ec815f6a9ae5"
+        },
+        {
+          "hand": [
+            42,
+            -2
+          ],
+          "support_hand": [
+            31,
+            -1
+          ],
+          "guard": [
+            46,
+            -2
+          ],
+          "weapon_tip": [
+            75,
+            -1
+          ],
+          "guard_point": [
+            47,
+            -3
+          ],
+          "hit_window": false,
+          "name": "dead_03",
+          "state": "dead",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              27,
+              -9
+            ],
+            "shoulder": [
+              16,
+              -5
+            ],
+            "hip": [
+              -5,
+              -4
+            ],
+            "far_knee": [
+              -19,
+              -2
+            ],
+            "far_foot": [
+              -29,
+              -1
+            ],
+            "near_knee": [
+              -10,
+              -2
+            ],
+            "near_foot": [
+              -22,
+              -1
+            ],
+            "hand": [
+              42,
+              -2
+            ],
+            "support": [
+              31,
+              -1
+            ],
+            "guard": [
+              46,
+              -2
+            ],
+            "weapon_tip": [
+              75,
+              -1
+            ],
+            "guard_point": [
+              47,
+              -3
+            ],
+            "near_elbow": [
+              10,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "12ecd3a9d195c7654af78da86ad2fc4f67ad0e19d57985b6fa26174e412f973f"
+        }
+      ]
+    },
+    "retreat": {
+      "start": 62,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            10,
+            -22
+          ],
+          "support_hand": [
+            3,
+            -24
+          ],
+          "guard": [
+            14,
+            -22
+          ],
+          "weapon_tip": [
+            66,
+            -10
+          ],
+          "guard_point": [
+            15,
+            -23
+          ],
+          "hit_window": false,
+          "name": "retreat_00",
+          "state": "retreat",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              2,
+              -57
+            ],
+            "shoulder": [
+              0,
+              -43
+            ],
+            "hip": [
+              0,
+              -26
+            ],
+            "far_knee": [
+              -13,
+              -14
+            ],
+            "far_foot": [
+              -19,
+              -1
+            ],
+            "near_knee": [
+              12,
+              -14
+            ],
+            "near_foot": [
+              20,
+              -1
+            ],
+            "hand": [
+              10,
+              -22
+            ],
+            "support": [
+              3,
+              -24
+            ],
+            "guard": [
+              14,
+              -22
+            ],
+            "weapon_tip": [
+              66,
+              -10
+            ],
+            "guard_point": [
+              15,
+              -23
+            ],
+            "near_elbow": [
+              7,
+              -33
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "693ec939d7192809f3b836b9138306f9873bb7d4d16a959ae60a04f2fe5836e8"
+        },
+        {
+          "hand": [
+            6,
+            -29
+          ],
+          "support_hand": [
+            0,
+            -29
+          ],
+          "guard": [
+            10,
+            -29
+          ],
+          "weapon_tip": [
+            58,
+            -50
+          ],
+          "guard_point": [
+            11,
+            -30
+          ],
+          "hit_window": false,
+          "name": "retreat_01",
+          "state": "retreat",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              -5,
+              -60
+            ],
+            "shoulder": [
+              -7,
+              -46
+            ],
+            "hip": [
+              -5,
+              -29
+            ],
+            "far_knee": [
+              -18,
+              -15
+            ],
+            "far_foot": [
+              -26,
+              -1
+            ],
+            "near_knee": [
+              3,
+              -17
+            ],
+            "near_foot": [
+              12,
+              -7
+            ],
+            "hand": [
+              6,
+              -29
+            ],
+            "support": [
+              0,
+              -29
+            ],
+            "guard": [
+              10,
+              -29
+            ],
+            "weapon_tip": [
+              58,
+              -50
+            ],
+            "guard_point": [
+              11,
+              -30
+            ],
+            "near_elbow": [
+              0,
+              -39
+            ],
+            "far_elbow": [
+              -9,
+              -37
+            ]
+          },
+          "baseline_raster_sha256": "53983b5fafea7ae99ee39f9f5fd7437cceaa18b90832dc5206cd1a1ea44f92a7"
+        },
+        {
+          "hand": [
+            5,
+            -33
+          ],
+          "support_hand": [
+            -2,
+            -32
+          ],
+          "guard": [
+            9,
+            -33
+          ],
+          "weapon_tip": [
+            53,
+            -63
+          ],
+          "guard_point": [
+            10,
+            -34
+          ],
+          "hit_window": false,
+          "name": "retreat_02",
+          "state": "retreat",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              -9,
+              -61
+            ],
+            "shoulder": [
+              -10,
+              -47
+            ],
+            "hip": [
+              -8,
+              -30
+            ],
+            "far_knee": [
+              -19,
+              -17
+            ],
+            "far_foot": [
+              -26,
+              -4
+            ],
+            "near_knee": [
+              -1,
+              -14
+            ],
+            "near_foot": [
+              7,
+              -1
+            ],
+            "hand": [
+              5,
+              -33
+            ],
+            "support": [
+              -2,
+              -32
+            ],
+            "guard": [
+              9,
+              -33
+            ],
+            "weapon_tip": [
+              53,
+              -63
+            ],
+            "guard_point": [
+              10,
+              -34
+            ],
+            "near_elbow": [
+              -1,
+              -41
+            ],
+            "far_elbow": [
+              -12,
+              -38
+            ]
+          },
+          "baseline_raster_sha256": "695419b36fe588256697f61716c51116e10d8a29bf004f2846a32be2304eacde"
+        },
+        {
+          "hand": [
+            12,
+            -27
+          ],
+          "support_hand": [
+            5,
+            -28
+          ],
+          "guard": [
+            16,
+            -27
+          ],
+          "weapon_tip": [
+            67,
+            -30
+          ],
+          "guard_point": [
+            17,
+            -28
+          ],
+          "hit_window": false,
+          "name": "retreat_03",
+          "state": "retreat",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              -3,
+              -61
+            ],
+            "shoulder": [
+              -4,
+              -47
+            ],
+            "hip": [
+              -4,
+              -30
+            ],
+            "far_knee": [
+              -15,
+              -16
+            ],
+            "far_foot": [
+              -19,
+              -1
+            ],
+            "near_knee": [
+              4,
+              -15
+            ],
+            "near_foot": [
+              10,
+              -1
+            ],
+            "hand": [
+              12,
+              -27
+            ],
+            "support": [
+              5,
+              -28
+            ],
+            "guard": [
+              16,
+              -27
+            ],
+            "weapon_tip": [
+              67,
+              -30
+            ],
+            "guard_point": [
+              17,
+              -28
+            ],
+            "near_elbow": [
+              5,
+              -37
+            ],
+            "far_elbow": [
+              -6,
+              -36
+            ]
+          },
+          "baseline_raster_sha256": "814cfe117aace12e3de59183062c72dd20b956969593e3d3d331ff86e86042c9"
+        }
+      ]
+    },
+    "jump": {
+      "start": 66,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            10,
+            -26
+          ],
+          "support_hand": [
+            3,
+            -27
+          ],
+          "guard": [
+            14,
+            -26
+          ],
+          "weapon_tip": [
+            62,
+            -44
+          ],
+          "guard_point": [
+            15,
+            -27
+          ],
+          "hit_window": false,
+          "name": "jump_00",
+          "state": "jump",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -50
+            ],
+            "shoulder": [
+              -1,
+              -36
+            ],
+            "hip": [
+              -2,
+              -20
+            ],
+            "far_knee": [
+              -14,
+              -10
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              12,
+              -11
+            ],
+            "near_foot": [
+              19,
+              -1
+            ],
+            "hand": [
+              10,
+              -26
+            ],
+            "support": [
+              3,
+              -27
+            ],
+            "guard": [
+              14,
+              -26
+            ],
+            "weapon_tip": [
+              62,
+              -44
+            ],
+            "guard_point": [
+              15,
+              -27
+            ],
+            "near_elbow": [
+              7,
+              -32
+            ],
+            "far_elbow": [
+              -4,
+              -29
+            ]
+          },
+          "baseline_raster_sha256": "510389f543595f179d18cd8211c426f491139157dcc9ad83cf27407ba25fdb8f"
+        },
+        {
+          "hand": [
+            11,
+            -36
+          ],
+          "support_hand": [
+            4,
+            -36
+          ],
+          "guard": [
+            15,
+            -36
+          ],
+          "weapon_tip": [
+            57,
+            -75
+          ],
+          "guard_point": [
+            16,
+            -37
+          ],
+          "hit_window": false,
+          "name": "jump_01",
+          "state": "jump",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              3,
+              -62
+            ],
+            "shoulder": [
+              2,
+              -48
+            ],
+            "hip": [
+              -1,
+              -31
+            ],
+            "far_knee": [
+              -10,
+              -23
+            ],
+            "far_foot": [
+              -17,
+              -17
+            ],
+            "near_knee": [
+              11,
+              -28
+            ],
+            "near_foot": [
+              13,
+              -20
+            ],
+            "hand": [
+              11,
+              -36
+            ],
+            "support": [
+              4,
+              -36
+            ],
+            "guard": [
+              15,
+              -36
+            ],
+            "weapon_tip": [
+              57,
+              -75
+            ],
+            "guard_point": [
+              16,
+              -37
+            ],
+            "near_elbow": [
+              9,
+              -44
+            ],
+            "far_elbow": [
+              -1,
+              -39
+            ]
+          },
+          "baseline_raster_sha256": "623e9b5b7debec57b77cea109b7355a513531f5c2ea06206814472000eab782d"
+        },
+        {
+          "hand": [
+            12,
+            -41
+          ],
+          "support_hand": [
+            5,
+            -40
+          ],
+          "guard": [
+            16,
+            -41
+          ],
+          "weapon_tip": [
+            51,
+            -89
+          ],
+          "guard_point": [
+            17,
+            -42
+          ],
+          "hit_window": false,
+          "name": "jump_02",
+          "state": "jump",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              6,
+              -68
+            ],
+            "shoulder": [
+              4,
+              -54
+            ],
+            "hip": [
+              0,
+              -37
+            ],
+            "far_knee": [
+              -14,
+              -32
+            ],
+            "far_foot": [
+              -8,
+              -24
+            ],
+            "near_knee": [
+              11,
+              -34
+            ],
+            "near_foot": [
+              8,
+              -25
+            ],
+            "hand": [
+              12,
+              -41
+            ],
+            "support": [
+              5,
+              -40
+            ],
+            "guard": [
+              16,
+              -41
+            ],
+            "weapon_tip": [
+              51,
+              -89
+            ],
+            "guard_point": [
+              17,
+              -42
+            ],
+            "near_elbow": [
+              11,
+              -50
+            ],
+            "far_elbow": [
+              -1,
+              -45
+            ]
+          },
+          "baseline_raster_sha256": "adf74feae493b1a5c256d602465a3b6c91a3b5595535c5f929152750b5a70e7f"
+        },
+        {
+          "hand": [
+            14,
+            -37
+          ],
+          "support_hand": [
+            7,
+            -37
+          ],
+          "guard": [
+            18,
+            -37
+          ],
+          "weapon_tip": [
+            65,
+            -71
+          ],
+          "guard_point": [
+            19,
+            -38
+          ],
+          "hit_window": false,
+          "name": "jump_03",
+          "state": "jump",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              5,
+              -64
+            ],
+            "shoulder": [
+              3,
+              -50
+            ],
+            "hip": [
+              0,
+              -34
+            ],
+            "far_knee": [
+              -13,
+              -25
+            ],
+            "far_foot": [
+              -19,
+              -13
+            ],
+            "near_knee": [
+              12,
+              -25
+            ],
+            "near_foot": [
+              16,
+              -13
+            ],
+            "hand": [
+              14,
+              -37
+            ],
+            "support": [
+              7,
+              -37
+            ],
+            "guard": [
+              18,
+              -37
+            ],
+            "weapon_tip": [
+              65,
+              -71
+            ],
+            "guard_point": [
+              19,
+              -38
+            ],
+            "near_elbow": [
+              11,
+              -46
+            ],
+            "far_elbow": [
+              -1,
+              -41
+            ]
+          },
+          "baseline_raster_sha256": "99cc5655bc902fe9070572f7da1c45152aa73a72ae47ba72daef27324ba050fc"
+        }
+      ]
+    },
+    "slam": {
+      "start": 70,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            0,
+            -56
+          ],
+          "support_hand": [
+            -5,
+            -53
+          ],
+          "guard": [
+            4,
+            -56
+          ],
+          "weapon_tip": [
+            -9,
+            -104
+          ],
+          "guard_point": [
+            5,
+            -57
+          ],
+          "hit_window": false,
+          "name": "slam_00",
+          "state": "slam",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              1,
+              -62
+            ],
+            "shoulder": [
+              -1,
+              -48
+            ],
+            "hip": [
+              -2,
+              -31
+            ],
+            "far_knee": [
+              -14,
+              -16
+            ],
+            "far_foot": [
+              -18,
+              -1
+            ],
+            "near_knee": [
+              9,
+              -17
+            ],
+            "near_foot": [
+              15,
+              -1
+            ],
+            "hand": [
+              0,
+              -56
+            ],
+            "support": [
+              -5,
+              -53
+            ],
+            "guard": [
+              4,
+              -56
+            ],
+            "weapon_tip": [
+              -9,
+              -104
+            ],
+            "guard_point": [
+              5,
+              -57
+            ],
+            "near_elbow": [
+              6,
+              -54
+            ],
+            "far_elbow": [
+              -6,
+              -53
+            ]
+          },
+          "baseline_raster_sha256": "20cf1d7263b485e6ed7ba64f5f3bd850eebcb3e6841786553cc9fa91354a4766"
+        },
+        {
+          "hand": [
+            8,
+            -49
+          ],
+          "support_hand": [
+            1,
+            -48
+          ],
+          "guard": [
+            12,
+            -49
+          ],
+          "weapon_tip": [
+            41,
+            -92
+          ],
+          "guard_point": [
+            13,
+            -50
+          ],
+          "hit_window": false,
+          "name": "slam_01",
+          "state": "slam",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              5,
+              -58
+            ],
+            "shoulder": [
+              3,
+              -44
+            ],
+            "hip": [
+              0,
+              -27
+            ],
+            "far_knee": [
+              -14,
+              -13
+            ],
+            "far_foot": [
+              -23,
+              -1
+            ],
+            "near_knee": [
+              13,
+              -15
+            ],
+            "near_foot": [
+              22,
+              -1
+            ],
+            "hand": [
+              8,
+              -49
+            ],
+            "support": [
+              1,
+              -48
+            ],
+            "guard": [
+              12,
+              -49
+            ],
+            "weapon_tip": [
+              41,
+              -92
+            ],
+            "guard_point": [
+              13,
+              -50
+            ],
+            "near_elbow": [
+              11,
+              -51
+            ],
+            "far_elbow": [
+              -3,
+              -48
+            ]
+          },
+          "baseline_raster_sha256": "335ec9dd076c8e16b3e495566b9f54fe1f6a497b71d4f76f5c3f1d77037cbf99"
+        },
+        {
+          "hand": [
+            13,
+            -35
+          ],
+          "support_hand": [
+            6,
+            -35
+          ],
+          "guard": [
+            17,
+            -35
+          ],
+          "weapon_tip": [
+            55,
+            3
+          ],
+          "guard_point": [
+            18,
+            -36
+          ],
+          "hit_window": true,
+          "name": "slam_02",
+          "state": "slam",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              12,
+              -46
+            ],
+            "shoulder": [
+              10,
+              -32
+            ],
+            "hip": [
+              2,
+              -20
+            ],
+            "far_knee": [
+              -14,
+              -10
+            ],
+            "far_foot": [
+              -23,
+              -1
+            ],
+            "near_knee": [
+              18,
+              -11
+            ],
+            "near_foot": [
+              29,
+              -1
+            ],
+            "hand": [
+              13,
+              -35
+            ],
+            "support": [
+              6,
+              -35
+            ],
+            "guard": [
+              17,
+              -35
+            ],
+            "weapon_tip": [
+              55,
+              3
+            ],
+            "guard_point": [
+              18,
+              -36
+            ],
+            "near_elbow": [
+              17,
+              -38
+            ],
+            "far_elbow": [
+              3,
+              -36
+            ]
+          },
+          "baseline_raster_sha256": "7f1c7c251a7761b64aea9174822e7777ee683edae0b232cbcb80f101d6db7724"
+        },
+        {
+          "hand": [
+            14,
+            -21
+          ],
+          "support_hand": [
+            7,
+            -23
+          ],
+          "guard": [
+            18,
+            -21
+          ],
+          "weapon_tip": [
+            72,
+            -5
+          ],
+          "guard_point": [
+            19,
+            -22
+          ],
+          "hit_window": true,
+          "name": "slam_03",
+          "state": "slam",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              8,
+              -49
+            ],
+            "shoulder": [
+              6,
+              -35
+            ],
+            "hip": [
+              2,
+              -22
+            ],
+            "far_knee": [
+              -14,
+              -11
+            ],
+            "far_foot": [
+              -22,
+              -1
+            ],
+            "near_knee": [
+              15,
+              -11
+            ],
+            "near_foot": [
+              27,
+              -1
+            ],
+            "hand": [
+              14,
+              -21
+            ],
+            "support": [
+              7,
+              -23
+            ],
+            "guard": [
+              18,
+              -21
+            ],
+            "weapon_tip": [
+              72,
+              -5
+            ],
+            "guard_point": [
+              19,
+              -22
+            ],
+            "near_elbow": [
+              13,
+              -29
+            ],
+            "far_elbow": [
+              1,
+              -28
+            ]
+          },
+          "baseline_raster_sha256": "66ac7a3be9f71523301d6a0d871ac90ca130285e629c4a97855b08c74b1dc565"
+        }
+      ]
+    },
+    "land": {
+      "start": 74,
+      "count": 4,
+      "frames": [
+        {
+          "hand": [
+            13,
+            -17
+          ],
+          "support_hand": [
+            6,
+            -19
+          ],
+          "guard": [
+            17,
+            -17
+          ],
+          "weapon_tip": [
+            69,
+            0
+          ],
+          "guard_point": [
+            18,
+            -18
+          ],
+          "hit_window": false,
+          "name": "land_00",
+          "state": "land",
+          "frame": 0,
+          "progress": 0.0,
+          "baseline_joints": {
+            "head": [
+              9,
+              -44
+            ],
+            "shoulder": [
+              7,
+              -30
+            ],
+            "hip": [
+              1,
+              -17
+            ],
+            "far_knee": [
+              -14,
+              -8
+            ],
+            "far_foot": [
+              -20,
+              -1
+            ],
+            "near_knee": [
+              16,
+              -8
+            ],
+            "near_foot": [
+              24,
+              -1
+            ],
+            "hand": [
+              13,
+              -17
+            ],
+            "support": [
+              6,
+              -19
+            ],
+            "guard": [
+              17,
+              -17
+            ],
+            "weapon_tip": [
+              69,
+              0
+            ],
+            "guard_point": [
+              18,
+              -18
+            ],
+            "near_elbow": [
+              12,
+              -24
+            ],
+            "far_elbow": [
+              0,
+              -23
+            ]
+          },
+          "baseline_raster_sha256": "76993283a86a601fe7a31192bf8f22bcee014b4a152b4d55e65d0f893f1a4459"
+        },
+        {
+          "hand": [
+            13,
+            -20
+          ],
+          "support_hand": [
+            6,
+            -22
+          ],
+          "guard": [
+            17,
+            -20
+          ],
+          "weapon_tip": [
+            68,
+            -3
+          ],
+          "guard_point": [
+            18,
+            -21
+          ],
+          "hit_window": false,
+          "name": "land_01",
+          "state": "land",
+          "frame": 1,
+          "progress": 0.3333333333333333,
+          "baseline_joints": {
+            "head": [
+              6,
+              -51
+            ],
+            "shoulder": [
+              4,
+              -37
+            ],
+            "hip": [
+              0,
+              -23
+            ],
+            "far_knee": [
+              -14,
+              -11
+            ],
+            "far_foot": [
+              -19,
+              -1
+            ],
+            "near_knee": [
+              12,
+              -11
+            ],
+            "near_foot": [
+              21,
+              -1
+            ],
+            "hand": [
+              13,
+              -20
+            ],
+            "support": [
+              6,
+              -22
+            ],
+            "guard": [
+              17,
+              -20
+            ],
+            "weapon_tip": [
+              68,
+              -3
+            ],
+            "guard_point": [
+              18,
+              -21
+            ],
+            "near_elbow": [
+              10,
+              -30
+            ],
+            "far_elbow": [
+              -1,
+              -29
+            ]
+          },
+          "baseline_raster_sha256": "7cf9bc46b4263c3e623c4db1559a5348435cf60d688d8b946875ab75508a46a9"
+        },
+        {
+          "hand": [
+            15,
+            -23
+          ],
+          "support_hand": [
+            8,
+            -25
+          ],
+          "guard": [
+            19,
+            -23
+          ],
+          "weapon_tip": [
+            72,
+            -13
+          ],
+          "guard_point": [
+            20,
+            -24
+          ],
+          "hit_window": false,
+          "name": "land_02",
+          "state": "land",
+          "frame": 2,
+          "progress": 0.6666666666666666,
+          "baseline_joints": {
+            "head": [
+              2,
+              -58
+            ],
+            "shoulder": [
+              1,
+              -44
+            ],
+            "hip": [
+              -1,
+              -28
+            ],
+            "far_knee": [
+              -13,
+              -15
+            ],
+            "far_foot": [
+              -17,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              13,
+              -1
+            ],
+            "hand": [
+              15,
+              -23
+            ],
+            "support": [
+              8,
+              -25
+            ],
+            "guard": [
+              19,
+              -23
+            ],
+            "weapon_tip": [
+              72,
+              -13
+            ],
+            "guard_point": [
+              20,
+              -24
+            ],
+            "near_elbow": [
+              9,
+              -34
+            ],
+            "far_elbow": [
+              -2,
+              -33
+            ]
+          },
+          "baseline_raster_sha256": "fc55828cf38d702e1cf625caa6f5cd9f03035769c105fc46ab3195e6935fe7bf"
+        },
+        {
+          "hand": [
+            17,
+            -25
+          ],
+          "support_hand": [
+            10,
+            -27
+          ],
+          "guard": [
+            21,
+            -25
+          ],
+          "weapon_tip": [
+            73,
+            -22
+          ],
+          "guard_point": [
+            22,
+            -26
+          ],
+          "hit_window": false,
+          "name": "land_03",
+          "state": "land",
+          "frame": 3,
+          "progress": 1.0,
+          "baseline_joints": {
+            "head": [
+              0,
+              -61
+            ],
+            "shoulder": [
+              -1,
+              -47
+            ],
+            "hip": [
+              -1,
+              -30
+            ],
+            "far_knee": [
+              -9,
+              -16
+            ],
+            "far_foot": [
+              -12,
+              -1
+            ],
+            "near_knee": [
+              8,
+              -15
+            ],
+            "near_foot": [
+              12,
+              -1
+            ],
+            "hand": [
+              17,
+              -25
+            ],
+            "support": [
+              10,
+              -27
+            ],
+            "guard": [
+              21,
+              -25
+            ],
+            "weapon_tip": [
+              73,
+              -22
+            ],
+            "guard_point": [
+              22,
+              -26
+            ],
+            "near_elbow": [
+              11,
+              -36
+            ],
+            "far_elbow": [
+              0,
+              -35
+            ]
+          },
+          "baseline_raster_sha256": "70fbaeb9c2fee81f0b1bc199d02c97fc8f84c8b99511878a4220d5b4af626dd3"
+        }
+      ]
+    }
+  }
+}

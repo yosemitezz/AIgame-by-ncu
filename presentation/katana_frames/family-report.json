@@ -4,7 +4,7 @@
   "all_alpha_binary": true,
   "all_landmarks_in_bounds": true,
   "all_frames_no_clipping": true,
-  "max_frame_colors": 19,
+  "max_frame_colors": 21,
   "cut_contact_frames": {
     "cut_a": [
       {
@@ -219,273 +219,273 @@
       "name": "idle_00",
       "bbox": [
         17,
-        47,
+        35,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "a5878ac6a1ea356d31436921b613af67a9b65d19c3c274db32fec6adc5595b5a"
+      "sha256": "56cec285526caaa30db23d10a5aab98587eee24ed64362fc3f5a28b391810984"
     },
     {
       "name": "idle_01",
       "bbox": [
         17,
-        46,
+        34,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "c89b749236f0f8972dda1d0954242ef262282cde01f48d08023c9a29130a47e5"
+      "sha256": "73ac7c1a6b78cb6330b693c263fe8fd01dac6ebd16259d22a62e298f690389b2"
     },
     {
       "name": "idle_02",
       "bbox": [
         17,
-        47,
+        35,
         121,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "9271adfd3004d39a1451acccc0feae61e2e8f3de62a28f55331ac11bbc095c17"
+      "sha256": "6a504d0c71dcae5f4d9be27cf9a94a2f66d7c9da57a8c56a784b8aadc612f1ce"
     },
     {
       "name": "idle_03",
       "bbox": [
         17,
-        47,
+        35,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "5dee5664a04c6670c7ab2c2658b62d0bc17e9993a671e6be8a2c975c45b95dd2"
+      "sha256": "52a51ea4029ab6477e84df9b8bbef4f50051611c7e16fe22d96ec0246a0994e8"
     },
     {
       "name": "approach_00",
       "bbox": [
         18,
-        46,
+        34,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "1cd7a75992badf6fc5d0790a7b146d4f73b0d23153e76cfd495e5df51573f96a"
+      "sha256": "de38031dc1b904369bb4b3f20bd6f9a76dc0c538d277e8fd7b14d97f26324a2c"
     },
     {
       "name": "approach_01",
       "bbox": [
         19,
-        45,
+        33,
         122,
         117
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "a24d34bc0f193eb7539a980948381db2e64ed76eca8b00ca456816b320619f15"
+      "sha256": "d0df842e027bb5f5a786690d2238ed7ce204796de3dd947743f3bcc2d6b7e53a"
     },
     {
       "name": "approach_02",
       "bbox": [
         19,
-        46,
+        34,
         121,
         116
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "c5919beee769adf94a3c6a1be82cfad0f2784afbb24721c2d737eaa34f8d73eb"
+      "sha256": "efa67812198e47c9781bec41820b6505e3b4ae3a960de42cee7474ddf8eeca95"
     },
     {
       "name": "approach_03",
       "bbox": [
         18,
-        46,
+        34,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "1fc9656073d053fb838e3018071e9ad70c8db8c67aa8df30167f4dcc180d9778"
+      "sha256": "1d1c25a15e7b8b4262bbf5cdfb2e5411ca1ec542867fbd3e39ca86cebe27d674"
     },
     {
       "name": "approach_04",
       "bbox": [
         19,
-        45,
+        33,
         123,
         117
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "0f8f3683311a6d646f648f05314be190e2f3b760654e4ddddf22ecf3f73d9726"
+      "sha256": "636be99506950a126a0e6a0271425a66e0e02ef79b6434a77c68913aaef2ef9e"
     },
     {
       "name": "approach_05",
       "bbox": [
         19,
-        46,
+        34,
         123,
         116
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "523dbb897dd85933998eaa6c586111397104bbf9721c08ec883c75a738edf2df"
+      "sha256": "f75f28e9cecec254f55d0ee7172037067e50a99d897162794875d2469c201d93"
     },
     {
       "name": "shift_00",
       "bbox": [
         16,
-        49,
+        38,
         114,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "ef231dfdcd5e516283fb6248d50e9953ca88ef80a0aaecae23c8047b6decd67f"
+      "sha256": "3678dd928cfac8e6c41297bb6e6a22c5253d97921b6361d23493dd0882eb34de"
     },
     {
       "name": "shift_01",
       "bbox": [
         13,
-        48,
+        36,
         112,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "86dd3ea21d0125b8703e1d8d53c484c64574c0b84d58b44336c272cd1946afac"
+      "sha256": "04141d2316608fd88952f9f553c95d03533573d2824edc86f804c9fb98510c2b"
     },
     {
       "name": "shift_02",
       "bbox": [
         13,
-        48,
+        36,
         114,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "69be3589a6d22f1eac6705d6cb1afa08d30e5c3dc808351ada9f5ef2eae3c56b"
+      "sha256": "8f5daf8320c731f26d81e78caa27dbcee81eb90574a3222520f7a26a61bdfcbb"
     },
     {
       "name": "shift_03",
       "bbox": [
         16,
-        47,
+        35,
         120,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "8e4ce95497cb59ed3059d9d0b21ee6e75f693f9bf1774df609d64fdf6a85b9e4"
+      "sha256": "24f01deda18d4a0ffe5ddaa18fba79aab842d12116fcf736f8a4616ee52388e4"
     },
     {
       "name": "draw_00",
       "bbox": [
         17,
-        48,
+        36,
         113,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "e1343c1376200bb4995747c8f571de5087f6fc582600ddaa0bce8ab1cf0ae26f"
+      "sha256": "11fd01cbd75a81fc63e5420a2d2cd3fdd7338470e5bfe31552c5887ee7428259"
     },
     {
       "name": "draw_01",
       "bbox": [
         16,
-        49,
+        38,
         104,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "79e2f489ca548fafc583ead7b7fe80694fd80ea0b6645cc92abb2490340cccdc"
+      "sha256": "41cc170ca523861bd5f27e56b56187fdd2bf6978050eda7afbe15963e0d6c658"
     },
     {
       "name": "draw_02",
@@ -495,14 +495,14 @@
         85,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "c1cdca1128c8b6b2fdb537929bb8165638f50042105cf75debd5342823544d3f"
+      "sha256": "7f0399fa4edfacf603abf58c58cddd1da93e86efad6d2a11ddd8c0a45be1b815"
     },
     {
       "name": "draw_03",
@@ -512,14 +512,14 @@
         89,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "5deaae75a6ab2e4e1e13e87fd12784d0c13c6b19e000274fa153f62cfe2a519c"
+      "sha256": "abde1dfd37772de22ef086af177f28843d49f68640b77a20682d66c25d5c83d6"
     },
     {
       "name": "cut_a_00",
@@ -529,99 +529,99 @@
         79,
         118
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "bbfea2bd1ecbd5aaa2da1494718a1111ad5e2acaef724504e1128e6b52aac573"
+      "sha256": "2e130418da631357c4f8c0763264bf0426b66b203438312b7162043d0e88e698"
     },
     {
       "name": "cut_a_01",
       "bbox": [
         16,
-        57,
+        48,
         124,
         118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "203b07adff236a205a4c6caf196fa64bbb30abc3b96b8d9d78414442a32332ab"
+      "sha256": "00141bc7f5ddb42ad56ab32112500b577e752d8b0614fc27414114dc13a20558"
     },
     {
       "name": "cut_a_02",
       "bbox": [
         18,
-        65,
+        58,
         107,
         123
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "d6f891fb99c0f5daf90f329b56c3494ab3976e33a7b9019b2450696aed1135f1"
+      "sha256": "9cac3b49d70519b2820ae024e5b65310d91b28a9f92c8b498d1629dfc19a93e4"
     },
     {
       "name": "cut_a_03",
       "bbox": [
         19,
-        57,
+        48,
         92,
         121
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "a443a369147a7097301fabfe889cc125527ded52091d9f7b149c7a42bf69bd4e"
+      "sha256": "48f140631354386b93304ef7ef8fceafaedcf84e24505351a6d98068dbb2c56c"
     },
     {
       "name": "cut_b_00",
       "bbox": [
         18,
-        57,
+        48,
         97,
         124
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "88bf70a5388f83e367dd3218e50269da09d6739909cb73ca6f7f17fdfeef4f23"
+      "sha256": "44afe67cfdd573756905b164dbb5a4acfd67694568622867e59c4f5e88282ebe"
     },
     {
       "name": "cut_b_01",
       "bbox": [
         20,
-        56,
+        47,
         121,
         118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "36c39835158be0df90cb09e3a69b6ee000197dc7b20180f5890bb29da85bee49"
+      "sha256": "51bdc481154ad4e5fa6242bcd3c9e987d033043f788d46f94ce2f36a7bd43823"
     },
     {
       "name": "cut_b_02",
@@ -629,203 +629,203 @@
         19,
         22,
         75,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "cfdfc74c8419852ba1282ae2a198b1a220f9374d0f7aa10084e17e083d48f444"
+      "sha256": "a20b818537ca681ed35170e22eb3febda14a7f76fcb8929b29369b9f8ffdc70f"
     },
     {
       "name": "cut_b_03",
       "bbox": [
         18,
-        47,
+        35,
         113,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "e7d0913ec6c9c6a4430c771a815f7fd4a9aeffca63d71ff326240c7a08d6dc09"
+      "sha256": "eaf8b7329c78a9306c136688ba87331a71902f49ad725d79955e1d1fad66b0e1"
     },
     {
       "name": "recover_00",
       "bbox": [
         18,
-        47,
+        35,
         116,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "80a444d020473d24a899cd5700b164840c4c48de79fdb76507b2466ab9c3b22e"
+      "sha256": "4b87a9d037ef3e2d4306a2c03dfc7291a8f47e7dc51fe66f2fda19671688033d"
     },
     {
       "name": "recover_01",
       "bbox": [
         15,
-        48,
+        36,
         103,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "5df5cabd4a24e9401ccea8f43119f87a84e1f650c23df272e36ce6cee59bb54d"
+      "sha256": "83dd67761c1afa758949eb129602453001ce2e339f752e2ef3fddd71b5fc623d"
     },
     {
       "name": "recover_02",
       "bbox": [
         14,
-        47,
+        35,
         92,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "7867cbdf7a7d9c86d47de8a44b8bb23624e6209a74e1ed8a6cf2ef30426d2dd0"
+      "sha256": "2a7df6edae217553d341f169da383ddb636dc2b04d212f0b7cb0d1e0eb4b2d8f"
     },
     {
       "name": "recover_03",
       "bbox": [
         16,
-        47,
+        35,
         110,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "5f4b9e3b6b563ca127ec07ce4e0baf1bf8ba27c5ad4e8dd0c842766d59dfafd7"
+      "sha256": "7aa23f3a992bd69c33b65178e69d3422331f02a25fdd1ae4cf8bdc0927d99e85"
     },
     {
       "name": "cast_00",
       "bbox": [
         17,
-        47,
+        35,
         114,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "6006de24f10aca2304238e2b3a0af266f46aa413a3681de8f73e497a91f21a9b"
+      "sha256": "6d9572f609a98a3c4f0d1a8bcefd221390642253e990c192b1751be45c90a9fa"
     },
     {
       "name": "cast_01",
       "bbox": [
         17,
-        46,
+        34,
         111,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "abd51661ce1f7339c1e5172122f23b9c3ce7133d121a1fc90b9806d4177d9bdb"
+      "sha256": "2e428267c43d882f4a3587daa55832ed75f57e76b60f5dda40fe7e72b255aa5a"
     },
     {
       "name": "cast_02",
       "bbox": [
         17,
-        46,
+        34,
         112,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "95a98b4e95cc9318ce84307b4d2b95ebbb538b413fd2bde78ea651eed208093c"
+      "sha256": "01caba56ee14e547a650272644343971e9cf3113cd5cb2ca16faa0c6ac367dc7"
     },
     {
       "name": "cast_03",
       "bbox": [
         17,
-        47,
+        35,
         115,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "04d3a623781b07f343cf2a5a398cc3ef386e648c509c07a177d4d62f91ce5393"
+      "sha256": "4b814624efd34bbacced3f01309624e350aa9fe9754f1935ad0b7cccc69af2ea"
     },
     {
       "name": "parry_recoil_00",
       "bbox": [
         16,
-        48,
+        36,
         106,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "9ca4e4217541ac68680278f0454b62995c85fdf937a37308cdbbd03541f248b7"
+      "sha256": "e35d180d87f20a0116c87a798c4e43e76b16187e104d4875d79dbc78b4938c2a"
     },
     {
       "name": "parry_recoil_01",
       "bbox": [
         14,
-        41,
+        39,
         88,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "ec0181f111cc045bba74dc4262973e153cc5eecd39e4654ceb4f6b804ba85f2a"
+      "sha256": "46c0a53bb82b7c7233989c266dcf778dd013d986bbf758c5155a901ba6c46cb1"
     },
     {
       "name": "parry_recoil_02",
@@ -835,541 +835,541 @@
         76,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "e42c84b4fa273f5e0cbca4e281238e4da35001160752ae85a4b991342278b8e1"
+      "sha256": "586a17e5921ca472538ed3b9a6b0ab480cb96da7e65105a002dc0f5684c1d918"
     },
     {
       "name": "parry_recoil_03",
       "bbox": [
         13,
-        46,
+        40,
         91,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "5f0a80b0eafb4a351dd6e1a51741cc4cd20c1ed2e779bdbe2fa601254fb4eaec"
+      "sha256": "dbface5601c3f3ce5f3663bab462b5f43875043d721da1f2217103358d5966ba"
     },
     {
       "name": "parry_recover_00",
       "bbox": [
         13,
-        46,
+        40,
         91,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "5f0a80b0eafb4a351dd6e1a51741cc4cd20c1ed2e779bdbe2fa601254fb4eaec"
+      "sha256": "dbface5601c3f3ce5f3663bab462b5f43875043d721da1f2217103358d5966ba"
     },
     {
       "name": "parry_recover_01",
       "bbox": [
         14,
-        41,
+        39,
         88,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "ec0181f111cc045bba74dc4262973e153cc5eecd39e4654ceb4f6b804ba85f2a"
+      "sha256": "46c0a53bb82b7c7233989c266dcf778dd013d986bbf758c5155a901ba6c46cb1"
     },
     {
       "name": "parry_recover_02",
       "bbox": [
         15,
-        48,
+        36,
         111,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "133eabee92f589ad835c8318c9cf72c2cdd56f0e28364d84c9a07dc468b6ec1b"
+      "sha256": "3b44d313c77192c4459d1438c22c662175c38d24ab19ec26c561837815a3008a"
     },
     {
       "name": "parry_recover_03",
       "bbox": [
         17,
-        47,
+        35,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "a5878ac6a1ea356d31436921b613af67a9b65d19c3c274db32fec6adc5595b5a"
+      "sha256": "56cec285526caaa30db23d10a5aab98587eee24ed64362fc3f5a28b391810984"
     },
     {
       "name": "armored_recoil_00",
       "bbox": [
         17,
-        47,
+        35,
         105,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "ee4418b8a4898b779b497cb9540506fa0691d7fb00a69ad050cd4a317201a054"
+      "sha256": "9cd44d18423461781e9bbc73b1d080f3ac485508415f3fc777232005002e4db5"
     },
     {
       "name": "armored_recoil_01",
       "bbox": [
         17,
-        41,
+        36,
         93,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "fd1c1314869f5715237dc6a6e806ca180bff8caec4539fdf48a670ba10eab0c8"
+      "sha256": "8790ef577167027f7d7aa127d95b03f9ada8b65a99b49faeeacc2dc52475bdcf"
     },
     {
       "name": "armored_recoil_02",
       "bbox": [
         17,
-        46,
+        35,
         99,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "387d83696d8cd885d32718ccb7a77500e2374320948ab9d43ecd9b5a5ec01f59"
+      "sha256": "540cd0e87d89567a0b39d626be4517e315170fa785b5bf13e3b5497dac3f0972"
     },
     {
       "name": "armored_recoil_03",
       "bbox": [
         17,
-        47,
+        35,
         115,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "bc0064b0e7d260f9e81ba11e7035e2033fd4cf2dc4c241187bf8aa7dc5b137c5"
+      "sha256": "46bd72fce1680ff41b5b16bae140367f41fdd1f30b9097b684c7fa68a19ae72f"
     },
     {
       "name": "guard_break_00",
       "bbox": [
         15,
-        53,
+        43,
         118,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "dadc8e6ad2a17dff24fed00440f73abaa2d1d5af48bfab206ab6013257c59ba4"
+      "sha256": "f8e80aad5be1acb6efa3fd6a06f09c0fa25400d49ab53033945978187280cbff"
     },
     {
       "name": "guard_break_01",
       "bbox": [
         14,
-        62,
+        54,
         117,
-        119
+        118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "aad26525d2f06616781916b123164d1797ea1defd04aa215af6dda40f6cc99fb"
+      "sha256": "71ebe3ebe3a988a85b1ecffa61d1bcd9a16a12815b0455091492002085307941"
     },
     {
       "name": "guard_break_02",
       "bbox": [
         14,
-        72,
+        67,
         118,
-        119
+        118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "c517151385a6c015596bfbecc9499d153ff1250ff449ea1c2d44ef831b458ad9"
+      "sha256": "be1dc8bcbf68560b6fea84704196f5bbeef304c300815f10df7397bcf781cfd1"
     },
     {
       "name": "guard_break_03",
       "bbox": [
         14,
-        76,
+        72,
         119,
-        119
+        118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "b6d692e216678ef4faf6468fa128db8e2ea201e25006a650d00d96a6f2d775cf"
+      "sha256": "264720d78d49adccb4c63acb8e6d8ac531dfa93e59e8e5208a0d59c1feab79ce"
     },
     {
       "name": "guard_recover_00",
       "bbox": [
         14,
-        76,
+        72,
         119,
-        119
+        118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "b6d692e216678ef4faf6468fa128db8e2ea201e25006a650d00d96a6f2d775cf"
+      "sha256": "264720d78d49adccb4c63acb8e6d8ac531dfa93e59e8e5208a0d59c1feab79ce"
     },
     {
       "name": "guard_recover_01",
       "bbox": [
         14,
-        62,
+        54,
         117,
-        119
+        118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "aad26525d2f06616781916b123164d1797ea1defd04aa215af6dda40f6cc99fb"
+      "sha256": "71ebe3ebe3a988a85b1ecffa61d1bcd9a16a12815b0455091492002085307941"
     },
     {
       "name": "guard_recover_02",
       "bbox": [
         15,
-        53,
+        43,
         118,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "dadc8e6ad2a17dff24fed00440f73abaa2d1d5af48bfab206ab6013257c59ba4"
+      "sha256": "f8e80aad5be1acb6efa3fd6a06f09c0fa25400d49ab53033945978187280cbff"
     },
     {
       "name": "guard_recover_03",
       "bbox": [
         17,
-        47,
+        35,
         121,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "b4098b8be4ea8c521781398b41632477c5dc4c146bb7fac830cb11f19331ce4a"
+      "sha256": "7279010db193128af77b0d3472e06eb5e693593e14d65c2b7cb5bc71c33fb05e"
     },
     {
       "name": "hurt_00",
       "bbox": [
         15,
-        49,
+        38,
         112,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "2ef6c157071dbdccf9f88ae7cc4e544ce8a75d7061390fbf560ad337d09e68bb"
+      "sha256": "8949937b2491ae20d4621426446ce2947c14b5d07891a43710fa12fc8cc7028f"
     },
     {
       "name": "hurt_01",
       "bbox": [
         13,
-        52,
+        41,
         106,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "a7cfe7a87eaf40c6a167b3b215c5367729dce6ead805e0e9a090cf89dfe919f5"
+      "sha256": "5849211f102e18adef8111edc4acb3c1dd4c2248403148f5ddcf9bd021cf9933"
     },
     {
       "name": "hurt_02",
       "bbox": [
         14,
-        51,
+        40,
         110,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "547c4b91cb03ab729733e6d8962aea2435228f6692482bb5a43f4cf67c215a5f"
+      "sha256": "71fd86c5fbd96454debf54e3de04383bab397ac157c188f0f9845588a98ac469"
     },
     {
       "name": "hurt_03",
       "bbox": [
         16,
-        48,
+        36,
         118,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "d8e4fba6e0bd0afce0ef614d7eab30ea58fb058d8c7cf60b1b0e582a2f46fc6c"
+      "sha256": "47cd9e2aa09f1ee447b97f7c363375a93784cabc54a41591c3865396e30286f5"
     },
     {
       "name": "dead_00",
       "bbox": [
         14,
-        72,
+        67,
         118,
-        119
+        118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "c517151385a6c015596bfbecc9499d153ff1250ff449ea1c2d44ef831b458ad9"
+      "sha256": "be1dc8bcbf68560b6fea84704196f5bbeef304c300815f10df7397bcf781cfd1"
     },
     {
       "name": "dead_01",
       "bbox": [
         17,
-        92,
+        93,
         124,
-        119
+        118
       ],
-      "colors": 13,
+      "colors": 17,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "9a8ae50d7230f8993d867a6e3622675525c9a66aeef1619f231ad4088563e4ee"
+      "sha256": "859af06b3deb2800751dde35ff225a83dd22431bdb0a0be96d60fe067eaaf34a"
     },
     {
       "name": "dead_02",
       "bbox": [
         16,
-        97,
+        98,
         124,
-        119
+        118
       ],
-      "colors": 14,
+      "colors": 17,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "4004ac8f3f6b2f591d3094ebd4b6f57f0fd8af3a40fe1d2c0f35ec815f6a9ae5"
+      "sha256": "fe8887a4a3f40ae08a1ec11b035dafbf74d39264138c124a838bc5eaa09c5cff"
     },
     {
       "name": "dead_03",
       "bbox": [
         15,
-        99,
+        100,
         124,
-        119
+        118
       ],
-      "colors": 13,
+      "colors": 16,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "12ecd3a9d195c7654af78da86ad2fc4f67ad0e19d57985b6fa26174e412f973f"
+      "sha256": "36bc63617a1685e80a81af7ebbbf253a0f4ab13a080a4c8f1cad467c943a5941"
     },
     {
       "name": "retreat_00",
       "bbox": [
         18,
-        51,
+        40,
         115,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "693ec939d7192809f3b836b9138306f9873bb7d4d16a959ae60a04f2fe5836e8"
+      "sha256": "228aee610c114af29427133e022a13d0ac8a4db65c2a0d2edd369fe6a3045451"
     },
     {
       "name": "retreat_01",
       "bbox": [
         13,
-        48,
+        36,
         107,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "53983b5fafea7ae99ee39f9f5fd7437cceaa18b90832dc5206cd1a1ea44f92a7"
+      "sha256": "35924ff641a89b0b3286816a196aed967e413ab8e7cabbed36ac96bf3cfcae41"
     },
     {
       "name": "retreat_02",
       "bbox": [
         10,
-        47,
+        35,
         103,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "695419b36fe588256697f61716c51116e10d8a29bf004f2846a32be2304eacde"
+      "sha256": "65b9c170125dbf65222a664b5500c35a7745ad1e3e3f43dcd6de8b2c9b644678"
     },
     {
       "name": "retreat_03",
       "bbox": [
         14,
-        47,
+        35,
         116,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "814cfe117aace12e3de59183062c72dd20b956969593e3d3d331ff86e86042c9"
+      "sha256": "3b73839381ace7aaa83a9e96f1a2021f43e92187491cf0301cc07d6aa650aac3"
     },
     {
       "name": "jump_00",
       "bbox": [
         16,
-        58,
+        49,
         111,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "510389f543595f179d18cd8211c426f491139157dcc9ad83cf27407ba25fdb8f"
+      "sha256": "13417d55142f593a825ccdfacea9bce34d405dd13f8370d6d66a94ad4b534265"
     },
     {
       "name": "jump_01",
       "bbox": [
         17,
-        40,
+        34,
         107,
-        112
+        107
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "623e9b5b7debec57b77cea109b7355a513531f5c2ea06206814472000eab782d"
+      "sha256": "46da718c15065f56dda8a93fb9d90b41a27525ad556599b53485adaac388cb72"
     },
     {
       "name": "jump_02",
@@ -1377,33 +1377,33 @@
         17,
         26,
         101,
-        106
+        101
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "adf74feae493b1a5c256d602465a3b6c91a3b5595535c5f929152750b5a70e7f"
+      "sha256": "52983bf1eedd578dd62fc0a54b13703479f6ed79d03e768fb5dc0b7dcbe07bb1"
     },
     {
       "name": "jump_03",
       "bbox": [
         18,
-        44,
+        32,
         115,
-        109
+        105
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "99cc5655bc902fe9070572f7da1c45152aa73a72ae47ba72daef27324ba050fc"
+      "sha256": "06950383f9223a2340f5d5823598f6909f02dd05bb90c3537100ff58cb909a45"
     },
     {
       "name": "slam_00",
@@ -1413,14 +1413,14 @@
         70,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "20cf1d7263b485e6ed7ba64f5f3bd850eebcb3e6841786553cc9fa91354a4766"
+      "sha256": "14f9c9776f85b68effb869a32919a375a4e214d5f58f6ab0129367a5cbc86368"
     },
     {
       "name": "slam_01",
@@ -1428,119 +1428,119 @@
         18,
         23,
         91,
-        118
+        117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "335ec9dd076c8e16b3e495566b9f54fe1f6a497b71d4f76f5c3f1d77037cbf99"
+      "sha256": "05449ad55db09782d3a8acc06c148740c7c173f22a1166eec7ecea16223630ae"
     },
     {
       "name": "slam_02",
       "bbox": [
         17,
-        62,
+        54,
         105,
         121
       ],
-      "colors": 18,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "7f1c7c251a7761b64aea9174822e7777ee683edae0b232cbcb80f101d6db7724"
+      "sha256": "1c46d088cd930fadc15473bf39b8cb3d21cad1e8f97b43232ddd16229a90b4ff"
     },
     {
       "name": "slam_03",
       "bbox": [
         19,
-        59,
+        50,
         121,
         118
       ],
-      "colors": 18,
+      "colors": 20,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "66ac7a3be9f71523301d6a0d871ac90ca130285e629c4a97855b08c74b1dc565"
+      "sha256": "c5b0667fa235ffa0fbda0bc7929a57109c5ad050f3c1855c9128d832241698f5"
     },
     {
       "name": "land_00",
       "bbox": [
         17,
-        64,
+        57,
         118,
         118
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "76993283a86a601fe7a31192bf8f22bcee014b4a152b4d55e65d0f893f1a4459"
+      "sha256": "098667e936ffe6ccdbc1a4b2d54ff696e6096b21b74a07fbaacf09b40efb0643"
     },
     {
       "name": "land_01",
       "bbox": [
         18,
-        57,
+        48,
         117,
-        118
+        117
       ],
-      "colors": 18,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "7cf9bc46b4263c3e623c4db1559a5348435cf60d688d8b946875ab75508a46a9"
+      "sha256": "af5c8ffcd7ff6792bb03ff22bad621de8d449e7651d655f1b2982d62b38fc28c"
     },
     {
       "name": "land_02",
       "bbox": [
         17,
-        50,
+        39,
         121,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "fc55828cf38d702e1cf625caa6f5cd9f03035769c105fc46ab3195e6935fe7bf"
+      "sha256": "b7f901cff263372965e2fa5a2a6424db3fb1a89c2bf74f260f8092122044e82a"
     },
     {
       "name": "land_03",
       "bbox": [
         17,
-        47,
+        35,
         122,
         117
       ],
-      "colors": 19,
+      "colors": 21,
       "alpha_values": [
         0,
         255
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "70fbaeb9c2fee81f0b1bc199d02c97fc8f84c8b99511878a4220d5b4af626dd3"
+      "sha256": "6f9e18fc57a104b3e4573b2d47fc3d51fde8167353ecb888610ae3a78cd3fcd3"
     }
   ],
-  "preserved_reaction_and_dead": true
+  "preserved_combat_contract": true
 }

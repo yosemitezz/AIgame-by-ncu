@@ -1,5 +1,5 @@
 extends SceneTree
-## Hero animation states: crouch, jump phases, landing, air-jump flip, air cuts and atlas integrity.
+## Hero animation states: crouch, jump phases, landing, air-jump flight, air cuts and atlas integrity.
 ## Attack timing, hit windows and the collider are covered by combat_feel_test and level_layout_test.
 
 const Player = preload("res://actors/player.gd")
@@ -185,13 +185,13 @@ func run() -> void:
 	await ticks(14)
 	player._jump(true)
 	await ticks(1)
-	check(player.animation_state == "air_jump", "the air jump plays the flip")
-	var flip_frames: Dictionary = {}
+	check(player.animation_state == "air_jump", "the air jump plays the wing-powered flight pose")
+	var flight_frames: Dictionary = {}
 	for index: int in range(26):
 		await ticks(1)
 		if player.animation_state == "air_jump":
-			flip_frames[player.frame] = true
-	check(flip_frames.size() >= 4, "the flip steps through its frames (%d)" % flip_frames.size())
+			flight_frames[player.frame] = true
+	check(flight_frames.size() >= 4, "wing-powered flight steps through its frames (%d)" % flight_frames.size())
 	await ticks(120)
 
 	# Airborne cuts read the airborne atlas rows.

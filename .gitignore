@@ -11,3 +11,4 @@ exports/
 .DS_Store
 Thumbs.db
 *.translation
+__pycache__/
