@@ -261,5 +261,3 @@ func _draw() -> void:
 	if invuln > 0.2 and int(invuln * 24.0) % 2 == 0:
 		return
 	PixelActor.paint(self, "hero", animation_state, frame, facing)
-
-

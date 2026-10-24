@@ -212,4 +212,3 @@ func _draw() -> void:
 	if health < max_health and not dead:
 		draw_rect(Rect2(-14.0, -45.0, 28.0, 3.0), Color("161829"))
 		draw_rect(Rect2(-14.0, -45.0, 28.0 * health / max_health, 3.0), Color("f07873"))
-

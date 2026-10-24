@@ -385,4 +385,3 @@ func _draw() -> void:
         draw_rect(Rect2(at + Vector2(-4, -39), Vector2(9, 11)), Color("0b0c18"))
         if _ending_clock < 2.12:
             draw_line(at + Vector2(4, -19), player.position + Vector2(12, -18), Color("ef7678"), 2)
-

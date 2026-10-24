@@ -19,4 +19,3 @@ static func paint(canvas: Node2D, kind: String, state: String, frame: int, facin
     canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2(float(facing) * size_scale, size_scale))
     canvas.draw_texture_rect_region(texture, Rect2(-anchor, frame_size), Rect2(Vector2(posmod(frame, 6) * frame_size.x, row * frame_size.y), frame_size))
     canvas.draw_set_transform(Vector2.ZERO)
-

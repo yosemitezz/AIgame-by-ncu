@@ -77,4 +77,3 @@ func run() -> void:
     game._ending_clock = 5
     await capture("06-chapter-end")
     quit()
-

@@ -67,4 +67,3 @@ func _draw() -> void:
             text(Vector2(182, 181), "The voice remains. The memory does not.", 14)
             text(Vector2(202, 230), "FIRST CHAPTER COMPLETE", 14, Color("72ece2"))
             text(Vector2(219, 264), "F5  begin again  /  R retry", 12)
-

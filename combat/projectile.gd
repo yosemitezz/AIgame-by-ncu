@@ -133,5 +133,3 @@ func _draw() -> void:
 	draw_rect(Rect2(-2.0, -4.0, 4.0, 8.0), ink)
 	draw_rect(Rect2(-4.0, -2.0, 8.0, 4.0), ink)
 	draw_rect(Rect2(-1.0, -2.0, 2.0, 4.0), Color("f3ffea"))
-
-

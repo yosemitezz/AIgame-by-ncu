@@ -111,4 +111,3 @@ func run() -> void:
     check(not game.checkpoint_active and not game.elite_defeated and game.score == 0, "new journey clears runtime progress")
     print("Integration: %d passed, %d failed" % [passed, failed])
     quit(1 if failed else 0)
-

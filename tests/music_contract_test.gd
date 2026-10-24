@@ -159,4 +159,3 @@ func _run() -> void:
     await process_frame
     print("Music contract: %d passed, %d failed" % [passed, failed])
     quit(1 if failed > 0 else 0)
-

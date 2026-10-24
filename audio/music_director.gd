@@ -198,4 +198,3 @@ func _synthesize(section: String, beats: int) -> AudioStreamWAV:
     stream.loop_begin = 0
     stream.loop_end = count
     return stream
-
