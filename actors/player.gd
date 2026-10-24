@@ -399,7 +399,9 @@ func receive_hit(amount: int, origin: Vector2) -> bool:
 	_dash_buffer = 0.0
 	_parry_buffer = 0.0
 	var away: float = 1.0 if global_position.x >= origin.x else -1.0
-	velocity = Vector2(away * 180.0, -115.0)
+	# Heavier blows throw the hero further and higher; a single point of damage keeps the original shove.
+	var weight: float = clampf(float(amount) - 1.0, 0.0, 2.0)
+	velocity = Vector2(away * (180.0 + 45.0 * weight), -115.0 - 40.0 * weight)
 	_fx("hurt", global_position + Vector2(0.0, -16.0), Vector2(away, -0.3), 1.0)
 	health_changed.emit(health, max_health)
 	if health <= 0:
