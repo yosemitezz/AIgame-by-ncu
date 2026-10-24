@@ -8,7 +8,7 @@ Fresh Godot 4.7 2D pixel side-scroller. Baseline main: 8f676ac555596dd5c43f1eef0
 - Boss/music agent: combat/boss.gd, audio/music_director.gd, data/music_timeline.json only.
 - Level agent: levels/bellkeep.gd, docs/level-design.md only.
 - Reviewer: read only, report defects; no edits or Git mutations.
-- Cursor (`cursor/art-ui`): owns `assets/art/`, `assets/vfx/`, `assets/ui/`, `assets/previews/`, `ui/`, `scenes/showcase_*.tscn`, `scripts/art/`, `tools/art/`, `docs/art/`. Bootstrapped art-preview `project.godot` + main showcase scene until Integration lands gameplay main; coordinate before rewriting project settings. Does not edit combat/level/music owners' files. Handoff: `docs/art/HANDOFF.md`.
+- Cursor (`cursor/art-ui`): owns `assets/art/` (final art; `assets/art/pixel_actor.gd` stays with Integration until coordinated), `assets/vfx/`, `assets/ui/`, `assets/previews/`, `ui/` (except `ui/hud.gd`, Integration), `scenes/showcase_*.tscn`, `scripts/art/`, `tools/art/`, `docs/art/`. Does not edit combat/level/music owners' files or the gameplay `project.godot`. Handoff: `docs/art/HANDOFF.md`.
 
 Do not reset user changes, force push, modify LICENSE, or edit another owner's file. Lead handles commits and pushes.
 
@@ -38,3 +38,5 @@ Music director: signal beat(index:int); signal section_changed(section:String); 
 Level: extends Node2D. const SPAWN:Vector2; CHECKPOINT:Vector2; BOSS_TRIGGER_X:float; BOSS_POSITION:Vector2; LEVEL_END:float. const PLATFORMS:Array (Rect2), ENEMIES:Array (dict kind, at), SHARDS:Array (Vector2), ZONES:Array (dict x,title,hint). setup(game) builds world physics & original pixel architectural drawing, no mobs spawned (lead reads ENEMIES). Floor around y=300; jump max height~68 from -340 and gravity900; speed180 (safe required gaps <=100, steps <=54), dash420. Main route continuous to boss at x~3000. Optional upper route. Level owns geometry and art only; lead owns gates/progression.
 
 HUD presentation signals emitted by root: hud_updated(state:Dictionary), boss_phase_changed(phase:String), warning_issued(kind:String,at:Vector2,duration:float), vfx_requested(kind:String,at:Vector2,direction:Vector2,power:float), animation_event(actor:Node,state:String,frame:int,facing:int). Functional HUD listens state dict hp/max_hp/shards/zone/hint/boss_hp/boss_max/phase/beat/section/outcome. VFX may connect signal without altering damage logic.
+
+Actual split: gameplay uses its independent work directory on feat/pixel-bellkeep-20261024. The original checkout remains on cursor/art-ui. Always inspect branch/worktree before writing; do not switch another editor's checkout.

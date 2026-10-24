@@ -1,5 +1,4 @@
 .godot/
-.import/
 .local/
 artifacts/
 exports/
@@ -8,6 +7,7 @@ exports/
 *.mp3
 *.wav
 *.ogg
+.import/
 .DS_Store
 Thumbs.db
 *.translation
