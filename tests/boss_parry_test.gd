@@ -257,15 +257,9 @@ func run() -> void:
     check(game.boss.reaction_progress == 0.0, "local hold freezes the physical reaction pose only")
     game.music.stop_score()
 
-    reset_contact(game)
-    game.boss._on_section("fixed")
-    game.boss._recovery_timer = 0.0
-    serial = game.boss.attack_serial
-    game.boss._physics_process(0.01)
-    game.boss._on_beat(3)
-    check(game.boss.attack_serial == serial, "free pursuit and off-beat signals never begin a new fixed attack")
-    game.boss._on_beat(4)
-    check(game.boss.attack_serial == serial + 1 and game.boss._windup_timer > 0.0, "new fixed attack windup still starts on the musical beat")
+    # Final fixed-cue scheduling is exercised through actual start_encounter and
+    # MusicDirector in main_boss_runtime_test. This contact mock deliberately
+    # does not start an encounter and cannot prove the authored score schedule.
     game.music.stop_score()
     game.queue_free()
     await process_frame

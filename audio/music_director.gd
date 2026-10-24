@@ -25,14 +25,14 @@ var _last_clock: float = 0.0
 var _stream_duration: float = 0.0
 var _dummy: bool = false
 
-func configure(p_game: Node) -> void:
+func configure(p_game: Node, timeline_path: String = "res://data/music_timeline.json") -> void:
     game = p_game
-    var file := FileAccess.open("res://data/music_timeline.json", FileAccess.READ)
+    var file := FileAccess.open(timeline_path, FileAccess.READ)
     if file:
         var parsed: Variant = JSON.parse_string(file.get_as_text().trim_prefix("\ufeff"))
         if parsed is Dictionary:
             timeline = parsed
-    bpm = clampf(float(timeline.get("bpm", 112.0)), 60.0, 200.0)
+    bpm = clampf(float(timeline.get("bpm", 112.0)), 60.0, 240.0)
     advance_health_ratio = clampf(float(timeline.get("advance_health_ratio", 0.5)), 0.1, 0.9)
     var music_bus: int = AudioServer.get_bus_index("Music")
     if music_bus < 0:

@@ -1,0 +1,475 @@
+{
+  "schema_version": 1,
+  "license": "MIT",
+  "provenance": "Newly authored short placeholder test score by this project. No notes, offsets, metadata or audio copied from the private source chart. Beat triples intentionally match the MIT parser format.",
+  "sections": {
+    "fixed": {
+      "loop_beats": 8,
+      "note": [
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "endbeat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "endbeat": [
+            2,
+            0,
+            1
+          ],
+          "column": 3
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "endbeat": [
+            4,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "endbeat": [
+            4,
+            0,
+            1
+          ],
+          "column": 3
+        }
+      ]
+    },
+    "random": {
+      "loop_beats": 16,
+      "note": [
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            4,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            6,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            8,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            10,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            12,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            14,
+            0,
+            1
+          ],
+          "column": 0
+        }
+      ]
+    },
+    "final": {
+      "loop_beats": 16,
+      "note": [
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            1,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            3,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            4,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            5,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            6,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            7,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            8,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            9,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            10,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            11,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            12,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            13,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            14,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            15,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            0,
+            0,
+            1
+          ],
+          "endbeat": [
+            2,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            0,
+            1,
+            4
+          ],
+          "endbeat": [
+            2,
+            1,
+            4
+          ],
+          "column": 1
+        },
+        {
+          "beat": [
+            0,
+            2,
+            4
+          ],
+          "endbeat": [
+            2,
+            2,
+            4
+          ],
+          "column": 2
+        },
+        {
+          "beat": [
+            0,
+            3,
+            4
+          ],
+          "endbeat": [
+            2,
+            3,
+            4
+          ],
+          "column": 3
+        },
+        {
+          "beat": [
+            4,
+            0,
+            1
+          ],
+          "endbeat": [
+            6,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            4,
+            1,
+            4
+          ],
+          "endbeat": [
+            6,
+            1,
+            4
+          ],
+          "column": 1
+        },
+        {
+          "beat": [
+            4,
+            2,
+            4
+          ],
+          "endbeat": [
+            6,
+            2,
+            4
+          ],
+          "column": 2
+        },
+        {
+          "beat": [
+            4,
+            3,
+            4
+          ],
+          "endbeat": [
+            6,
+            3,
+            4
+          ],
+          "column": 3
+        },
+        {
+          "beat": [
+            8,
+            0,
+            1
+          ],
+          "endbeat": [
+            10,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            8,
+            1,
+            4
+          ],
+          "endbeat": [
+            10,
+            1,
+            4
+          ],
+          "column": 1
+        },
+        {
+          "beat": [
+            8,
+            2,
+            4
+          ],
+          "endbeat": [
+            10,
+            2,
+            4
+          ],
+          "column": 2
+        },
+        {
+          "beat": [
+            8,
+            3,
+            4
+          ],
+          "endbeat": [
+            10,
+            3,
+            4
+          ],
+          "column": 3
+        },
+        {
+          "beat": [
+            12,
+            0,
+            1
+          ],
+          "endbeat": [
+            14,
+            0,
+            1
+          ],
+          "column": 0
+        },
+        {
+          "beat": [
+            12,
+            1,
+            4
+          ],
+          "endbeat": [
+            14,
+            1,
+            4
+          ],
+          "column": 1
+        },
+        {
+          "beat": [
+            12,
+            2,
+            4
+          ],
+          "endbeat": [
+            14,
+            2,
+            4
+          ],
+          "column": 2
+        },
+        {
+          "beat": [
+            12,
+            3,
+            4
+          ],
+          "endbeat": [
+            14,
+            3,
+            4
+          ],
+          "column": 3
+        }
+      ]
+    }
+  },
+  "runtime_status": "Connected to main combat/boss.gd through sole MusicDirector; original short placeholder, not the private source song chart."
+}

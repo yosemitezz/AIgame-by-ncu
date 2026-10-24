@@ -1,6 +1,14 @@
 extends CharacterBody2D
 ## Bellkeeper: readable beat-led windups, pursuit, repositioning and projectile patterns.
 
+const FriendDirector = preload("res://combat/friend_rhythm/battle_director.gd")
+const FriendSlots = preload("res://combat/friend_rhythm/boss_move_slots.gd")
+const FriendPlanner = preload("res://combat/friend_rhythm/boss_attack_planner.gd")
+const FriendLasers = preload("res://combat/friend_rhythm/laser_formation_planner.gd")
+const FriendPatterns = preload("res://combat/friend_rhythm/projectile_patterns.gd")
+const BossHazard = preload("res://combat/boss_hazard.gd")
+const PLAN_ARENA: Rect2 = Rect2(2660.0, 40.0, 670.0, 290.0)
+const LASER_ARENA: Rect2 = Rect2(2660.0, 40.0, 670.0, 260.0)
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const ARENA_LEFT: float = 2660.0
 const ARENA_RIGHT: float = 3330.0
@@ -13,6 +21,37 @@ const GUARD_BREAK_TIME: float = 0.90
 const GUARD_RECOVER_TIME: float = 0.18
 const POSTURE_RESET_LOCK: float = 0.45
 
+var friend_director: RefCounted = FriendDirector.new()
+var friend_slots: Node
+var hazard_generation: int = 0
+var _cube_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _cube_launch_count: int = 0
+var authored_trace: Array[Dictionary] = []
+var authored_last_pattern: String = ""
+var authored_pattern_count: int = 0
+var authored_action_count: int = 0
+var _authored_document: Dictionary = {}
+var _authored_ready: bool = false
+var _section_origin_beat: int = 0
+var _section_origin_score: float = 0.0
+var _loop_origin_score: float = 0.0
+var _authored_cycle: int = 0
+var _authored_loop_beats: int = 16
+var _authored_actions: Array[Dictionary] = []
+var _authored_dash: Dictionary = {}
+var _prepared_plans: Dictionary = {}
+var _source_strikes: Dictionary = {}
+var _warning_geometry: Dictionary = {}
+var _authored_pose: String = ""
+var _authored_pose_elapsed: float = 0.0
+var _authored_pose_duration: float = 0.0
+var _release_elapsed: float = -1.0
+var _present_strike: int = 0
+var _death_elapsed: float = 0.0
+var _warning_elapsed: float = 0.0
+var _warning_duration: float = 0.0
+var _windup_duration: float = 0.0
+var _locked_target: Vector2 = Vector2.ZERO
 var game: Node
 var max_health: int = 48
 var health: int = 48
@@ -77,6 +116,8 @@ func configure(p_game: Node, at: Vector2) -> void:
     if is_instance_valid(game.music):
         game.music.beat.connect(_on_beat)
         game.music.section_changed.connect(_on_section)
+    _cube_rng.randomize()
+    _configure_authored()
 
 func start_encounter() -> void:
     if dead or _active:
@@ -126,6 +167,7 @@ func _on_section(section: String) -> void:
         guard_posture = 0
         _posture_lockout = 0.0
         _clear_reaction()
+    _load_authored_section(section)
     game.on_boss_phase(section)
     match section:
         "random":
@@ -136,34 +178,18 @@ func _on_section(section: String) -> void:
             game.announce("The seal is open. Keep moving; turn its light against it.", 3.0)
 
 func _on_beat(index: int) -> void:
-    if dead or not _active or game.story_safe or _stagger_timer > 0.0 or _reaction_blocks_attacks or _posture_lockout > 0.0:
+    if dead or not _active or game.story_safe or phase == "rest" or not _authored_ready or not bool(game.music.running):
         return
-    if _windup_timer > 0.0 or _charge_timer > 0.0 or _recovery_timer > 0.0 or _combo_pending:
-        return
-    if index % 2 != 0:
-        return
-    var fixed_patterns: Array[String] = ["slash", "fan", "charge", "ring"]
-    var patterns: Array[String] = ["slash", "fan", "charge", "rain", "ring"]
-    var attack: String
-    if phase == "fixed":
-        attack = fixed_patterns[_attack_count % fixed_patterns.size()]
-    elif phase == "random":
-        var choices: Array[String] = []
-        for candidate: String in patterns:
-            if candidate != _last_pattern:
-                choices.append(candidate)
-        attack = choices[randi_range(0, choices.size() - 1)]
-    else:
-        var final_patterns: Array[String] = ["armored_slash", "fan", "charge", "rain", "ring"]
-        attack = final_patterns[_attack_count % final_patterns.size()]
-    _last_pattern = attack
-    _attack_count += 1
-    _begin_attack(attack)
+    # This value is the exact event timestamp, not a replacement frame clock.
+    # Sub-beat actions/hazards read MusicDirector.get_score_time() exclusively.
+    _dispatch_authored_clock(float(index - _section_origin_beat) * game.music.seconds_per_beat(), true)
 
 func _begin_attack(attack: String) -> void:
     if dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
         return
+    _invalidate_authored()
     attack_serial += 1
+    _resolved_contacts.clear()
     contact_token = attack_serial * 8
     attack_parryable = attack in ["slash", "armored_slash"]
     # Armor and parryability are independent: the armored double cut can be
@@ -173,6 +199,10 @@ func _begin_attack(attack: String) -> void:
     _combo_timer = 0.0
     _pending_attack = attack
     _windup_timer = game.music.seconds_per_beat() * 0.8
+    _windup_duration = _windup_timer
+    _release_elapsed = -1.0
+    _present_strike = 0
+    _locked_target = game.player.global_position
     var toward: Vector2 = game.player.global_position + Vector2(0, -14) - global_position - Vector2(0, -25)
     facing = 1 if toward.x >= 0.0 else -1
     _aim = toward.normalized()
@@ -189,6 +219,19 @@ func set_impact_freeze(seconds: float) -> void:
     combat_freeze = maxf(combat_freeze, clampf(seconds, 0, 0.07))
 
 func _physics_process(delta: float) -> void:
+    if get_tree().paused or game.get("_paused") == true:
+        return
+    if game.get("outcome") != null and str(game.get("outcome")) != "":
+        _cancel_all_attacks()
+        velocity = Vector2.ZERO
+        # Victory stops gameplay immediately, but the death animation still
+        # receives local presentation time. No action or collision is advanced.
+        if dead:
+            _death_elapsed += delta
+            animation_state = "dead"
+            frame = clampi(int(_death_elapsed / 0.6 * 5.999), 0, 5)
+            _publish_animation()
+        return
     hurt_flash = maxf(0.0, hurt_flash - delta)
     _posture_lockout = maxf(0.0, _posture_lockout - delta)
     if game.story_safe:
@@ -205,6 +248,17 @@ func _physics_process(delta: float) -> void:
         queue_redraw()
         return
     _animation_clock += delta
+    _authored_pose_elapsed += delta
+    _warning_elapsed += delta
+    if _release_elapsed >= 0.0:
+        _release_elapsed += delta
+    if dead:
+        _death_elapsed += delta
+    elif _active and not game.story_safe and _authored_ready and bool(game.music.running) and game.music.has_method("get_score_time"):
+        var score: float = float(game.music.get_score_time())
+        _dispatch_authored_clock(maxf(0.0, score - _section_origin_score), false)
+        _prepare_upcoming(score)
+        _advance_authored_actions(score)
     _hurt_timer = maxf(0.0, _hurt_timer - delta)
     _stagger_timer = maxf(0.0, _stagger_timer - delta)
     _recovery_timer = maxf(0.0, _recovery_timer - delta)
@@ -225,6 +279,13 @@ func _physics_process(delta: float) -> void:
     elif _stagger_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
         animation_state = "hurt"
+    elif not _authored_dash.is_empty():
+        _advance_authored_dash(float(game.music.get_score_time()))
+        if not _authored_dash.is_empty():
+            velocity.x = 0.0
+            animation_state = "dash"
+        elif _reaction_blocks_attacks:
+            animation_state = reaction_state
     elif _windup_timer > 0.0:
         _windup_timer = maxf(0.0, _windup_timer - delta)
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
@@ -257,7 +318,7 @@ func _physics_process(delta: float) -> void:
         animation_state = reaction_state
         frame = clampi(int(reaction_progress * 3.999), 0, 3)
     else:
-        if _hurt_timer > 0.0 and not dead:
+        if _hurt_timer > 0.0 and not dead and _authored_dash.is_empty() and not (_release_elapsed >= 0.0 and _release_elapsed < 0.10):
             animation_state = "hurt"
         frame = int(_animation_clock * 12.0) % 6
     _publish_animation()
@@ -281,6 +342,8 @@ func _release_attack() -> void:
     if attack.is_empty():
         return
     _recovery_timer = 0.24
+    _release_elapsed = 0.0
+    _present_strike = 1
     match attack:
         "slash":
             _try_melee_contact(78.0, true, false, contact_token)
@@ -326,6 +389,8 @@ func _release_combo_contact() -> void:
         return
     _combo_pending = false
     _combo_timer = 0.0
+    _release_elapsed = 0.0
+    _present_strike = 2
     contact_token = attack_serial * 8 + 1
     _contact_resolved = false
     _recovery_timer = 0.24
@@ -372,6 +437,9 @@ func _try_melee_contact(reach: float, parryable: bool = true, armored: bool = fa
         game.damage_player(1, global_position)
 
 func _cancel_all_attacks() -> void:
+    _invalidate_authored()
+    _release_elapsed = -1.0
+    _present_strike = 0
     _pending_attack = ""
     _windup_timer = 0.0
     _charge_timer = 0.0
@@ -429,8 +497,312 @@ func _die() -> void:
     game.emit_fx("boss_defeat", global_position + Vector2(0, -28), Vector2.ZERO, 2.0)
     game.on_boss_defeated()
 
+
+# MIT friend PR1/PR3 integration: scheduling/geometry are source-derived;
+# main health, physical contact, reactions and MusicDirector remain authoritative.
+func _configure_authored() -> void:
+    var file: FileAccess = FileAccess.open("res://data/main_boss_chart.json", FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        return
+    _authored_document = parsed
+    friend_slots = FriendSlots.new()
+    add_child(friend_slots)
+    _authored_ready = friend_slots.load_config("res://data/authored_boss_moves.json")
+    friend_director.event_dispatched.connect(_on_authored_event)
+
+func _load_authored_section(section: String) -> void:
+    _section_origin_beat = int(game.music.total_beats)
+    _section_origin_score = float(_section_origin_beat) * game.music.seconds_per_beat()
+    _loop_origin_score = _section_origin_score
+    _authored_cycle = 0
+    if not _authored_ready or section == "rest":
+        return
+    var document: Dictionary = _authored_document.get("sections", {}).get(section, {})
+    if document.is_empty():
+        return
+    _authored_loop_beats = maxi(1, int(document.get("loop_beats", 16)))
+    if friend_director.load_document(document, float(game.music.bpm)):
+        friend_director.restart_at()
+
+func _dispatch_authored_clock(elapsed: float, on_beat: bool) -> void:
+    if dead or game.story_safe or phase == "rest" or not _authored_ready:
+        return
+    var duration: float = float(_authored_loop_beats) * game.music.seconds_per_beat()
+    var cycle: int = int(floor(maxf(0.0, elapsed) / duration + 0.000001))
+    var local: float = maxf(0.0, elapsed - float(cycle) * duration)
+    if cycle != _authored_cycle:
+        _invalidate_authored()
+        _authored_cycle = cycle
+        _loop_origin_score = _section_origin_score + float(cycle) * duration
+        var document: Dictionary = _authored_document["sections"][phase]
+        friend_director.load_document(document, float(game.music.bpm))
+        friend_director.restart_at(local)
+    if not friend_director.running:
+        if _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0:
+            return
+        friend_director.restart_at(local)
+    # Fixed cue starts are emitted by beat callbacks only. Continuous processing
+    # still advances existing cube/laser geometry through its own music getter.
+    if on_beat or phase != "fixed":
+        friend_director.advance_to(local)
+
+func _on_authored_event(event: Dictionary, version: int) -> void:
+    if version != friend_director.generation or dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0:
+        return
+    var payload: Dictionary = event["payload"]
+    match str(event["type"]):
+        "action_phrase":
+            if phase == "random" or phase == "final":
+                var pattern: Dictionary = _pattern_for_phrase(payload)
+                var key: int = int(payload["index"])
+                var prepared: Dictionary = _prepared_plans.get(key, {})
+                _prepared_plans.erase(key)
+                _begin_authored_pattern(pattern, _loop_origin_score + float(payload["start_time"]), Vector2.INF, prepared)
+        "fixed_attack":
+            _spawn_authored_cube(payload)
+        "laser_formation":
+            _spawn_authored_formation(payload)
+
+func _pattern_for_phrase(phrase: Dictionary) -> Dictionary:
+    var sequence: int = int(phrase["sequence_index"])
+    if phase == "final":
+        var pattern: Dictionary = friend_slots.get_fast_pattern(sequence)
+        pattern["pattern_id"] = friend_slots.fast_cycle[posmod(sequence, friend_slots.fast_cycle.size())]
+        return pattern
+    return friend_slots.get_normal_pattern(sequence)
+
+func _prepare_upcoming(score: float) -> void:
+    if phase not in ["random", "final"] or _reaction_blocks_attacks or _posture_lockout > 0.0:
+        return
+    for phrase: Dictionary in friend_director.chart.action_phrases:
+        var start: float = _loop_origin_score + float(phrase["start_time"])
+        var key: int = int(phrase["index"])
+        if start <= score + 0.000001 or start - score > game.music.seconds_per_beat() * 0.8 or _prepared_plans.has(key):
+            continue
+        var pattern: Dictionary = _pattern_for_phrase(phrase)
+        var target: Vector2 = game.player.global_position
+        var plan: Dictionary = FriendPlanner.build_plan(pattern, start, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
+        _prepared_plans[key] = plan
+        _warning_elapsed = 0.0
+        _warning_duration = maxf(0.001, start - score)
+        _warning_geometry = {"kind": "authored_path", "pattern": str(pattern.get("pattern_id", "")), "from": global_position, "to": target, "locked_target": target, "start_time": score, "damage_time": start}
+
+func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locked_target: Vector2 = Vector2.INF, prepared: Dictionary = {}) -> bool:
+    if dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0 or pattern.is_empty() or (pattern.has("enabled") and not bool(pattern["enabled"])):
+        return false
+    var target: Vector2 = game.player.global_position if not locked_target.is_finite() else locked_target
+    var plan: Dictionary = prepared.duplicate(true) if not prepared.is_empty() else FriendPlanner.build_plan(pattern, start_score_time, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
+    if (plan["actions"] as Array).is_empty():
+        return false
+    attack_serial += 1
+    _authored_dash.clear()
+    for resolved: int in _resolved_contacts.keys():
+        if resolved < (attack_serial - 16) * 8:
+            _resolved_contacts.erase(resolved)
+    _source_strikes[attack_serial] = 0
+    authored_last_pattern = str(plan["pattern_id"])
+    authored_pattern_count += 1
+    _locked_target = plan["locked_player"]
+    # Queue source actions without doing collision in the music callback. At a
+    # shared boundary an old ring@4 sorts before the next teleport@0.
+    for index: int in (plan["actions"] as Array).size():
+        var action: Dictionary = plan["actions"][index].duplicate(true)
+        action["source_serial"] = attack_serial
+        action["source_pattern"] = authored_last_pattern
+        action["source_index"] = index
+        action["source_locked_target"] = _locked_target
+        action["generation"] = hazard_generation
+        if _authored_actions.size() < 96:
+            _authored_actions.append(action)
+    _authored_actions.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+        if is_equal_approx(float(a["time"]), float(b["time"])):
+            if int(a["source_serial"]) == int(b["source_serial"]):
+                return int(a["source_index"]) < int(b["source_index"])
+            return int(a["source_serial"]) < int(b["source_serial"])
+        return float(a["time"]) < float(b["time"]))
+    _warning_geometry.clear()
+    return true
+
+func _advance_authored_actions(score: float) -> void:
+    if _reaction_blocks_attacks or _posture_lockout > 0.0 or game.story_safe or dead:
+        return
+    var attempts: int = 0
+    var version: int = hazard_generation
+    while not _authored_actions.is_empty() and attempts < 24 and version == hazard_generation:
+        var action: Dictionary = _authored_actions[0]
+        if float(action["time"]) > score + 0.000001:
+            break
+        _authored_actions.pop_front()
+        attempts += 1
+        if int(action["generation"]) != version:
+            continue
+        # A suspended render frame cannot unleash several seconds of old hits.
+        if score - float(action["time"]) > 0.20:
+            continue
+        _execute_authored_action(action, score)
+
+func _execute_authored_action(action: Dictionary, score: float) -> void:
+    var kind: String = str(action["type"])
+    var pattern: String = str(action["source_pattern"])
+    var serial: int = int(action["source_serial"])
+    var target: Vector2 = action.get("resolved_target", global_position)
+    authored_action_count += 1
+    authored_trace.append({"pattern": pattern, "type": kind, "serial": serial, "time": score})
+    if authored_trace.size() > 96:
+        authored_trace.pop_front()
+    match kind:
+        "aim":
+            _warning_elapsed = 0.0
+            _warning_duration = game.music.seconds_per_beat() * (1.0 if phase == "final" else 2.0)
+            _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + game.music.seconds_per_beat() * (1.0 if phase == "final" else 2.0)}
+            _set_authored_pose("draw", game.music.seconds_per_beat() * (1.0 if phase == "final" else 2.0))
+        "teleport", "center":
+            var old: Vector2 = global_position
+            var x: float = PLAN_ARENA.get_center().x if kind == "center" else target.x
+            global_position.x = clampf(x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0)
+            velocity = Vector2.ZERO
+            game.emit_fx("enemy_dash", old + Vector2(0, -24), Vector2(signf(global_position.x - old.x), 0), 0.9)
+            _set_authored_pose("shift", 0.20)
+        "dash":
+            var duration: float = maxf(0.08, float(action.get("duration_beats", 1.0)) * game.music.seconds_per_beat())
+            var to: Vector2 = Vector2(clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y)
+            facing = 1 if to.x >= global_position.x else -1
+            contact_token = serial * 8 + int(action["source_index"])
+            _contact_resolved = false
+            attack_parryable = pattern != "charge_dash_ring"
+            attack_armored = pattern != "fan_then_dash"
+            _source_strikes[serial] = int(_source_strikes.get(serial, 0)) + 1
+            _present_strike = mini(2, int(_source_strikes[serial]))
+            _release_elapsed = 0.0
+            _authored_dash = {"from": global_position, "to": to, "start_time": float(action["time"]), "end_time": float(action["time"]) + duration, "parryable": attack_parryable, "armored": attack_armored, "token": contact_token}
+            _warning_geometry.clear()
+            game.emit_fx("enemy_dash", global_position + Vector2(0, -26), Vector2(facing, 0), 1.0)
+        "ring", "fan", "side_spray":
+            var shots: Array[Dictionary] = FriendPatterns.vectors(kind, action, global_position + Vector2(0, -26), (action["source_locked_target"] as Vector2) + Vector2(0, -13))
+            for shot: Dictionary in shots:
+                var style: String = "elite_rune" if kind == "ring" else ("wisp_seed" if kind == "side_spray" else "sentry_shard")
+                var projectile: Node2D = game.spawn_projectile(shot["position"], shot["velocity"], false, style)
+                if is_instance_valid(projectile):
+                    projectile.set("lifetime", float(shot["ttl_seconds"]))
+                    projectile.set_meta("boss_source", get_instance_id())
+            _set_authored_pose("cast", 0.24)
+
+func _advance_authored_dash(score: float) -> void:
+    if _authored_dash.is_empty():
+        return
+    var dash: Dictionary = _authored_dash.duplicate()
+    var duration: float = maxf(0.001, float(dash["end_time"]) - float(dash["start_time"]))
+    var progress: float = clampf((score - float(dash["start_time"])) / duration, 0.0, 1.0)
+    global_position = (dash["from"] as Vector2).lerp(dash["to"], progress)
+    _try_melee_contact(78.0 if bool(dash["parryable"]) else 50.0, bool(dash["parryable"]), bool(dash["armored"]), int(dash["token"]))
+    if not _authored_dash.is_empty() and progress >= 1.0:
+        _authored_dash.clear()
+        _set_authored_pose("recover", 0.18)
+
+func _spawn_authored_cube(event: Dictionary) -> void:
+    if not game.has_method("spawn_boss_hazard"):
+        return
+    if not bool(friend_slots.get_fixed_pattern().get("enabled", false)):
+        return
+    var occurrence: int = _cube_launch_count
+    _cube_launch_count += 1
+    var diamond: bool = _cube_rng.randi_range(0, 1) == 1
+    var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(event["time"]), game.music.seconds_per_beat(), global_position + Vector2(0, -30), LASER_ARENA, occurrence, diamond)
+    var hazard: Node2D = BossHazard.new()
+    hazard.configure_cube(game, self, plan, LASER_ARENA, hazard_generation)
+    if game.spawn_boss_hazard(hazard):
+        attack_serial += 1
+        authored_last_pattern = "cube_plus" if bool(plan["diamond"]) else "cube_x"
+        authored_pattern_count += 1
+        _set_authored_pose("cast", game.music.seconds_per_beat() * 0.8)
+
+func _spawn_authored_formation(event: Dictionary) -> void:
+    if not game.has_method("spawn_boss_hazard"):
+        return
+    var formation: Dictionary = event.duplicate(true)
+    formation["occurrence"] = int(event.get("occurrence", 0)) + _authored_cycle * maxi(1, int(ceil(float(friend_director.chart.laser_formations.size()) / 4.0)))
+    var lines: Array[Dictionary] = FriendLasers.build_lines(formation, friend_slots.get_laser_formations(), LASER_ARENA)
+    for line: Dictionary in lines:
+        for key: String in ["warning_time", "damage_time", "active_until"]:
+            line[key] = float(line[key]) + _loop_origin_score
+    var hazard: Node2D = BossHazard.new()
+    hazard.configure_lines(game, self, lines, LASER_ARENA, hazard_generation, str(formation["pattern"]))
+    game.spawn_boss_hazard(hazard)
+
+func _invalidate_authored() -> void:
+    hazard_generation += 1
+    friend_director.invalidate()
+    _authored_actions.clear()
+    _authored_dash.clear()
+    _prepared_plans.clear()
+    _source_strikes.clear()
+    _warning_geometry.clear()
+    _authored_pose = ""
+    if is_instance_valid(game) and game.has_method("clear_boss_hazards"):
+        game.clear_boss_hazards()
+
+func _set_authored_pose(state: String, duration: float) -> void:
+    _authored_pose = state
+    _authored_pose_elapsed = 0.0
+    _authored_pose_duration = maxf(0.001, duration)
+
+func get_authored_status() -> Dictionary:
+    return {"section": phase, "pattern": authored_last_pattern, "serial": attack_serial, "queued_actions": _authored_actions.size(), "dash_active": not _authored_dash.is_empty(), "cycle": _authored_cycle, "hazard_generation": hazard_generation, "pattern_count": authored_pattern_count, "action_count": authored_action_count, "trace": authored_trace.duplicate(true)}
+
+func get_warning_geometry(kind: String = "") -> Dictionary:
+    if _warning_geometry.is_empty() or (not kind.is_empty() and str(_warning_geometry.get("kind", "")) != kind):
+        return {}
+    return _warning_geometry.duplicate(true)
+
+func get_presentation_pose() -> Dictionary:
+    var state: String = "idle"
+    var progress: float = 0.0
+    if dead:
+        state = "dead"
+        progress = clampf(_death_elapsed / 0.6, 0.0, 1.0)
+    elif reaction_state != "none":
+        state = "armored_recoil" if reaction_state == "parry_recoil" and not _reaction_blocks_attacks else reaction_state
+        progress = reaction_progress
+    elif not _authored_dash.is_empty():
+        state = "cut_b" if _present_strike >= 2 else "cut_a"
+        progress = clampf(_release_elapsed / 0.18, 0.0, 1.0)
+    elif _windup_timer > 0.0:
+        state = "draw" if _pending_attack in ["slash", "armored_slash", "charge"] else "cast"
+        progress = clampf(1.0 - _windup_timer / maxf(0.001, _windup_duration), 0.0, 1.0)
+    elif _charge_timer > 0.0 or (_release_elapsed >= 0.0 and _release_elapsed < 0.10):
+        state = "cut_b" if _present_strike >= 2 else "cut_a"
+        progress = clampf(_release_elapsed / 0.10, 0.0, 1.0)
+    elif _combo_pending:
+        state = "draw"
+        progress = clampf(1.0 - _combo_timer / ARMORED_CHAIN_GAP, 0.0, 1.0)
+    elif not _authored_pose.is_empty() and _authored_pose_elapsed < _authored_pose_duration:
+        state = _authored_pose
+        progress = clampf(_authored_pose_elapsed / _authored_pose_duration, 0.0, 1.0)
+    elif _recovery_timer > 0.0:
+        state = "recover"
+        progress = clampf(1.0 - _recovery_timer / 0.24, 0.0, 1.0)
+    elif _hurt_timer > 0.0:
+        state = "hurt"
+        progress = clampf(1.0 - _hurt_timer / 0.09, 0.0, 1.0)
+    elif not _warning_geometry.is_empty():
+        state = "draw"
+        progress = clampf(_warning_elapsed / maxf(0.001, _warning_duration), 0.0, 1.0)
+    elif absf(velocity.x) > 1.0:
+        state = "approach"
+        progress = fmod(_animation_clock * 3.0, 1.0)
+    return {"state": state, "progress": progress, "strike": _present_strike, "armored": attack_armored, "contact_serial": contact_token}
+
 func _draw() -> void:
     Pixels.paint(self, "boss", animation_state, frame, facing)
+    if not _warning_geometry.is_empty() and str(_warning_geometry.get("kind", "")) == "authored_path":
+        var from: Vector2 = (_warning_geometry["from"] as Vector2) - global_position + Vector2(0, -18)
+        var to: Vector2 = (_warning_geometry["to"] as Vector2) - global_position + Vector2(0, -18)
+        var ink: Color = Color("ff967f") if str(_warning_geometry.get("pattern", "")) == "charge_dash_ring" else Color("ffd779")
+        draw_line(from.round(), to.round(), Color(ink, 0.55), 1.0, false)
+        draw_rect(Rect2(to.round() - Vector2(3, 3), Vector2(6, 6)), ink, false, 1.0)
     if _windup_timer > 0.0 or _combo_pending:
         var gold := Color("ff967f") if not attack_parryable and _pending_attack == "charge" else Color("ffd779")
         var direction: int = facing

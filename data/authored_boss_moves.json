@@ -1,0 +1,455 @@
+{
+  "schema_version": 2,
+  "status": "main-runtime-pr3-actions-original-redistributable-placeholder-chart",
+  "normal_cycle": [
+    "move_1",
+    "move_2",
+    "move_3",
+    "move_4"
+  ],
+  "fast_cycle": [
+    "fast_1",
+    "fast_2",
+    "fast_3",
+    "fast_4"
+  ],
+  "slots": [
+    {
+      "move_slot": "move_1",
+      "display_name": "\u62db\u5f0f1",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "charge_dash_ring",
+      "parameters": {
+        "actions": [
+          {
+            "beat": 0.0,
+            "type": "aim",
+            "target": "locked_player"
+          },
+          {
+            "beat": 2.0,
+            "type": "dash",
+            "target": "locked_player",
+            "duration_beats": 2.0,
+            "damage": 6.0
+          },
+          {
+            "beat": 4.0,
+            "type": "ring",
+            "count": 8,
+            "angle_offset_degrees": 0.0,
+            "speed": 175.0,
+            "ttl_seconds": 2.0,
+            "damage": 6.0
+          }
+        ]
+      }
+    },
+    {
+      "move_slot": "move_2",
+      "display_name": "\u62db\u5f0f2",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "side_sweep_spray",
+      "parameters": {
+        "actions": [
+          {
+            "beat": 0.0,
+            "type": "teleport",
+            "target": "arena_left"
+          },
+          {
+            "beat": 2.0,
+            "type": "dash",
+            "target": "arena_right",
+            "duration_beats": 1.55,
+            "damage": 6.0
+          },
+          {
+            "beat": 2.15,
+            "type": "side_spray",
+            "count": 3,
+            "speed": 118.0,
+            "ttl_seconds": 2.0,
+            "damage": 6.0
+          },
+          {
+            "beat": 2.7,
+            "type": "side_spray",
+            "count": 3,
+            "speed": 118.0,
+            "ttl_seconds": 2.0,
+            "damage": 6.0
+          },
+          {
+            "beat": 3.25,
+            "type": "side_spray",
+            "count": 3,
+            "speed": 118.0,
+            "ttl_seconds": 2.0,
+            "damage": 6.0
+          }
+        ]
+      }
+    },
+    {
+      "move_slot": "move_3",
+      "display_name": "\u62db\u5f0f3",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "fan_then_dash",
+      "parameters": {
+        "actions": [
+          {
+            "beat": 0.0,
+            "type": "fan",
+            "count": 3,
+            "spread_degrees": 34.0,
+            "speed": 205.0,
+            "ttl_seconds": 1.8,
+            "damage": 6.0
+          },
+          {
+            "beat": 2.0,
+            "type": "aim",
+            "target": "locked_player"
+          },
+          {
+            "beat": 2.0,
+            "type": "dash",
+            "target": "locked_player",
+            "duration_beats": 1.55,
+            "damage": 6.0
+          }
+        ]
+      }
+    },
+    {
+      "move_slot": "move_4",
+      "display_name": "\u62db\u5f0f4",
+      "segment_type": "normal",
+      "enabled": true,
+      "pattern_id": "dash_double_ring",
+      "parameters": {
+        "actions": [
+          {
+            "beat": 0.0,
+            "type": "dash",
+            "target": "locked_player",
+            "duration_beats": 1.4,
+            "damage": 6.0
+          },
+          {
+            "beat": 2.0,
+            "type": "ring",
+            "count": 8,
+            "angle_offset_degrees": 0.0,
+            "speed": 155.0,
+            "ttl_seconds": 2.4,
+            "damage": 6.0
+          },
+          {
+            "beat": 2.25,
+            "type": "ring",
+            "count": 8,
+            "angle_offset_degrees": 22.5,
+            "speed": 155.0,
+            "ttl_seconds": 2.4,
+            "damage": 6.0
+          }
+        ]
+      }
+    },
+    {
+      "move_slot": "fixed_1",
+      "display_name": "\u56fa\u5b9a\u6bb5\u62db\u5f0f1",
+      "segment_type": "fixed",
+      "enabled": true,
+      "pattern_id": "cube_diagonal_lasers",
+      "parameters": {
+        "cube_flight_beats": 2.0,
+        "warning_beats": 2.0,
+        "line_hold_seconds": 0.9,
+        "line_thickness": 10.0,
+        "target_lanes": [
+          {
+            "x": 0.27,
+            "y": 0.33
+          },
+          {
+            "x": 0.73,
+            "y": 0.32
+          },
+          {
+            "x": 0.68,
+            "y": 0.7
+          },
+          {
+            "x": 0.3,
+            "y": 0.68
+          }
+        ]
+      }
+    },
+    {
+      "move_slot": "fixed_2",
+      "display_name": "\u56fa\u5b9a\u6bb5\u62db\u5f0f2",
+      "segment_type": "fixed",
+      "enabled": false,
+      "pattern_id": "",
+      "parameters": {}
+    }
+  ],
+  "fast_patterns": {
+    "fast_1": {
+      "display_name": "\u51b2\u2014\u5f39\u2014\u5f39\u2014\u5f39",
+      "actions": [
+        {
+          "beat": 0.0,
+          "type": "aim",
+          "target": "locked_player"
+        },
+        {
+          "beat": 1.0,
+          "type": "dash",
+          "target": "locked_player",
+          "duration_beats": 1.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 2.0,
+          "type": "ring",
+          "count": 8,
+          "angle_offset_degrees": 0.0,
+          "speed": 145.0,
+          "ttl_seconds": 2.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 3.0,
+          "type": "ring",
+          "count": 8,
+          "angle_offset_degrees": 22.5,
+          "speed": 145.0,
+          "ttl_seconds": 2.0,
+          "damage": 6.0
+        }
+      ]
+    },
+    "fast_2": {
+      "display_name": "\u5f39\u2014\u5f39\u2014\u51b2\u2014\u5f39",
+      "actions": [
+        {
+          "beat": 0.0,
+          "type": "fan",
+          "count": 3,
+          "spread_degrees": 34.0,
+          "angle_offset_degrees": -24.0,
+          "speed": 170.0,
+          "ttl_seconds": 2.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 1.0,
+          "type": "fan",
+          "count": 3,
+          "spread_degrees": 34.0,
+          "angle_offset_degrees": 24.0,
+          "speed": 170.0,
+          "ttl_seconds": 2.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 2.0,
+          "type": "dash",
+          "target": "locked_player",
+          "duration_beats": 1.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 3.0,
+          "type": "ring",
+          "count": 6,
+          "angle_offset_degrees": 0.0,
+          "speed": 145.0,
+          "ttl_seconds": 2.0,
+          "damage": 6.0
+        }
+      ]
+    },
+    "fast_3": {
+      "display_name": "\u53cc\u51b2",
+      "actions": [
+        {
+          "beat": 0.0,
+          "type": "aim",
+          "target": "locked_player"
+        },
+        {
+          "beat": 1.0,
+          "type": "dash",
+          "target": "locked_player",
+          "duration_beats": 1.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 2.0,
+          "type": "aim",
+          "target": "locked_player"
+        },
+        {
+          "beat": 3.0,
+          "type": "dash",
+          "target": "locked_player",
+          "duration_beats": 1.0,
+          "damage": 6.0
+        }
+      ]
+    },
+    "fast_4": {
+      "display_name": "\u56db\u8fde\u5f39",
+      "actions": [
+        {
+          "beat": 0.0,
+          "type": "center"
+        },
+        {
+          "beat": 0.05,
+          "type": "ring",
+          "count": 8,
+          "angle_offset_degrees": 0.0,
+          "speed": 115.0,
+          "ttl_seconds": 3.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 1.05,
+          "type": "ring",
+          "count": 8,
+          "angle_offset_degrees": 22.5,
+          "speed": 115.0,
+          "ttl_seconds": 3.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 2.05,
+          "type": "ring",
+          "count": 6,
+          "angle_offset_degrees": 0.0,
+          "speed": 115.0,
+          "ttl_seconds": 3.0,
+          "damage": 6.0
+        },
+        {
+          "beat": 3.05,
+          "type": "ring",
+          "count": 6,
+          "angle_offset_degrees": 30.0,
+          "speed": 115.0,
+          "ttl_seconds": 3.0,
+          "damage": 6.0
+        }
+      ]
+    }
+  },
+  "laser_formations": {
+    "beam_hold_tail_seconds": 0.7,
+    "line_thickness": 9.0,
+    "patterns": {
+      "diamond": {
+        "safe_radius": 44.0,
+        "safe_offsets": [
+          [
+            -0.2,
+            0.0
+          ],
+          [
+            0.18,
+            0.04
+          ],
+          [
+            -0.16,
+            0.1
+          ]
+        ]
+      },
+      "parallel": {
+        "line_offsets": [
+          -60.0,
+          -20.0,
+          20.0,
+          60.0
+        ],
+        "safe_offsets": [
+          [
+            -0.16,
+            0.0
+          ],
+          [
+            0.14,
+            0.06
+          ],
+          [
+            0.0,
+            -0.12
+          ]
+        ]
+      },
+      "grid": {
+        "vertical_half_gap": 64.0,
+        "horizontal_half_gap": 43.0,
+        "safe_offsets": [
+          [
+            0.16,
+            0.18
+          ],
+          [
+            -0.18,
+            -0.14
+          ],
+          [
+            0.2,
+            -0.16
+          ]
+        ]
+      },
+      "rotating": {
+        "safe_radius": 38.0,
+        "safe_offsets": [
+          [
+            -0.18,
+            -0.12
+          ],
+          [
+            0.16,
+            0.15
+          ],
+          [
+            -0.13,
+            0.18
+          ]
+        ]
+      }
+    }
+  },
+  "integration": {
+    "source_prs": [
+      1,
+      3
+    ],
+    "final_head": "fff7526a3dc687c9625dece860a79695c00db8d0",
+    "author": "zjuan-ctrl",
+    "chart": "res://data/main_boss_chart.json",
+    "main_contact_damage": 1,
+    "note": "Main Boss executes these MIT source action plans and formations using main contact damage 1, HP48, source-qualified parry/armor and sole MusicDirector. Source damage6 is retained only as provenance and is not applied to main health.",
+    "fast_interval_threshold_beats": 1.1,
+    "handoff_differences": {
+      "fixed_grouping": "event_time with absolute1e-6s tolerance; exact beat keys remain separate for notes",
+      "cube_orientation": "random at launch, then locked: square X versus diamond plus",
+      "last_fast_pair": "explicit basic two-note fallback",
+      "formation_tail": "maximum line damage_time plus0.7s",
+      "main_parry_mapping": "charge_dash_ring dash unparable armored; fan_then_dash ordinary interruptible; other source dashes parryable armored"
+    }
+  }
+}

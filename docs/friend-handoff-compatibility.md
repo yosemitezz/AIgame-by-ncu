@@ -1,0 +1,17 @@
+# Handoff decisions and verification
+
+The supplied chart is byte-identical to the pre-existing boss_attack/data/if_infinity.chart.json: SHA256133082afb6234f693576d78db4c228fcb882a6027049df3dd687e0f198df3b27,41269bytes. No new chart copy or commercial audio is added. The complete handoff was read as design data. The user selected this integrated side-scroller: existing code, original art,800x450 viewport and main project remain. Its instructions to discard the project, create a top-down project or return to640x360 are not applied.
+
+Source audit explicitly uses configuration203BPM/+245ms; positive offset delays event time. Metadata/time/audio-note fields do not drive combat. Notes group by exact three-component keys; only fixed long-note triggers group by converted time with a tiny tolerance. Fixed triggers are excluded from ordinary laser damage but co-timed ordinary notes remain. The fast threshold is1.1beats. The parser recomputes all counts; no production counts are hardcoded.
+
+Actual source results:1172raw/1171timed/862exact keys/703normal groups/107heavy/230endbeat records/24fixed groups/182ordinary lasers/48formations/21phases/315pairs/228phrases=141basic+87fast. A new overstrict adjacency check was removed to preserve the source phase/interval rule; statistics then match the provided sample. Raw endbeat count and ordinary laser count remain separate audit fields.
+
+The main game actually executes four normal plans, four fast plans, fixed cubes and four laser formations. Cube orientation is selected at emission and locked: square0degrees gives X(45/135), diamond45 gives +(0/90); target rules remain configurable. Each line uses one successful damage record and the group's latest end plus0.7seconds. The second fixed slot remains empty. Main physical movement, invulnerability, contact parry, posture and damage authority are retained.
+
+The generated placeholder score currently remains112BPM/0offset with original short section data; it demonstrates the complete move vocabulary with the existing health/phrase-gated loop. The203BPM/full409.53-second source chart is separately audited, not falsely presented as the main default score. The attachment contains an audio reference but supplies no new audio bytes; commercial audio is neither copied nor newly published.
+
+Main health8/Boss48/damage1, wide combo profiles, K contact parry and Shift dash are preserved. The standalone100/3200/6balance,105sword and slower sword timings are not silently applied. Proposed left-Shift block/double-tap movement and heavy-beat judgment effects await user decisions. Heavy timing metadata is parsed, but its falling judgment HUD is not yet integrated; there is no miss-beat damage. Narrative rest always disables both factions and clears old hazards, regardless of the standalone gap behavior.
+
+Focused evidence is in ignored artifacts: main-boss-runtime-test62/0; main-authored-boss-test86/0; friend-source-chart-parser-audit14/0; enemy cast90/0; enemy visual859/0. Independent review closed the pause lease and victory death-pose defects. Subjective feel, full-song synchronization and full playthrough are not claimed.
+
+The MusicDirector configuration now accepts203BPM without the former200BPM clamp. A separate optional timeline path enables real configured-score checks; the default file and its112BPM value are unchanged. music_203_config_test exercises a real MusicDirector and its sole clock at203BPM.

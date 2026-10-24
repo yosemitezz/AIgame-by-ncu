@@ -15,3 +15,12 @@ The project's own MIT LICENSE remains intact. New frame art and synthesized impa
 ## Fusion Pixel Font
 
 The bundled 12px zh-Hans project font is from TakWolf/fusion-pixel-font release 2026.10.16 under SIL OFL 1.1. Full original OFL and component notices are retained in assets/fonts/. It is a project resource, not a system installation or a commercial game font. See docs/pixel-font.md for official source URL and file hash.
+
+
+## Friend Boss PR1 / PR2 / PR3
+
+Source: yosemitezz/AIgame-by-ncu pull requests 1, 2 and 3 by zjuan-ctrl. PR1 head4e79620503bc9fd05a2154018ec97ec76f227557; final PR3 headfff7526a3dc687c9625dece860a79695c00db8d0 contains PR2 head6ca9ca81e260d62d2556cb5d6e9f767c2e46c233. Final code is adapted once, not three overlapping controllers. Original MIT text is retained at third_party/friend-boss-pr1/LICENSE.
+
+Adapted parser, action planner, slot configuration and laser geometry live in combat/friend_rhythm; combat/boss.gd and boss_hazard.gd call them using the main MusicDirector clock and existing damage/parry safety rules. Differences follow the supplied handoff: configurable1.1-beat fast threshold, exact note keys but tolerance-grouped fixed triggers, random fixed cube orientation and explicit source balance conversion. The supplied source chart is audited read-only in its original pre-existing subproject; no song, audio reference chart, demo art or subproject file is newly copied or modified by this milestone. Main runtime uses its generated redistributable score and original configurable short-score data.
+
+New six-enemy frame families and their editable generator are original pixel artwork. The main baseline heavy-hit camera zoom and layered synthesized sounds remain unchanged; the earlier CodingQuests note describes the earlier adaptation, not a claim that the current camera has no zoom.
