@@ -44,6 +44,19 @@ func run() -> void:
 		check(l["bottom"].encloses(l["status"]) and l["bottom"].encloses(l["controls"]), "the bottom panel holds the status and controls rows")
 		if boss:
 			check(not l["boss"].intersects(l["dialog"]), "the dialogue box sits below the boss bar")
+	# Map: room titles have glyphs, and the fog of war only ever advances.
+	var Lvl = load("res://levels/bellkeep.gd")
+	var room_missing: Array[String] = []
+	for room: Dictionary in Lvl.ROOMS:
+		for i: int in str(room["title"]).length():
+			if not hud.font.has_char(str(room["title"]).unicode_at(i)):
+				room_missing.append(str(room["title"])[i])
+	check(room_missing.is_empty(), "the font has every map room title glyph")
+	hud._explored_x = 0.0
+	hud.update_state(base_state().merged({"player_at": Vector2(1200, 300)}, true))
+	check(hud._explored_x == 1200.0, "the map remembers the furthest point reached")
+	hud.update_state(base_state().merged({"player_at": Vector2(400, 300)}, true))
+	check(hud._explored_x == 1200.0, "walking back does not re-hide explored ground")
 	# Typewriter.
 	check(hud.typed_count(10, 0.0) == 0 and hud.typed_count(10, 0.1) == 2 and hud.typed_count(10, 5.0) == 10, "typewriter reveals text at 28 chars per second and stops at the end")
 	# HP bar grows with max HP and is clamped.

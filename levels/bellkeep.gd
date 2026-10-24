@@ -99,18 +99,50 @@ const ZONES: Array[Dictionary] = [
 	{"x": 2640.0, "title": "THE HOLLOW BELFRY", "hint": "Close the distance  /  Parry the golden rain"},
 ]
 
-const SKY: Color = Color("101323")
-const SKY_LOW: Color = Color("171b2c")
-const FAR: Color = Color("1d2537")
-const MID: Color = Color("273147")
-const MASON: Color = Color("303a4d")
-const STONE: Color = Color("3e4c60")
-const LIP: Color = Color("6d7e8b")
-const DARK: Color = Color("141b2b")
-const CYAN_LOW: Color = Color("315b67")
-const CYAN: Color = Color("77cfc8")
-const GOLD_LOW: Color = Color("88704e")
-const GOLD: Color = Color("b9a16d")
+const SKY: Color = Color("0b0a15")
+const SKY_LOW: Color = Color("150f1e")
+const HAZE: Color = Color("3a1a2c")
+const FAR: Color = Color("1a1524")
+const MID: Color = Color("241d30")
+const MASON: Color = Color("322b3c")
+const STONE: Color = Color("41394b")
+const LIP: Color = Color("786b7e")
+const DARK: Color = Color("0f0b16")
+const CYAN_LOW: Color = Color("2d5560")
+const CYAN: Color = Color("6fd0c6")
+const GOLD_LOW: Color = Color("7d5a3c")
+const GOLD: Color = Color("c08a4a")
+const BONE: Color = Color("b8ad9a")
+const BLOOD: Color = Color("6a1a28")
+## Stained glass: wine, indigo, amber, teal.
+const GLASS: Array[Color] = [Color("7a2338"), Color("2c3a78"), Color("b07a36"), Color("2f6a6a")]
+const TREE_XS: Array[int] = [40, 250, 470, 640, 880, 1090, 1250, 1560, 1690, 1980, 2200, 2480, 3180, 3480]
+const TOMB_XS: Array[int] = [96, 150, 214, 364, 420, 612, 668, 752, 1030, 1226, 1462, 1524, 1648, 1930, 2010, 2144, 2330, 2420, 2540, 3190, 3236, 3470]
+const FENCES: Array[Vector2] = [Vector2(236, 356), Vector2(1440, 1600), Vector2(2150, 2300)]
+const CAGES: Array[Vector2] = [Vector2(610, 28), Vector2(800, 44), Vector2(1060, 32), Vector2(1300, 50), Vector2(1490, 36)]
+const GARGOYLES: Array[Vector3] = [Vector3(2626, 142, -1), Vector3(2654, 142, 1), Vector3(3366, 142, -1), Vector3(3394, 142, 1), Vector3(1836, 164, -1), Vector3(1884, 164, 1)]
+## Light pools used by vfx/dark_atmosphere.gd. at: world position of the flame, r: radius in px, a: strength.
+const LIGHTS: Array[Dictionary] = [
+	{"at": Vector2(624, 388), "r": 78, "tint": Color("ff9a4a"), "a": 0.22},
+	{"at": Vector2(916, 388), "r": 78, "tint": Color("ff9a4a"), "a": 0.22},
+	{"at": Vector2(1392, 388), "r": 78, "tint": Color("ff9a4a"), "a": 0.22},
+	{"at": Vector2(1640, 388), "r": 78, "tint": Color("ff9a4a"), "a": 0.22},
+	{"at": Vector2(1116, -36), "r": 70, "tint": Color("ffa85a"), "a": 0.22},
+	{"at": Vector2(1360, -36), "r": 70, "tint": Color("ffa85a"), "a": 0.22},
+	{"at": Vector2(1592, -36), "r": 70, "tint": Color("ffa85a"), "a": 0.22},
+	{"at": Vector2(126, 281), "r": 46, "tint": Color("ffb060"), "a": 0.2},
+	{"at": Vector2(900, 281), "r": 46, "tint": Color("ffb060"), "a": 0.2},
+	{"at": Vector2(2076, 281), "r": 46, "tint": Color("ffb060"), "a": 0.2},
+	{"at": Vector2(2580, 281), "r": 46, "tint": Color("ffb060"), "a": 0.2},
+	{"at": Vector2(3300, 281), "r": 46, "tint": Color("ffb060"), "a": 0.2},
+	{"at": Vector2(1860, 236), "r": 104, "tint": Color("5fe0d0"), "a": 0.26},
+	{"at": Vector2(349, 238), "r": 40, "tint": Color("5fe0d0"), "a": 0.2},
+	{"at": Vector2(615, 150), "r": 40, "tint": Color("5fe0d0"), "a": 0.2},
+	{"at": Vector2(795, 126), "r": 40, "tint": Color("5fe0d0"), "a": 0.2},
+	{"at": Vector2(2640, 150), "r": 74, "tint": Color("c0504a"), "a": 0.2},
+	{"at": Vector2(2990, 120), "r": 150, "tint": Color("d03a48"), "a": 0.2},
+	{"at": Vector2(3380, 150), "r": 90, "tint": Color("c05040"), "a": 0.22},
+]
 
 var game: Node = null
 var _clock: float = 0.0
@@ -152,21 +184,26 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	draw_rect(Rect2(-360, -420, 4280, 1000), SKY)
-	draw_rect(Rect2(-360, 116, 4280, 464), SKY_LOW)
+	_draw_sky_gradient()
 	_draw_sky()
 	_draw_silhouettes()
+	_draw_spires()
+	_draw_lancets()
 	_draw_colonnade()
+	_draw_graveyard()
 	_draw_bell_landmark()
 	_draw_dungeon_background()
 	_draw_archive()
 	for area in PLATFORMS:
 		_draw_platform(area)
+	_draw_hanging_cages()
+	_draw_ground_details()
 	_draw_broken_chains()
 	_draw_shrine()
 	_draw_wayfinding()
 	_draw_gate(2640, 300, false)
 	_draw_gate(3380, 300, true)
+	_draw_gargoyles()
 	_draw_climbs()
 	_draw_water()
 	_draw_doors()
@@ -176,17 +213,22 @@ func _draw_sky() -> void:
 	for index in range(96):
 		var x: int = -160 + ((index * 163 + 47) % 3760)
 		var y: int = -40 + ((index * 47 + 11) % 172)
-		var tint: Color = CYAN_LOW if index % 4 == 0 else MID
+		var tint: Color = Color("5a4a66") if index % 4 == 0 else MID
 		draw_rect(Rect2(x, y, 2, 2), tint)
 	# A single broken moon establishes the belfry as the destination.
-	_pixel_disc(Vector2(2922, 74), 48, Color("334253"))
-	_pixel_disc(Vector2(2936, 62), 43, SKY)
+	for halo in range(4):
+		_pixel_disc(Vector2(2922, 74), 84 - halo * 10, Color(0.55, 0.13, 0.2, 0.05 + halo * 0.03))
+	_pixel_disc(Vector2(2922, 74), 48, Color("7d2230"))
+	_pixel_disc(Vector2(2918, 70), 44, Color("9a2f3c"))
+	for crater in [Vector2(2900, 62), Vector2(2934, 88), Vector2(2940, 56), Vector2(2910, 92)]:
+		draw_rect(Rect2(crater.x, crater.y, 8, 6), Color("6a1c28"))
+		draw_rect(Rect2(crater.x + 2, crater.y + 1, 4, 2), Color("7d2230"))
 	draw_rect(Rect2(2864, 98, 128, 4), SKY_LOW)
 	for index in range(13):
 		var x: int = index * 288 - 100
 		var y: int = 108 + (index % 3) * 12
-		draw_rect(Rect2(x, y, 152, 4), Color("1d2639"))
-		draw_rect(Rect2(x + 36, y - 4, 92, 4), Color("1d2639"))
+		draw_rect(Rect2(x, y, 152, 4), Color("261c32"))
+		draw_rect(Rect2(x + 36, y - 4, 92, 4), Color("261c32"))
 
 func _draw_silhouettes() -> void:
 	for index in range(18):
@@ -212,7 +254,7 @@ func _draw_silhouettes() -> void:
 		Vector2(-160, 300), Vector2(40, 214), Vector2(180, 270),
 		Vector2(380, 206), Vector2(600, 284), Vector2(820, 242),
 		Vector2(1020, 300),
-	]), Color("202a3c"))
+	]), Color("211a2e"))
 
 func _draw_colonnade() -> void:
 	for index in range(12):
@@ -467,18 +509,18 @@ func _set_door_open(id: String, opened: bool) -> void:
 	queue_redraw()
 
 func _draw_dungeon_background() -> void:
-	draw_rect(Rect2(400, 324, 1450, 276), Color("111a25"))
+	draw_rect(Rect2(400, 324, 1450, 276), Color("0f0f1a"))
 	for row in range(11):
 		var y: int = 326 + row * 16
 		var offset: int = 16 if row % 2 else 0
 		for column in range(46):
 			var x: int = 400 + column * 32 - offset
-			draw_rect(Rect2(x, y, 31, 15), Color("1c2935") if (row + column) % 5 else Color("223440"))
+			draw_rect(Rect2(x, y, 31, 15), Color("191a28") if (row + column) % 5 else Color("222335"))
 	for x in [466, 728, 1008, 1270, 1552, 1784]:
-		_draw_arch(float(x), 348.0, 108.0, 152.0, Color("293b46"))
-		draw_rect(Rect2(int(x) + 14, 390, 80, 110), Color("16212e"))
+		_draw_arch(float(x), 348.0, 108.0, 152.0, Color("2c2a3b"))
+		draw_rect(Rect2(int(x) + 14, 390, 80, 110), Color("120f1b"))
 		for bar in range(4):
-			draw_rect(Rect2(int(x) + 24 + bar * 16, 382, 2, 116), Color("263540"))
+			draw_rect(Rect2(int(x) + 24 + bar * 16, 382, 2, 116), Color("2a2838"))
 	for index in range(38):
 		var x: int = 432 + (index * 89) % 1330
 		var y: int = 342 + (index * 31) % 104
@@ -489,8 +531,8 @@ func _draw_dungeon_background() -> void:
 	# Uneven low-value rubble fills the base without inventing walkable surfaces.
 	for index in range(30):
 		var x: int = 416 + index * 46
-		draw_rect(Rect2(x, 480 + index % 3 * 4, 16, 12), Color("26313b"))
-		draw_rect(Rect2(x + 12, 488, 12, 12), Color("1b2733"))
+		draw_rect(Rect2(x, 480 + index % 3 * 4, 16, 12), Color("211f2c"))
+		draw_rect(Rect2(x + 12, 488, 12, 12), Color("171520"))
 
 func _draw_archive() -> void:
 	draw_rect(Rect2(1096, -112, 520, 160), Color("1a1b2a"))
@@ -533,8 +575,8 @@ func _draw_climbs() -> void:
 
 func _draw_water() -> void:
 	for region: Rect2 in WATER_REGIONS:
-		draw_rect(region, Color("2b5361"))
-		draw_rect(Rect2(region.position, Vector2(region.size.x, 1)), Color("668c96"))
+		draw_rect(region, Color("1f3f4d"))
+		draw_rect(Rect2(region.position, Vector2(region.size.x, 1)), Color("5d8794"))
 		for index in range(int(region.size.x / 28)):
 			var x: float = region.position.x + 4 + index * 28 + (2 if int(_clock * 4) % 2 else 0)
 			var y: float = region.position.y + 4 + (index % 3) * 3
@@ -570,3 +612,159 @@ func _draw_doors() -> void:
 				for y in range(int(rect.position.y) + 5, int(rect.end.y), 12):
 					draw_rect(Rect2(rect.position.x + 2, y, 8, 2), GOLD_LOW)
 				draw_rect(Rect2(rect.position.x + 4, rect.end.y - 35, 4, 5), GOLD)
+
+# ---------------------------------------------------------------- dark fantasy scenery (drawing only, no collision)
+func _on_floor(x: float) -> bool:
+	for index in range(6):
+		var area: Rect2 = PLATFORMS[index]
+		if x >= area.position.x + 4.0 and x <= area.end.x - 4.0:
+			return true
+	return false
+
+func _draw_sky_gradient() -> void:
+	# Near-black violet overhead, a bruised crimson haze toward the horizon, drawn in 20 px bands.
+	for band in range(50):
+		var y: int = -420 + band * 20
+		var t: float = clampf((float(y) + 40.0) / 340.0, 0.0, 1.0)
+		var tint: Color = SKY.lerp(HAZE, t * t) if y < 300 else SKY_LOW
+		draw_rect(Rect2(-360, y, 4280, 20), tint)
+
+func _draw_spires() -> void:
+	for index in range(16):
+		var x: int = index * 244 - 120
+		var height: int = 120 + ((index * 53) % 90)
+		var w: int = 20 + (index % 3) * 6
+		var top: int = 300 - height
+		draw_rect(Rect2(x, top, w, height), FAR)
+		draw_rect(Rect2(x - 3, top - 4, w + 6, 4), FAR)
+		draw_colored_polygon(PackedVector2Array([Vector2(x - 4, top - 4), Vector2(x + w / 2, top - 56 - (index % 2) * 18), Vector2(x + w + 4, top - 4)]), FAR)
+		draw_rect(Rect2(x + w / 2 - 1, top - 74 - (index % 2) * 18, 2, 18), FAR)
+		draw_rect(Rect2(x + w / 2 - 2, top + 18, 4, 10), Color("5a3a2c") if index % 4 == 0 else Color("1f1a2b"))
+		# Flying buttress leaning toward the next tower.
+		for step in range(6):
+			draw_rect(Rect2(x + w + step * 8, top + 60 + step * 6, 10, 4), FAR)
+
+func _draw_lancets() -> void:
+	for index in range(12):
+		_draw_lancet(index * 220 + 202, 132 + (index % 2) * 10, 28, 108 - (index % 2) * 10, index % 4)
+
+func _draw_lancet(x: int, top: int, w: int, h: int, hue: int) -> void:
+	var half: int = w / 2
+	draw_colored_polygon(PackedVector2Array([Vector2(x - 4, top + h), Vector2(x - 4, top + half), Vector2(x + half, top - half - 6), Vector2(x + w + 4, top + half), Vector2(x + w + 4, top + h)]), MASON)
+	draw_colored_polygon(PackedVector2Array([Vector2(x, top + h), Vector2(x, top + half), Vector2(x + half, top - half), Vector2(x + w, top + half), Vector2(x + w, top + h)]), Color("1a1020"))
+	var rows: int = 4
+	var pane: int = (h - half) / rows
+	for row in range(rows):
+		for col in range(2):
+			var tint: Color = GLASS[(hue + row + col) % GLASS.size()]
+			draw_rect(Rect2(x + 1 + col * half, top + half + row * pane + 1, half - 2, pane - 2), tint.darkened(0.3) if (row + col) % 2 else tint)
+	draw_colored_polygon(PackedVector2Array([Vector2(x + 1, top + half), Vector2(x + half, top - half + 2), Vector2(x + w - 1, top + half)]), GLASS[hue % GLASS.size()].darkened(0.15))
+	draw_rect(Rect2(x + half - 1, top - half + 2, 2, h + half - 2), Color("241c2c"))
+	draw_rect(Rect2(x - 6, top + h, w + 12, 4), STONE)
+
+func _draw_graveyard() -> void:
+	for index in range(TREE_XS.size()):
+		if _on_floor(float(TREE_XS[index])):
+			_draw_dead_tree(TREE_XS[index], index)
+	for index in range(TOMB_XS.size()):
+		var x: int = TOMB_XS[index]
+		if not _on_floor(float(x)) or absi(x - 1860) < 60 or absi(x - 2640) < 70 or absi(x - 3380) < 70 or (x > 2700 and x < 3160):
+			continue
+		_draw_tombstone(x, index)
+	for fence: Vector2 in FENCES:
+		draw_rect(Rect2(fence.x, 280, fence.y - fence.x, 2), Color("1a1622"))
+		draw_rect(Rect2(fence.x, 290, fence.y - fence.x, 2), Color("1a1622"))
+		for x in range(int(fence.x), int(fence.y), 10):
+			draw_rect(Rect2(x, 274, 2, 26), Color("1a1622"))
+			draw_rect(Rect2(x - 1, 270, 4, 4), Color("1a1622"))
+
+func _draw_dead_tree(x: int, variant: int) -> void:
+	var ink: Color = Color("0c0912")
+	var h: int = 64 + (variant % 4) * 12
+	var base: int = 300
+	draw_rect(Rect2(x - 3, base - h, 6, h), ink)
+	draw_rect(Rect2(x - 6, base - 10, 12, 10), ink)
+	draw_rect(Rect2(x - 8, base - h - 6, 3, 10), ink)
+	draw_rect(Rect2(x + 5, base - h - 10, 3, 14), ink)
+	draw_rect(Rect2(x - 1, base - h - 14, 3, 14), ink)
+	for side in [-1, 1]:
+		var by: int = base - h + 16 + (variant % 3) * 6
+		for step in range(5):
+			var px: int = x + side * (2 + step * 4)
+			draw_rect(Rect2(px if side > 0 else px - 4, by - step * 5, 5, 3), ink)
+		draw_rect(Rect2(x + side * 22 - (0 if side > 0 else 2), by - 30, 2, 9), ink)
+	if variant % 3 == 0:
+		# A crow keeps watch on the right bough.
+		var cx: int = x + 14
+		var cy: int = base - h + 16 + (variant % 3) * 6 - 14
+		draw_rect(Rect2(cx, cy - 5, 7, 5), ink)
+		draw_rect(Rect2(cx + 7, cy - 6, 3, 3), ink)
+		draw_rect(Rect2(cx + 10, cy - 5, 3, 1), ink)
+		draw_rect(Rect2(cx + 8, cy - 5, 1, 1), Color("b04050"))
+
+func _draw_tombstone(x: int, variant: int) -> void:
+	match variant % 3:
+		0:
+			draw_rect(Rect2(x, 278, 14, 22), MASON)
+			draw_rect(Rect2(x + 2, 276, 10, 2), MASON)
+			draw_rect(Rect2(x, 278, 2, 22), STONE)
+			draw_rect(Rect2(x + 6, 282, 2, 9), DARK)
+			draw_rect(Rect2(x + 3, 285, 8, 2), DARK)
+		1:
+			draw_rect(Rect2(x + 5, 270, 4, 30), MASON)
+			draw_rect(Rect2(x, 276, 14, 4), MASON)
+			draw_rect(Rect2(x + 5, 270, 1, 30), STONE)
+			draw_rect(Rect2(x - 2, 297, 18, 3), MID)
+		_:
+			draw_rect(Rect2(x, 286, 16, 14), MASON)
+			draw_rect(Rect2(x + 4, 282, 8, 4), MASON)
+			draw_rect(Rect2(x + 10, 296, 10, 4), MID)
+			draw_rect(Rect2(x, 286, 2, 14), STONE)
+
+func _draw_gargoyles() -> void:
+	for entry: Vector3 in GARGOYLES:
+		_draw_gargoyle(Vector2(entry.x, entry.y), int(entry.z))
+
+func _draw_gargoyle(at: Vector2, flip: int) -> void:
+	var ink: Color = Color("171220")
+	draw_rect(Rect2(at.x - 7, at.y - 4, 14, 4), ink)
+	draw_rect(Rect2(at.x - 4 + flip * 2, at.y - 14, 8, 10), ink)
+	draw_rect(Rect2(at.x - 3 + flip * 5, at.y - 20, 7, 7), ink)
+	draw_rect(Rect2(at.x + flip * 7, at.y - 22, 2, 4), ink)
+	draw_colored_polygon(PackedVector2Array([Vector2(at.x - flip * 3, at.y - 14), Vector2(at.x - flip * 15, at.y - 30), Vector2(at.x - flip * 10, at.y - 10)]), ink)
+	if int(_clock * 2.0 + at.x) % 5 != 0:
+		draw_rect(Rect2(at.x + flip * 5 + (0 if flip > 0 else 1), at.y - 18, 2, 2), Color("d03a48"))
+
+func _draw_hanging_cages() -> void:
+	for entry: Vector2 in CAGES:
+		var x: int = int(entry.x)
+		var length: int = int(entry.y)
+		for y in range(324, 324 + length, 6):
+			draw_rect(Rect2(x, y, 2, 4), MID)
+		var cy: int = 324 + length
+		draw_rect(Rect2(x - 8, cy, 18, 3), Color("2c2a34"))
+		draw_rect(Rect2(x - 8, cy + 24, 18, 3), Color("2c2a34"))
+		for bar in range(5):
+			draw_rect(Rect2(x - 7 + bar * 4, cy + 3, 1, 21), Color("3a3844"))
+		draw_rect(Rect2(x - 3, cy + 14, 6, 6), BONE)
+		draw_rect(Rect2(x - 2, cy + 16, 1, 2), DARK)
+		draw_rect(Rect2(x + 1, cy + 16, 1, 2), DARK)
+
+func _draw_ground_details() -> void:
+	for index in range(110):
+		var x: int = -70 + index * 33 + (index * 17) % 13
+		if not _on_floor(float(x)):
+			continue
+		var tint: Color = Color("2d2438") if index % 5 else Color("4a2638")
+		draw_rect(Rect2(x, 295, 1, 5), tint)
+		draw_rect(Rect2(x + 2, 292 - index % 3, 1, 8 + index % 3), tint)
+		draw_rect(Rect2(x + 4, 296, 1, 4), tint)
+		if index % 9 == 4:
+			draw_rect(Rect2(x + 8, 294, 6, 6), BONE)
+			draw_rect(Rect2(x + 9, 296, 1, 2), DARK)
+			draw_rect(Rect2(x + 12, 296, 1, 2), DARK)
+			draw_rect(Rect2(x + 9, 299, 4, 1), DARK)
+			draw_rect(Rect2(x + 16, 298, 8, 2), BONE)
+		if index % 13 == 6:
+			draw_rect(Rect2(x, 300, 14, 2), BLOOD)
+			draw_rect(Rect2(x + 3, 302, 8, 1), Color("4a1220"))

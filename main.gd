@@ -18,6 +18,7 @@ const HUD = preload("res://ui/hud.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const FxLayer = preload("res://vfx/fx_layer.gd")
 const MotionBlur = preload("res://vfx/motion_blur.gd")
+const DarkAtmosphere = preload("res://vfx/dark_atmosphere.gd")
 const Impact = preload("res://combat/impact_feedback.gd")
 const CombatVFX = preload("res://presentation/combat_vfx.gd")
 ## Effects owned by the gradient layer (vfx/fx_layer.gd) AND mirrored to the pixel-frame layer
@@ -82,6 +83,10 @@ func _ready() -> void:
     add_child(level)
     level.setup(self)
     level.restore_opened_ids(get_tree().get_meta("bellkeep_doors", []))
+    # Mood layer: ambient tint, flame light pools, fog, ash, embers and a vignette (presentation only).
+    var mood := DarkAtmosphere.new()
+    add_child(mood)
+    mood.setup(self)
     # Presentation-only combat VFX: reads vfx_requested / warning_issued, never touches gameplay.
     var fx := FxLayer.new()
     fx.name = "FxLayer"

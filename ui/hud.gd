@@ -25,7 +25,8 @@ const STRINGS: Array[String] = [
     "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  ESC 暂停", "歇息片刻", "ESC 继续冒险", "TAB 查看地图", "R 返回检查点", "F5 重新启程",
     "F2 震屏：", "M 声音：", "F3 速度感：", "关闭", "开启", "静音", "标准", "强", "左SHIFT格挡 / 双击WASD闪避 / E交互",
     "游戏结束", "保持决心……", "R 从检查点重试   F5 重新启程", "钟声之后", "声音仍在。记忆却止于此处。", "第一章结束", "F5 重新启程   R 重试",
-    "钟堡 / 路线图", "悬链书库  ·  破碎回廊  ·  淤水墓廊", "红心 你的位置    青线 铁链    蓝线 浅水    黄色 门 / 检查点", "TAB 或 ESC 返回冒险", "低血!"]
+    "钟堡 / 路线图", "悬链书库  ·  破碎回廊  ·  淤水墓廊", "红心 你的位置    青线 铁链    蓝线 浅水    黄色 门 / 检查点", "TAB 或 ESC 返回冒险", "低血!",
+    "未知", "当前：", "红心 你的位置    青方块 检查点    红块 钟守    紫点 碎片    黄色 门"]
 var state: Dictionary = {}
 var font: Font
 var _clock: float = 0.0
@@ -35,6 +36,7 @@ var _hint: String = ""
 var _hint_age: float = 99.0
 var _outcome: String = ""
 var _outcome_clock: float = 0.0
+var _explored_x: float = 0.0
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -42,6 +44,8 @@ func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     font = PixelFont.create()
     resized.connect(queue_redraw)
+    if is_inside_tree():
+        _explored_x = float(get_tree().get_meta("bellkeep_explored", 0.0))
 
 func _process(delta: float) -> void:
     _clock += delta
@@ -54,6 +58,11 @@ func _process(delta: float) -> void:
 
 func update_state(next: Dictionary) -> void:
     state = next
+    var reached: float = float(next.get("player_at", Vector2.ZERO).x)
+    if reached > _explored_x:
+        _explored_x = reached
+        if is_inside_tree():
+            get_tree().set_meta("bellkeep_explored", _explored_x)
     var outcome: String = str(next.get("outcome", ""))
     if outcome != _outcome:
         _outcome = outcome
@@ -281,34 +290,71 @@ func map_point(at: Vector2, area: Rect2) -> Vector2:
     return (origin + (at - bounds.position) * factor).round()
 
 func _draw_map(rect: Rect2) -> void:
-    draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.94))
-    frame_box(rect, 3)
-    centered(rect.position.y + 29, "钟堡 / 路线图", 24, YELLOW)
+    draw_rect(Rect2(Vector2.ZERO, size), Color(0.01, 0.0, 0.03, 0.95))
+    frame_box(rect, 3, Color("b8ad9a"))
+    draw_rect(rect.grow(-3), Color("0d0814"))
+    # Gothic corner brackets and a thin inner rule.
+    draw_rect(rect.grow(-8), Color("2a1f33"), false, 1.0)
+    for corner: Vector2 in [rect.position, Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y), rect.end]:
+        var sx: float = 1.0 if corner.x <= rect.position.x else -1.0
+        var sy: float = 1.0 if corner.y <= rect.position.y else -1.0
+        draw_rect(Rect2(corner + Vector2(6.0 * sx - (0.0 if sx > 0 else 12.0), 6.0 * sy - (0.0 if sy > 0 else 2.0)), Vector2(12, 2)), Color("c08a4a"))
+        draw_rect(Rect2(corner + Vector2(6.0 * sx - (0.0 if sx > 0 else 2.0), 6.0 * sy - (0.0 if sy > 0 else 12.0)), Vector2(2, 12)), Color("c08a4a"))
+    centered(rect.position.y + 29, "钟堡 / 路线图", 24, Color("c08a4a"))
     centered(rect.position.y + 50, "悬链书库  ·  破碎回廊  ·  淤水墓廊", 12, GRAY)
     var area := Rect2(rect.position + Vector2(18, 70), rect.size - Vector2(36, 124))
+    var player_x: float = state.get("player_at", Level.SPAWN).x
+    var current: int = 0
+    for index: int in Level.ZONES.size():
+        if player_x >= float(Level.ZONES[index]["x"]):
+            current = index
+    # Zone bands: alternating tint with a numbered tick at each zone start.
+    for index: int in Level.ZONES.size():
+        var left: float = map_point(Vector2(float(Level.ZONES[index]["x"]), 0.0), area).x
+        var right: float = area.end.x if index == Level.ZONES.size() - 1 else map_point(Vector2(float(Level.ZONES[index + 1]["x"]), 0.0), area).x
+        if index % 2 == 0:
+            draw_rect(Rect2(left, area.position.y, right - left, area.size.y), Color(0.12, 0.07, 0.16, 0.55))
+        draw_rect(Rect2(left, area.position.y, 1, area.size.y), Color("2a1f33"))
+        text(Vector2(left + 3, area.position.y + 11), str(index + 1), 12, YELLOW if index == current else DIM)
+    # Room outlines.
+    for room: Dictionary in Level.ROOMS:
+        var box: Rect2 = room["rect"]
+        var a: Vector2 = map_point(box.position, area)
+        var b: Vector2 = map_point(box.end, area)
+        draw_rect(Rect2(a, b - a), Color("6a1a28"), false, 1.0)
+        text(Vector2(a.x + 4, b.y - 4), str(room["title"]), 12, Color("b07a7a"))
     for platform: Rect2 in Level.PLATFORMS:
         var start: Vector2 = map_point(platform.position, area)
         var end: Vector2 = map_point(platform.end, area)
-        draw_rect(Rect2(start, Vector2(maxf(2, end.x - start.x), maxf(2, minf(5, end.y - start.y)))), Color("c0c0c0"))
+        draw_rect(Rect2(start, Vector2(maxf(2, end.x - start.x), maxf(2, minf(5, end.y - start.y)))), Color("9a8fa0"))
     for climb: Dictionary in Level.CLIMBABLES:
         var bounds: Rect2 = climb["rect"]
-        draw_line(map_point(Vector2(bounds.get_center().x, bounds.position.y), area), map_point(Vector2(bounds.get_center().x, bounds.end.y), area), CYAN, 2)
+        draw_line(map_point(Vector2(bounds.get_center().x, bounds.position.y), area), map_point(Vector2(bounds.get_center().x, bounds.end.y), area), Color("3f8f8a"), 2)
     for water: Rect2 in Level.WATER_REGIONS:
-        draw_line(map_point(water.position, area), map_point(Vector2(water.end.x, water.position.y), area), Color("3f7fff"), 3)
+        draw_line(map_point(water.position, area), map_point(Vector2(water.end.x, water.position.y), area), Color("3a5fa0"), 3)
     var opened: Array = state.get("opened_doors", [])
     for door: Dictionary in Level.DOORS:
         var at: Vector2 = map_point(door["rect"].get_center(), area)
-        draw_rect(Rect2(at - Vector2(2, 3), Vector2(4, 6)), DIM if door["id"] in opened else YELLOW)
+        draw_rect(Rect2(at - Vector2(2, 3), Vector2(4, 6)), DIM if door["id"] in opened else Color("c08a4a"))
     var collected: Dictionary = state.get("collected", {})
     for index: int in Level.SHARDS.size():
         if not collected.has(index):
             var at: Vector2 = map_point(Level.SHARDS[index], area)
             draw_rect(Rect2(at, Vector2(2, 2)), PURPLE)
+    # Fog of war: unexplored ground to the right of the furthest point reached is veiled.
+    var fog_x: float = clampf(map_point(Vector2(_explored_x + 220.0, 0.0), area).x, area.position.x, area.end.x)
+    if fog_x < area.end.x:
+        draw_rect(Rect2(fog_x, area.position.y, area.end.x - fog_x, area.size.y), Color(0.02, 0.0, 0.05, 0.72))
+        draw_rect(Rect2(fog_x, area.position.y, 2, area.size.y), Color("6a1a28"))
+        text(Vector2(fog_x + 8, area.position.y + 24), "未知", 12, DIM)
     var shrine: Vector2 = map_point(Level.CHECKPOINT, area)
-    draw_rect(Rect2(shrine - Vector2(3, 3), Vector2(6, 6)), YELLOW)
+    draw_rect(Rect2(shrine - Vector2(3, 3), Vector2(6, 6)), CYAN)
+    draw_rect(Rect2(shrine - Vector2(1, 5), Vector2(2, 2)), WHITE)
     var bell: Vector2 = map_point(Level.BOSS_POSITION, area)
-    draw_rect(Rect2(bell - Vector2(3, 4), Vector2(6, 8)), ORANGE)
+    draw_rect(Rect2(bell - Vector2(4, 5), Vector2(8, 10)), Color("a02838"))
+    draw_rect(Rect2(bell - Vector2(2, 3), Vector2(4, 6)), Color("ff6070"))
     var player_at: Vector2 = map_point(state.get("player_at", Level.SPAWN), area)
     draw_heart(player_at - Vector2(4, 4), 1, RED)
-    text(rect.position + Vector2(18, rect.size.y - 31), "红心 你的位置    青线 铁链    蓝线 浅水    黄色 门 / 检查点", 12, WHITE, rect.size.x - 36)
+    centered(area.end.y + 14, "当前：" + str(state.get("zone", "")), 12, YELLOW)
+    text(rect.position + Vector2(18, rect.size.y - 31), "红心 你的位置    青方块 检查点    红块 钟守    紫点 碎片    黄色 门", 12, WHITE, rect.size.x - 36)
     centered(rect.end.y - 12, "TAB 或 ESC 返回冒险", 12, YELLOW)
