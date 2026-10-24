@@ -13,7 +13,7 @@
 | `fixed_1` | 固定段招式1 | fixed |
 | `fixed_2` | 固定段招式2 | fixed |
 
-具体招式接入时修改 `data/boss_moves.json`，不要在不同脚本里新增散落的时间常量。
+具体招式时间与参数集中在 `data/boss_moves.json`，运行时由 `BossAttackPlanner` 转成音乐时间轴动作。
 
 ## 字段
 
@@ -39,16 +39,25 @@
 
 - `phase_indices` 为空时不限阶段。
 - `start_beat` / `end_beat` 为 `null` 时不限 beat。
-- normal 槽位由 `BossMoveSlots.select_for_timing_group()` 在 timing group 时机选择。
-- fixed 槽位通过 `BossMoveSlots.request_slot()` 显式触发；固定段安排仍等待用户谱面。
-- 已提供通用弹幕原语 `aimed`、`spread`、`radial`、`rain`，未绑定任何招式槽位。
-- 未识别 `pattern_id` 只记录警告，不伪造攻击。
+- `normal_cycle` 按 `move_1` → `move_2` → `move_3` → `move_4` 循环。
+- 加速段使用 `fast_cycle` 的四 note 动作句循环。
+- 固定招式1由同拍至少两条带 `endbeat` 的 laser note 触发。
+- 固定招式2继续禁用，不填充未知内容。
+
+## 两 note 分组
+
+`ChartParser` 在单个战斗阶段内寻找至少三个等间隔 timing group。最大连续等间隔序列从左到右拆成不重叠的两 note 组。若拍间隔不超过 1.01 拍，再合并相邻两组为四 note 动作句；更长间隔则以两 note 动作句触发普通四招。
 
 ## 激光
 
-ChartParser 在激光 `beat` 产生预警数据，在 `endbeat` 产生伤害事件。弹幕系统支持横/纵两种基础路径，但当前参考配置使用临时横向训练路径。最终方向、持续、重叠和同时覆盖规则应由用户招式设计指定；不得从 `column` 推导方向。
+ChartParser 在激光 `beat` 产生预警数据，在 `endbeat` 产生伤害事件。方向只由激光几何规划器生成，不从 `column` 推导。
 
-可在 `ProjectileSystem.configure_pending_laser()` 中为单个激光配置方向。事件源索引由 `ChartParser` 保留。
+- `diamond`：四条斜线依次围出菱形区域。
+- `parallel`：四条平行线形成走廊，相邻调用镜像。
+- `grid`：左右竖线与上下横线形成井字安全区。
+- `rotating`：四条不等位置斜线围出偏置安全区。
+
+固定招式1的两条线从正方体中心产生：正方形姿态对应 X 型，菱形姿态对应 + 型。
 
 ## 替换贴图
 

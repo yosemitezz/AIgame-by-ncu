@@ -14,11 +14,19 @@ const EXPECTED_SLOTS := {
 
 var slots: Dictionary = {}
 var errors: Array[String] = []
+var normal_cycle: Array[String] = []
+var fast_cycle: Array[String] = []
+var fast_patterns: Dictionary = {}
+var laser_formations: Dictionary = {}
 
 
 func load_config(path: String) -> bool:
 	slots.clear()
 	errors.clear()
+	normal_cycle.clear()
+	fast_cycle.clear()
+	fast_patterns.clear()
+	laser_formations.clear()
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		errors.append("Cannot open boss move config: %s" % path)
@@ -27,7 +35,8 @@ func load_config(path: String) -> bool:
 	if not parsed is Dictionary:
 		errors.append("Boss move config root must be an object")
 		return false
-	var raw_slots: Variant = (parsed as Dictionary).get("slots", [])
+	var document := parsed as Dictionary
+	var raw_slots: Variant = document.get("slots", [])
 	if not raw_slots is Array:
 		errors.append("Boss move slots must be an array")
 		return false
@@ -56,6 +65,18 @@ func load_config(path: String) -> bool:
 	for required_id in EXPECTED_SLOTS:
 		if not slots.has(required_id):
 			errors.append("Missing move slot: %s" % required_id)
+	normal_cycle = _string_array(document.get("normal_cycle", []), "normal_cycle")
+	fast_cycle = _string_array(document.get("fast_cycle", []), "fast_cycle")
+	var raw_fast: Variant = document.get("fast_patterns", {})
+	fast_patterns = (raw_fast as Dictionary).duplicate(true) if raw_fast is Dictionary else {}
+	var raw_lasers: Variant = document.get("laser_formations", {})
+	laser_formations = (raw_lasers as Dictionary).duplicate(true) if raw_lasers is Dictionary else {}
+	for slot_id in normal_cycle:
+		if not slots.has(slot_id):
+			errors.append("normal_cycle references missing slot %s" % slot_id)
+	for pattern_id in fast_cycle:
+		if not fast_patterns.has(pattern_id):
+			errors.append("fast_cycle references missing pattern %s" % pattern_id)
 	return errors.is_empty()
 
 
@@ -106,4 +127,36 @@ func has_enabled_slots() -> bool:
 		if bool((slot as Dictionary).get("enabled", false)):
 			return true
 	return false
+
+
+func get_normal_pattern(cycle_index: int) -> Dictionary:
+	if normal_cycle.is_empty():
+		return {}
+	var slot_id := normal_cycle[posmod(cycle_index, normal_cycle.size())]
+	return (slots.get(slot_id, {}) as Dictionary).duplicate(true)
+
+
+func get_fast_pattern(cycle_index: int) -> Dictionary:
+	if fast_cycle.is_empty():
+		return {}
+	var pattern_id := fast_cycle[posmod(cycle_index, fast_cycle.size())]
+	return (fast_patterns.get(pattern_id, {}) as Dictionary).duplicate(true)
+
+
+func get_fixed_pattern() -> Dictionary:
+	return (slots.get("fixed_1", {}) as Dictionary).duplicate(true)
+
+
+func get_laser_formations() -> Dictionary:
+	return laser_formations.duplicate(true)
+
+
+func _string_array(value: Variant, field_name: String) -> Array[String]:
+	var result: Array[String] = []
+	if not value is Array:
+		errors.append("%s must be an array" % field_name)
+		return result
+	for entry in value:
+		result.append(str(entry))
+	return result
 

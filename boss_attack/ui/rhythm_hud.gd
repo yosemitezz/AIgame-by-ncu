@@ -13,6 +13,7 @@ var _hit_sfx: AudioStreamPlayer
 var _miss_sfx: AudioStreamPlayer
 var _outcome_text := ""
 var _outcome_color := Color.WHITE
+var _attack_name := ""
 
 
 func _ready() -> void:
@@ -63,6 +64,11 @@ func show_outcome(text: String, color: Color) -> void:
 	queue_redraw()
 
 
+func set_attack_name(value: String) -> void:
+	_attack_name = value
+	queue_redraw()
+
+
 func _process(delta: float) -> void:
 	_feedback_timer = maxf(0.0, _feedback_timer - delta)
 	if _feedback_timer <= 0.0:
@@ -91,8 +97,10 @@ func _draw() -> void:
 	if director.active_phase_index >= 0:
 		phase_text = "PHASE %d / %d" % [director.active_phase_index + 1, chart.phase_count]
 	draw_string(font, Vector2(292, 62), phase_text, HORIZONTAL_ALIGNMENT_CENTER, 170, 11, muted)
+	if not _attack_name.is_empty():
+		draw_string(font, Vector2(300, 80), _attack_name, HORIZONTAL_ALIGNMENT_CENTER, 220, 10, Color("#ffcf70"))
 	draw_string(font, Vector2(290, 352), "A/D/S/W x2: dodge   SHIFT: heavy block   J / LMB: sword", HORIZONTAL_ALIGNMENT_CENTER, 300, 10, Color(0.65, 0.76, 0.9, 0.8))
-	draw_string(font, Vector2(584, 351), "TRAINING", HORIZONTAL_ALIGNMENT_RIGHT, 52, 9, Color(1.0, 0.72, 0.35, 0.8))
+	draw_string(font, Vector2(510, 351), "LOGIC ONLY", HORIZONTAL_ALIGNMENT_RIGHT, 124, 9, Color(1.0, 0.72, 0.35, 0.8))
 
 	if _feedback_timer > 0.0:
 		var feedback_color := Color("#65ffd0") if _feedback_kind == "HIT" else Color("#ff6782")

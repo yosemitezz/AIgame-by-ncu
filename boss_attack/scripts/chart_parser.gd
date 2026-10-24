@@ -15,6 +15,10 @@ var timing_groups: Array[Dictionary] = []
 var heavy_groups: Array[Dictionary] = []
 var lasers: Array[Dictionary] = []
 var phases: Array[Dictionary] = []
+var paired_note_groups: Array[Dictionary] = []
+var action_phrases: Array[Dictionary] = []
+var fixed_attack_events: Array[Dictionary] = []
+var laser_formations: Array[Dictionary] = []
 
 var note_count: int = 0
 var timed_note_count: int = 0
@@ -23,7 +27,12 @@ var normal_timing_group_count: int = 0
 var heavy_group_count: int = 0
 var laser_count: int = 0
 var phase_count: int = 0
+var paired_note_group_count: int = 0
+var action_phrase_count: int = 0
+var fixed_attack_event_count: int = 0
+var laser_formation_count: int = 0
 var chart_end_time: float = 0.0
+var fast_interval_threshold_beats: float = 1.01
 
 var _beats_by_key: Dictionary = {}
 var _event_beats: Dictionary = {}
@@ -68,6 +77,9 @@ func parse_text(text: String, configured_bpm: float = 203.0, configured_offset_m
 	if errors.is_empty():
 		_build_groups()
 		_build_phases()
+		_build_paired_notes()
+		_build_fixed_attack_events()
+		_build_laser_formations()
 	note_count = (raw_notes as Array).size()
 	timed_note_count = _timed_note_total
 	unique_time_count = _beats_by_key.size()
@@ -75,6 +87,10 @@ func parse_text(text: String, configured_bpm: float = 203.0, configured_offset_m
 	heavy_group_count = heavy_groups.size()
 	laser_count = lasers.size()
 	phase_count = phases.size()
+	paired_note_group_count = paired_note_groups.size()
+	action_phrase_count = action_phrases.size()
+	fixed_attack_event_count = fixed_attack_events.size()
+	laser_formation_count = laser_formations.size()
 	chart_end_time = _find_chart_end_time()
 	return errors.is_empty()
 
@@ -88,6 +104,10 @@ func get_stats() -> Dictionary:
 		"heavy_groups": heavy_group_count,
 		"lasers": laser_count,
 		"phases": phase_count,
+		"paired_note_groups": paired_note_group_count,
+		"action_phrases": action_phrase_count,
+		"fixed_attack_events": fixed_attack_event_count,
+		"laser_formations": laser_formation_count,
 		"bpm": bpm,
 		"offset_ms": offset_ms,
 		"chart_end_time": chart_end_time,
@@ -105,6 +125,10 @@ func _clear() -> void:
 	heavy_groups.clear()
 	lasers.clear()
 	phases.clear()
+	paired_note_groups.clear()
+	action_phrases.clear()
+	fixed_attack_events.clear()
+	laser_formations.clear()
 	_beats_by_key.clear()
 	_event_beats.clear()
 	_timed_note_total = 0
@@ -115,6 +139,10 @@ func _clear() -> void:
 	heavy_group_count = 0
 	laser_count = 0
 	phase_count = 0
+	paired_note_group_count = 0
+	action_phrase_count = 0
+	fixed_attack_event_count = 0
+	laser_formation_count = 0
 	chart_end_time = 0.0
 
 
@@ -254,6 +282,167 @@ func _build_phases() -> void:
 		var phase_index := _phase_index_for_time(laser["time"])
 		if phase_index >= 0:
 			(phases[phase_index]["lasers"] as Array).append(laser)
+
+
+func _build_paired_notes() -> void:
+	## A maximal run of equally spaced timing groups is split from left to
+	## right into non-overlapping two-note groups. Runs need at least three
+	## notes, otherwise "equal interval" has not been observed more than once.
+	var pair_run: Array[Dictionary] = []
+	var pair_run_phase := -1
+	var pair_run_interval := 0.0
+
+	for phase in phases:
+		var groups: Array = phase["timing_groups"]
+		var run_start := 0
+		while run_start + 1 < groups.size():
+			var interval_seconds := float(groups[run_start + 1]["time"]) - float(groups[run_start]["time"])
+			var run_end := run_start + 2
+			while run_end < groups.size():
+				var next_interval := float(groups[run_end]["time"]) - float(groups[run_end - 1]["time"])
+				if not is_equal_approx(next_interval, interval_seconds):
+					break
+				run_end += 1
+			if run_end - run_start >= 3:
+				var pair_index := run_start
+				while pair_index + 1 < run_end:
+					var first_group: Dictionary = groups[pair_index]
+					var second_group: Dictionary = groups[pair_index + 1]
+					var pair := {
+						"index": paired_note_groups.size(),
+						"phase_index": int(phase["index"]),
+						"interval_seconds": interval_seconds,
+						"interval_beats": interval_seconds / (60.0 / bpm),
+						"first_group": first_group,
+						"second_group": second_group,
+						"start_time": float(first_group["time"]),
+						"end_time": float(second_group["time"]) + interval_seconds,
+						"note_count": 2,
+					}
+					var global_pair_index := paired_note_groups.size()
+					paired_note_groups.append(pair)
+					first_group["pair_group_index"] = global_pair_index
+					first_group["pair_note_index"] = 1
+					second_group["pair_group_index"] = global_pair_index
+					second_group["pair_note_index"] = 2
+					pair_index += 2
+			run_start = run_end - 1
+
+	## Slower sections use one two-note group as one four-beat action phrase.
+	## Accelerated one-beat sections combine two groups into a four-note phrase.
+	var basic_sequence := 0
+	var fast_sequence := 0
+	var index := 0
+	while index < paired_note_groups.size():
+		var first_pair: Dictionary = paired_note_groups[index]
+		var interval_beats := float(first_pair["interval_beats"])
+		var is_fast := interval_beats <= fast_interval_threshold_beats
+		var phrase_pairs: Array[Dictionary] = [first_pair]
+		if is_fast and index + 1 < paired_note_groups.size():
+			var next_pair: Dictionary = paired_note_groups[index + 1]
+			if int(next_pair["phase_index"]) == int(first_pair["phase_index"]) \
+				and is_equal_approx(float(next_pair["interval_beats"]), interval_beats):
+				phrase_pairs.append(next_pair)
+		var groups_in_phrase: Array[Dictionary] = []
+		for pair in phrase_pairs:
+			groups_in_phrase.append(pair["first_group"])
+			groups_in_phrase.append(pair["second_group"])
+		var phrase_index := action_phrases.size()
+		var mode := "fast" if is_fast and groups_in_phrase.size() == 4 else "basic"
+		var sequence_index := fast_sequence if mode == "fast" else basic_sequence
+		var phrase := {
+			"index": phrase_index,
+			"phase_index": int(first_pair["phase_index"]),
+			"mode": mode,
+			"sequence_index": sequence_index,
+			"interval_beats": interval_beats,
+			"pairs": phrase_pairs,
+			"groups": groups_in_phrase,
+			"note_count": groups_in_phrase.size(),
+			"start_time": float(groups_in_phrase[0]["time"]),
+			"end_time": float(groups_in_phrase[-1]["time"]) + interval_beats * (60.0 / bpm),
+		}
+		action_phrases.append(phrase)
+		for note_index in groups_in_phrase.size():
+			groups_in_phrase[note_index]["action_phrase_index"] = phrase_index
+			groups_in_phrase[note_index]["action_note_index"] = note_index + 1
+			groups_in_phrase[note_index]["action_mode"] = mode
+		if mode == "fast":
+			fast_sequence += 1
+			index += phrase_pairs.size()
+		else:
+			basic_sequence += 1
+			index += 1
+
+
+func _build_fixed_attack_events() -> void:
+	var by_beat: Dictionary = {}
+	for laser in lasers:
+		var key: String = laser["beat_key"]
+		if not by_beat.has(key):
+			by_beat[key] = []
+		(by_beat[key] as Array).append(laser)
+
+	for key in by_beat:
+		var records: Array = by_beat[key]
+		if records.size() < 2:
+			continue
+		var trigger_index := fixed_attack_events.size()
+		var normalized_records: Array[Dictionary] = []
+		for record in records:
+			normalized_records.append(record as Dictionary)
+		var first: Dictionary = normalized_records[0]
+		var trigger := {
+			"index": trigger_index,
+			"beat_key": key,
+			"beat": first["beat"].duplicate(true),
+			"beat_float": first["beat_float"],
+			"time": first["time"],
+			"lasers": normalized_records,
+			"phase_index": _phase_index_for_time(first["time"]),
+			"primary_source_index": int(first["source_index"]),
+		}
+		fixed_attack_events.append(trigger)
+		for line_index in normalized_records.size():
+			var record: Dictionary = normalized_records[line_index]
+			record["fixed_attack_index"] = trigger_index
+			record["fixed_line_index"] = line_index
+			record["fixed_primary"] = line_index == 0
+
+
+func _build_laser_formations() -> void:
+	var patterns := ["diamond", "parallel", "grid", "rotating"]
+	var formation_index := 0
+	for phase in phases:
+		var phase_lasers: Array[Dictionary] = []
+		for laser in phase["lasers"]:
+			if not (laser as Dictionary).has("fixed_attack_index"):
+				phase_lasers.append(laser as Dictionary)
+		var offset := 0
+		while offset < phase_lasers.size():
+			var count := mini(4, phase_lasers.size() - offset)
+			var records := phase_lasers.slice(offset, offset + count)
+			var last_damage := float(records[-1]["damage_time"])
+			var formation := {
+				"index": formation_index,
+				"phase_index": int(phase["index"]),
+				"pattern": patterns[formation_index % patterns.size()],
+				"occurrence": formation_index / patterns.size(),
+				"lasers": records,
+				"start_time": float(records[0]["time"]),
+				"last_damage_time": last_damage,
+				"active_until": last_damage + 0.7,
+			}
+			laser_formations.append(formation)
+			for line_index in records.size():
+				var record: Dictionary = records[line_index]
+				record["formation_index"] = formation_index
+				record["formation_line_index"] = line_index
+				record["formation_pattern"] = formation["pattern"]
+				record["formation_occurrence"] = formation["occurrence"]
+				record["formation_active_until"] = formation["active_until"]
+			formation_index += 1
+			offset += count
 
 
 func _phase_index_for_time(value: float) -> int:

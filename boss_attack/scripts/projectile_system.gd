@@ -12,6 +12,7 @@ var barrage_enabled := true
 
 var _bullets: Array[Dictionary] = []
 var _lasers: Array[Dictionary] = []
+var _cubes: Array[Dictionary] = []
 var _config: Dictionary = {}
 var _boss_texture: Texture2D
 var _laser_rects: Array[Rect2] = []
@@ -74,6 +75,63 @@ func execute_slot(slot: Dictionary, context: Dictionary) -> void:
 	var parameters: Dictionary = (slot.get("parameters", {}) as Dictionary).duplicate(true)
 	parameters.merge(context, false)
 	spawn_pattern(pattern_id, parameters)
+
+
+func spawn_ring(
+	origin: Vector2,
+	count: int,
+	angle_offset_degrees: float,
+	speed: float,
+	ttl_seconds: float,
+	damage: float
+) -> void:
+	for index in maxi(count, 1):
+		var angle := deg_to_rad(angle_offset_degrees + 360.0 * float(index) / float(maxi(count, 1)))
+		_spawn_bullet(origin, Vector2.from_angle(angle) * speed, damage, 5.0, ttl_seconds)
+
+
+func spawn_fan(
+	origin: Vector2,
+	target: Vector2,
+	count: int,
+	spread_degrees: float,
+	angle_offset_degrees: float,
+	speed: float,
+	ttl_seconds: float,
+	damage: float
+) -> void:
+	var base_direction := (target - origin).normalized()
+	if base_direction == Vector2.ZERO:
+		base_direction = Vector2.DOWN
+	base_direction = base_direction.rotated(deg_to_rad(angle_offset_degrees))
+	for index in maxi(count, 1):
+		var fraction := 0.5 if count <= 1 else float(index) / float(count - 1)
+		var angle := deg_to_rad(spread_degrees) * (fraction - 0.5)
+		_spawn_bullet(origin, base_direction.rotated(angle) * speed, damage, 5.0, ttl_seconds)
+
+
+func spawn_side_spray(origin: Vector2, count: int, speed: float, ttl_seconds: float, damage: float) -> void:
+	for index in maxi(count, 1):
+		var x_offset := (float(index) - float(count - 1) * 0.5) * 13.0
+		var launch := origin + Vector2(x_offset, 0.0)
+		_spawn_bullet(launch, Vector2.UP * speed + Vector2.RIGHT * speed * 0.22, damage, 5.0, ttl_seconds)
+		_spawn_bullet(launch, Vector2.DOWN * speed + Vector2.RIGHT * speed * 0.22, damage, 5.0, ttl_seconds)
+
+
+func spawn_diagonal_cube(cube: Dictionary) -> void:
+	var data := cube.duplicate(true)
+	data["position"] = data["from"]
+	data["fired"] = false
+	_cubes.append(data)
+
+
+func queue_laser_geometry(line: Dictionary) -> void:
+	var laser := line.duplicate(true)
+	laser["configured"] = true
+	laser["generic_line"] = true
+	laser["hit"] = false
+	_lasers.append(laser)
+	queue_redraw()
 
 
 func spawn_pattern(pattern_id: StringName, parameters: Dictionary = {}) -> void:
@@ -145,6 +203,7 @@ func configure_pending_laser(event_source_index: int, direction: String, lane_ra
 func clear_barrages() -> void:
 	_bullets.clear()
 	_lasers.clear()
+	_cubes.clear()
 	_laser_rects.clear()
 	queue_redraw()
 
@@ -173,6 +232,8 @@ func _process(delta: float) -> void:
 		surviving.append(bullet)
 	_bullets = surviving
 
+	_update_cubes()
+
 	_laser_rects.clear()
 	var surviving_lasers: Array[Dictionary] = []
 	for laser in _lasers:
@@ -186,8 +247,14 @@ func _process(delta: float) -> void:
 		var beam_rect := _beam_rect(laser)
 		_laser_rects.append(beam_rect)
 		if chart_time >= damage_time and chart_time <= active_until and not bool(laser.get("hit", false)):
-			if player != null and beam_rect.grow(10.0).has_point(player.global_position):
+			var intersects := false
+			if bool(laser.get("generic_line", false)):
+				intersects = _point_hits_line(player.global_position if player != null else Vector2.ZERO, laser, 10.0)
+			else:
+				intersects = beam_rect.grow(10.0).has_point(player.global_position) if player != null else false
+			if player != null and intersects:
 				var damage := float(_config.get("combat", {}).get("normal_attack_damage", 6.0))
+				damage = float(laser.get("damage", damage))
 				if player.has_method("receive_damage"):
 					var accepted: bool = player.receive_damage(damage, player.global_position + Vector2.UP * 20.0, 20.0)
 					if accepted:
@@ -198,7 +265,49 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+func _update_cubes() -> void:
+	var surviving: Array[Dictionary] = []
+	for cube in _cubes:
+		var flight_end := float(cube["flight_end_time"])
+		var damage_time := float(cube["damage_time"])
+		if chart_time <= flight_end:
+			var duration := maxf(flight_end - float(cube["start_time"]), 0.001)
+			var t := clampf((chart_time - float(cube["start_time"])) / duration, 0.0, 1.0)
+			cube["position"] = (cube["from"] as Vector2).lerp(cube["to"] as Vector2, t)
+		else:
+			cube["position"] = cube["to"]
+		if chart_time >= damage_time and not bool(cube.get("fired", false)):
+			cube["fired"] = true
+			var angles := [45.0, 135.0] if bool(cube.get("diamond", false)) else [0.0, 90.0]
+			for index in angles.size():
+				_lasers.append({
+					"configured": true,
+					"generic_line": true,
+					"hit": false,
+					"origin": cube["to"],
+					"angle_radians": deg_to_rad(float(angles[index])),
+					"thickness": float(cube.get("thickness", 10.0)),
+					"warning_time": damage_time,
+					"damage_time": damage_time,
+					"active_until": float(cube["active_until"]),
+					"damage": float(_config.get("combat", {}).get("normal_attack_damage", 6.0)),
+					"source_index": -1,
+				})
+		if chart_time <= float(cube["active_until"]) + 0.2:
+			surviving.append(cube)
+	_cubes = surviving
+
+
+func _point_hits_line(point: Vector2, laser: Dictionary, player_radius: float) -> bool:
+	var origin := laser["origin"] as Vector2
+	var angle := float(laser["angle_radians"])
+	var normal := Vector2.from_angle(angle + PI * 0.5)
+	return absf((point - origin).dot(normal)) <= float(laser.get("thickness", 9.0)) * 0.5 + player_radius
+
+
 func _beam_rect(laser: Dictionary) -> Rect2:
+	if bool(laser.get("generic_line", false)):
+		return Rect2(laser["origin"] as Vector2, Vector2.ZERO)
 	var direction := str(laser.get("direction", "horizontal"))
 	var lane_ratio := float(laser.get("lane_ratio", 0.5))
 	var thickness := float(laser.get("thickness", 12.0))
@@ -234,6 +343,23 @@ func _draw() -> void:
 			continue
 		var damage_time := float(laser["damage_time"])
 		var active_until := float(laser["active_until"])
+		if bool(laser.get("generic_line", false)):
+			if chart_time < float(laser["warning_time"]):
+				continue
+			var angle := float(laser["angle_radians"])
+			var direction := Vector2.from_angle(angle)
+			var origin := laser["origin"] as Vector2
+			var low := origin - direction * 1000.0
+			var high := origin + direction * 1000.0
+			var width := float(laser.get("thickness", 9.0))
+			if chart_time < damage_time:
+				draw_line(low, high, Color(1.0, 0.22, 0.25, 0.35), 2.0)
+				draw_line(low, high, Color(1.0, 0.22, 0.25, 0.14), width + 8.0)
+			elif chart_time <= active_until:
+				draw_line(low, high, Color("#ff304d"), width + 5.0)
+				draw_line(low, high, Color("#fff0cf"), maxf(width - 3.0, 1.0))
+			continue
+
 		var rect := _beam_rect(laser)
 		if chart_time < damage_time:
 			draw_rect(rect, Color(1.0, 0.18, 0.2, 0.2), true)
@@ -244,4 +370,18 @@ func _draw() -> void:
 		elif chart_time <= active_until:
 			draw_rect(rect, Color("#ff304d"), true)
 			draw_rect(rect.grow(-3.0), Color("#fff0cf"), true)
+
+	for cube in _cubes:
+		var position := cube["position"] as Vector2
+		var half := 16.0
+		var points := PackedVector2Array([
+			position + Vector2(-half, 0),
+			position + Vector2(0, -half),
+			position + Vector2(half, 0),
+			position + Vector2(0, half),
+		])
+		draw_colored_polygon(points, Color("#79c9ff"))
+		draw_polyline(points + PackedVector2Array([points[0]]), Color.WHITE, 2.0)
+		if not bool(cube.get("fired", false)):
+			draw_circle(position, 4.0, Color("#fff0ae"))
 
