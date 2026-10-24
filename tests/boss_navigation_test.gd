@@ -1,6 +1,7 @@
 extends SceneTree
 ## Static real-terrain/short physics fixtures, not a gameplay run or input replay.
-const Level = preload("res://levels/bellkeep.gd")
+const Level = preload("res://levels/boss_chamber.gd")
+const Dungeon = preload("res://levels/bellkeep.gd")
 const STEP: float = 1.0/60.0
 const ARENA_LEFT: float = 2660.0
 const ARENA_RIGHT: float = 3330.0
@@ -107,7 +108,7 @@ func probe_body(at: Vector2) -> CharacterBody2D:
     return body
 
 func check_terrain() -> void:
-    check(Level.PLATFORMS.has(Rect2(1798,300,1762,120)),"Boss floor is the actual uninterrupted solid deck")
+    check(Level.PLATFORMS.has(Rect2(2580,300,840,120)),"Boss floor is the actual uninterrupted solid deck")
     for at: Vector2 in [Vector2(2660,299),Vector2(3330,299)]:
         var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(at,at+Vector2(0,8),1)
         var hit: Dictionary = fixture.get_world_2d().direct_space_state.intersect_ray(query)
@@ -120,7 +121,7 @@ func check_terrain() -> void:
                 var shape: CollisionShape2D = child.get_child(0)
                 found = shape.one_way_collision and is_equal_approx(shape.one_way_collision_margin,4.0)
         check(found,"12px platform is real one-way collision "+str(item["id"]))
-    for chain: Dictionary in Level.CLIMBABLES:
+    for chain: Dictionary in Dungeon.CLIMBABLES:
         check((chain["rect"] as Rect2).end.x < ARENA_LEFT,"no phantom climb chain inside Boss arena")
 
 func check_platform_landings() -> void:
@@ -341,8 +342,6 @@ func run() -> void:
     level = Level.new()
     fixture.add_child(level)
     level.setup(null)
-    static_rect(Rect2(2619,60,12,240),"RealLeftBattleGate")
-    static_rect(Rect2(3359,60,12,240),"RealRightBattleGate")
     await physics_frame
     check_terrain()
     await check_platform_landings()

@@ -45,27 +45,7 @@ func run() -> void:
     check(game.player._hit_confirmed, "accepted hit enables cancellation confirmation")
     check(game.player.combat_freeze > 0 and target.combat_freeze > 0, "both contacting actors receive local hold")
     check(is_equal_approx(Engine.time_scale, 1.0) and not paused, "impact never changes global time or tree pause")
-    game._start_boss()
-    game.boss.set_physics_process(false)
-    game.boss.position = Vector2(2236, 300)
-    game.boss.facing = -1
-    game.boss._contact_resolved = false
-    game.player.parry_timer = 0.16
-    impacts_before = game.impact.impact_count
-    game.boss._begin_attack("slash")
-    game.boss._release_attack()
-    check(game.impact.impact_count == impacts_before + 1, "one Boss parry produces exactly one impact bundle")
-    check(game.boss.combat_freeze > 0 and game.player.combat_freeze > 0, "Boss parry holds both actors through one contact event")
-    game.boss.position = Vector2(3100, 300)
-    game.music.start_score()
-    game.music._process(game.music.seconds_per_beat() * 1.1)
-    check(game.music.total_beats == 1, "music clock advances while actors are held")
-    var projectile: Node = game.spawn_projectile(Vector2(2200, 100), Vector2(100, 0))
-    projectile.set_physics_process(false)
-    var at: Vector2 = projectile.position
-    projectile._physics_process(0.05)
-    check(projectile.position.x > at.x, "projectiles keep moving during actor-local hit-stop")
-    projectile.clear()
+    # Finish the dungeon actor lifetime before mounting the separate Boss room.
     target._hurt_flash = 0
     game.player.combat_freeze = 0.0
     game.player._clear_parry()
@@ -76,6 +56,32 @@ func run() -> void:
     game.player.attack_sweep_to = 1.0
     game.hero_attack(game.player, 1, 55, 1)
     check(target.health == before - 3, "next attack serial can hit same target again")
+    game._start_boss()
+    game.boss.set_physics_process(false)
+    var boss_spawn: Vector2 = game.room_spec["boss_spawn"]
+    game.boss.position = boss_spawn
+    game.boss.facing = -1
+    game.boss._contact_resolved = false
+    # _start_boss mounts the arena and revives/repositions the player. Set the
+    # genuine front-contact pair only after that room transition has completed.
+    game.player.revive(boss_spawn + Vector2(-36.0, 0.0))
+    game.player.invuln = 0.0
+    game.player.facing = 1
+    game.player._start_parry()
+    impacts_before = game.impact.impact_count
+    game.boss._begin_attack("slash")
+    game.boss._release_attack()
+    check(game.impact.impact_count == impacts_before + 1, "one Boss parry produces exactly one impact bundle")
+    check(game.boss.combat_freeze > 0 and game.player.combat_freeze > 0, "Boss parry holds both actors through one contact event")
+    game.music.start_score()
+    game.music._process(game.music.seconds_per_beat() * 1.1)
+    check(game.music.total_beats == 1, "music clock advances while actors are held")
+    var projectile: Node = game.spawn_projectile(game.player.position + Vector2(0, -120), Vector2(100, 0))
+    projectile.set_physics_process(false)
+    var at: Vector2 = projectile.position
+    projectile._physics_process(0.05)
+    check(projectile.position.x > at.x, "projectiles keep moving during actor-local hit-stop")
+    projectile.clear()
     var bounded: bool = true
     var offset := Vector2.ZERO
     for _i: int in 120:
@@ -100,7 +106,7 @@ func run() -> void:
     check(not gradient.draw_warnings and int(gradient.counts().get("warnings",0)) == 0 and int(game.effects.counts().get("warnings",0)) > 0, "one warning authority holds the issued warning without a duplicate gradient overlay")
     game.set_story_safe(true)
     var impact_count: int = game.impact.impact_count
-    game.request_impact(game.player, target, true, true)
+    game.request_impact(game.player, game.boss, true, true)
     check(game.player.combat_freeze == 0 and game.impact.impact_count == impact_count, "rest clears actor hold and rejects new impact requests")
     counts = game.effects.counts()
     check(int(counts.get("warnings", 0)) == 0 and int(gradient.counts().get("warnings",0)) == 0, "rest clears both hostile warning layers")

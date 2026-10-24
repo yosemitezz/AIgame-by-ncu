@@ -34,10 +34,10 @@ func run() -> void:
     for child: Node in game.level.get_children():
         if String(child.name).begins_with("Masonry_"):
             platform_count += 1
-    check(platform_count == game.level.PLATFORMS.size(), "every authored platform body is built")
+    check(platform_count == (game.room_spec["platforms"] as Array).size(), "every active dungeon platform body is built")
     check(InputMap.has_action("parry") and InputMap.has_action("dash"), "input mappings installed")
     var floors: Array[Rect2] = []
-    for rectangle: Rect2 in game.level.PLATFORMS:
+    for rectangle: Rect2 in game.room_spec["platforms"]:
         if rectangle.size.y > 16 and is_equal_approx(rectangle.position.y, 300.0):
             floors.append(rectangle)
     var safe_gap: float = 180.0 * (2.0 * 340.0 / 900.0) * 0.7

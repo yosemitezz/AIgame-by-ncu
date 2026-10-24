@@ -27,6 +27,7 @@ const STRINGS: Array[String] = [
     "游戏结束", "保持决心……", "R 从检查点重试   F5 重新启程", "钟声之后", "声音仍在。记忆却止于此处。", "第一章结束", "F5 重新启程   R 重试",
     "钟堡 / 路线图", "悬链书库  ·  破碎回廊  ·  淤水墓廊", "红心 你的位置    青线 铁链    蓝线 浅水    黄色 门 / 检查点", "TAB 或 ESC 返回冒险", "低血!",
     "未知", "当前：", "红心 你的位置    青方块 检查点    红块 钟守    紫点 碎片    黄色 门"]
+const ROOM_STRINGS: Array[String] = ["钟堡地牢", "决斗厅", "当前房间", "门户", "E 查看门户", "再按 E 确认", "房间切换中", "房间准备中", "地图 / ", "独立决斗房间", "入口 / 返回门户", "TAB 或 ESC 关闭地图"]
 var state: Dictionary = {}
 var font: Font
 var _clock: float = 0.0
@@ -59,7 +60,7 @@ func _process(delta: float) -> void:
 func update_state(next: Dictionary) -> void:
     state = next
     var reached: float = float(next.get("player_at", Vector2.ZERO).x)
-    if reached > _explored_x:
+    if current_room() == "dungeon" and reached > _explored_x:
         _explored_x = reached
         if is_inside_tree():
             get_tree().set_meta("bellkeep_explored", _explored_x)
@@ -98,7 +99,8 @@ func panel_layout(canvas: Vector2, has_boss: bool = false) -> Dictionary:
         "buttons": Rect2(0, canvas.y - 48, canvas.x, 26),
         "controls": Rect2(16, canvas.y - 20, canvas.x - 32, 14),
         "pause": Rect2((canvas.x - 456) * 0.5, (canvas.y - 276) * 0.5, 456, 276),
-        "map": Rect2(24, 64, canvas.x - 48, canvas.y - 88)}
+        "map": Rect2(24, 64, canvas.x - 48, canvas.y - 88),
+        "portal": Rect2((canvas.x - 512) * 0.5, canvas.y - 132, 512, 48)}
 
 func text(at: Vector2, value: String, point_size: int = 12, ink: Color = WHITE, width: float = -1) -> void:
     draw_string(font, at.round(), value, HORIZONTAL_ALIGNMENT_LEFT, width, point_size, ink)
@@ -135,6 +137,9 @@ func _draw() -> void:
         _draw_game_over()
     elif outcome == "victory":
         _draw_victory()
+        _draw_portal(Rect2((size.x-512)*0.5,size.y-64,512,48))
+    if bool(state.get("transition", false)) and outcome != "defeat":
+        _draw_room_transition()
 
 func _draw_hud(layout: Dictionary, has_boss: bool) -> void:
     if has_boss:
@@ -171,13 +176,78 @@ func _draw_hud(layout: Dictionary, has_boss: bool) -> void:
     text(Vector2(bar_x + bar_w + 130, y), "碎片 %02d/%02d" % [state.get("shards", 0), state.get("total_shards", 25)], 12, WHITE)
     var zone_w: float = 220.0
     var zone_x: float = status.end.x - zone_w
-    text(Vector2(zone_x, y), str(state.get("zone", "")), 12, WHITE, zone_w)
+    text(Vector2(zone_x, y), room_status(), 12, WHITE, zone_w)
     draw_rect(Rect2(zone_x, y + 4, zone_w, 5), WHITE)
     draw_rect(Rect2(zone_x + 1, y + 5, zone_w - 2, 3), BLACK)
     draw_rect(Rect2(zone_x + 1, y + 5, roundf((zone_w - 2) * clampf(float(state.get("progress", 0)), 0.0, 1.0)), 3), YELLOW)
+    _draw_portal(layout["portal"])
     _draw_buttons(layout["buttons"])
     var controls: Rect2 = layout["controls"]
     text(controls.position + Vector2(0, 11), "A/D 移动  空格 跳跃 / 连跳  W/S 攀爬  S 蹲下  E 交互  ESC 暂停", 12, GRAY, controls.size.x)
+
+func current_room() -> String:
+    return "boss" if str(state.get("room_id", "dungeon")) == "boss" else "dungeon"
+
+func room_status() -> String:
+    # Legacy callers keep their zone label; the room-aware root supplies a title.
+    return str(state.get("room_title", state.get("zone", "")))
+
+func room_title() -> String:
+    var title: String = str(state.get("room_title", ""))
+    return title if title != "" else ("决斗厅" if current_room() == "boss" else "钟堡地牢")
+
+func map_bounds() -> Rect2:
+    var fallback: Rect2 = Rect2(2580,-120,840,620) if current_room() == "boss" else Level.WORLD_BOUNDS
+    var candidate: Variant = state.get("room_bounds", fallback)
+    if candidate is Rect2 and candidate.position.is_finite() and candidate.size.is_finite() and candidate.size.x > 0 and candidate.size.y > 0:
+        return candidate
+    return fallback
+
+func room_map_data() -> Dictionary:
+    var boss_room: bool = current_room() == "boss"
+    var bounds: Rect2 = map_bounds()
+    var platforms: Array = []
+    var fallback: Array = [Rect2(2580,300,840,24)] if boss_room else Level.PLATFORMS
+    var supplied: Variant = state.get("room_platforms", fallback)
+    if supplied is Array:
+        for value: Variant in supplied:
+            if value is Rect2 and value.intersects(bounds): platforms.append(value.intersection(bounds))
+    var portal: Variant = state.get("portal_at", Vector2(2706,300) if boss_room else Vector2(2560,300))
+    if not portal is Vector2 or not portal.is_finite(): portal = bounds.get_center()
+    return {"room_id":current_room(), "bounds":bounds, "platforms":platforms, "portal_at":portal,
+        "has_fog":not boss_room, "shards":[] if boss_room else Level.SHARDS,
+        "rooms":[] if boss_room else Level.ROOMS, "climbables":[] if boss_room else Level.CLIMBABLES}
+
+func portal_feedback() -> Dictionary:
+    var hint: String = str(state.get("portal_hint", ""))
+    var visible_now: bool = hint != "" and not bool(state.get("paused", false)) and str(state.get("overlay", "")) == "" and str(state.get("outcome", "")) != "defeat" and not bool(state.get("transition", false))
+    return {"visible":visible_now, "title":room_title(), "hint":hint,
+        "confirm":bool(state.get("portal_confirm", false)),
+        "action":"再按 E 确认" if bool(state.get("portal_confirm", false)) else "E 查看门户"}
+
+func transition_alpha(progress: float) -> float:
+    if not is_finite(progress): return 1.0
+    var value: float = clampf(progress, 0.0, 1.0)
+    # Root swaps the world at .40 and prepares it until .72. Opaque during both.
+    return clampf(minf(value / 0.32, (1.0-value) / 0.28), 0.0, 1.0)
+
+func _draw_portal(rect: Rect2) -> void:
+    var feedback: Dictionary = portal_feedback()
+    if not feedback["visible"]: return
+    frame_box(rect, 2, YELLOW if feedback["confirm"] else WHITE)
+    text(rect.position + Vector2(12,17), str(feedback["hint"]), 12, WHITE, rect.size.x-24)
+    text(rect.position + Vector2(12,35), str(feedback["action"]), 12, YELLOW if feedback["confirm"] else CYAN, rect.size.x-24)
+
+func _draw_room_transition() -> void:
+    var progress: float = float(state.get("transition_progress", 0.0))
+    var alpha: float = transition_alpha(progress)
+    draw_rect(Rect2(Vector2.ZERO, size), Color(0,0,0,alpha))
+    if alpha < 0.98: return
+    centered(size.y*0.5-12, room_title(), 24, WHITE)
+    centered(size.y*0.5+18, "房间准备中" if progress >= 0.4 else "房间切换中", 12, GRAY)
+    var bar: Rect2 = Rect2((size.x-144)*0.5, size.y*0.5+34,144,4)
+    draw_rect(bar, DIM)
+    draw_rect(Rect2(bar.position,Vector2(roundf(bar.size.x*clampf(progress,0,1)),bar.size.y)),WHITE)
 
 ## Four orange command buttons in the FIGHT / ACT / ITEM / MERCY spot. They list the real combat keys; the one that is in use
 ## turns yellow and shows the soul.
@@ -284,7 +354,7 @@ func _draw_victory() -> void:
         centered(size.y * 0.3 + 205.0, "F5 重新启程   R 重试", 12, GRAY)
 
 func map_point(at: Vector2, area: Rect2) -> Vector2:
-    var bounds: Rect2 = Level.WORLD_BOUNDS
+    var bounds: Rect2 = map_bounds()
     var factor: float = minf(area.size.x / bounds.size.x, area.size.y / bounds.size.y)
     var origin: Vector2 = area.position + (area.size - bounds.size * factor) * 0.5
     return (origin + (at - bounds.position) * factor).round()
@@ -300,6 +370,9 @@ func _draw_map(rect: Rect2) -> void:
         var sy: float = 1.0 if corner.y <= rect.position.y else -1.0
         draw_rect(Rect2(corner + Vector2(6.0 * sx - (0.0 if sx > 0 else 12.0), 6.0 * sy - (0.0 if sy > 0 else 2.0)), Vector2(12, 2)), Color("c08a4a"))
         draw_rect(Rect2(corner + Vector2(6.0 * sx - (0.0 if sx > 0 else 2.0), 6.0 * sy - (0.0 if sy > 0 else 12.0)), Vector2(2, 12)), Color("c08a4a"))
+    if current_room() == "boss":
+        _draw_boss_map_contents(rect)
+        return
     centered(rect.position.y + 29, "钟堡 / 路线图", 24, Color("c08a4a"))
     centered(rect.position.y + 50, "悬链书库  ·  破碎回廊  ·  淤水墓廊", 12, GRAY)
     var area := Rect2(rect.position + Vector2(18, 70), rect.size - Vector2(36, 124))
@@ -310,8 +383,10 @@ func _draw_map(rect: Rect2) -> void:
             current = index
     # Zone bands: alternating tint with a numbered tick at each zone start.
     for index: int in Level.ZONES.size():
-        var left: float = map_point(Vector2(float(Level.ZONES[index]["x"]), 0.0), area).x
+        if float(Level.ZONES[index]["x"]) > map_bounds().end.x: continue
+        var left: float = clampf(map_point(Vector2(float(Level.ZONES[index]["x"]), 0.0), area).x, area.position.x, area.end.x)
         var right: float = area.end.x if index == Level.ZONES.size() - 1 else map_point(Vector2(float(Level.ZONES[index + 1]["x"]), 0.0), area).x
+        right = clampf(right, area.position.x, area.end.x)
         if index % 2 == 0:
             draw_rect(Rect2(left, area.position.y, right - left, area.size.y), Color(0.12, 0.07, 0.16, 0.55))
         draw_rect(Rect2(left, area.position.y, 1, area.size.y), Color("2a1f33"))
@@ -319,26 +394,33 @@ func _draw_map(rect: Rect2) -> void:
     # Room outlines.
     for room: Dictionary in Level.ROOMS:
         var box: Rect2 = room["rect"]
+        if not box.intersects(map_bounds()): continue
+        box = box.intersection(map_bounds())
         var a: Vector2 = map_point(box.position, area)
         var b: Vector2 = map_point(box.end, area)
         draw_rect(Rect2(a, b - a), Color("6a1a28"), false, 1.0)
         text(Vector2(a.x + 4, b.y - 4), str(room["title"]), 12, Color("b07a7a"))
-    for platform: Rect2 in Level.PLATFORMS:
+    for platform: Rect2 in room_map_data()["platforms"]:
         var start: Vector2 = map_point(platform.position, area)
         var end: Vector2 = map_point(platform.end, area)
         draw_rect(Rect2(start, Vector2(maxf(2, end.x - start.x), maxf(2, minf(5, end.y - start.y)))), Color("9a8fa0"))
     for climb: Dictionary in Level.CLIMBABLES:
         var bounds: Rect2 = climb["rect"]
+        if not bounds.intersects(map_bounds()): continue
+        bounds = bounds.intersection(map_bounds())
         draw_line(map_point(Vector2(bounds.get_center().x, bounds.position.y), area), map_point(Vector2(bounds.get_center().x, bounds.end.y), area), Color("3f8f8a"), 2)
     for water: Rect2 in Level.WATER_REGIONS:
+        if not water.intersects(map_bounds()): continue
+        water = water.intersection(map_bounds())
         draw_line(map_point(water.position, area), map_point(Vector2(water.end.x, water.position.y), area), Color("3a5fa0"), 3)
     var opened: Array = state.get("opened_doors", [])
     for door: Dictionary in Level.DOORS:
+        if not map_bounds().has_point(door["rect"].get_center()): continue
         var at: Vector2 = map_point(door["rect"].get_center(), area)
         draw_rect(Rect2(at - Vector2(2, 3), Vector2(4, 6)), DIM if door["id"] in opened else Color("c08a4a"))
     var collected: Dictionary = state.get("collected", {})
     for index: int in Level.SHARDS.size():
-        if not collected.has(index):
+        if not collected.has(index) and map_bounds().has_point(Level.SHARDS[index]):
             var at: Vector2 = map_point(Level.SHARDS[index], area)
             draw_rect(Rect2(at, Vector2(2, 2)), PURPLE)
     # Fog of war: unexplored ground to the right of the furthest point reached is veiled.
@@ -350,7 +432,7 @@ func _draw_map(rect: Rect2) -> void:
     var shrine: Vector2 = map_point(Level.CHECKPOINT, area)
     draw_rect(Rect2(shrine - Vector2(3, 3), Vector2(6, 6)), CYAN)
     draw_rect(Rect2(shrine - Vector2(1, 5), Vector2(2, 2)), WHITE)
-    var bell: Vector2 = map_point(Level.BOSS_POSITION, area)
+    var bell: Vector2 = map_point(room_map_data()["portal_at"], area)
     draw_rect(Rect2(bell - Vector2(4, 5), Vector2(8, 10)), Color("a02838"))
     draw_rect(Rect2(bell - Vector2(2, 3), Vector2(4, 6)), Color("ff6070"))
     var player_at: Vector2 = map_point(state.get("player_at", Level.SPAWN), area)
@@ -358,3 +440,23 @@ func _draw_map(rect: Rect2) -> void:
     centered(area.end.y + 14, "当前：" + str(state.get("zone", "")), 12, YELLOW)
     text(rect.position + Vector2(18, rect.size.y - 31), "红心 你的位置    青方块 检查点    红块 钟守    紫点 碎片    黄色 门", 12, WHITE, rect.size.x - 36)
     centered(rect.end.y - 12, "TAB 或 ESC 返回冒险", 12, YELLOW)
+
+func _draw_boss_map_contents(rect: Rect2) -> void:
+    centered(rect.position.y+29, "地图 / " + room_title(), 24, Color("c08a4a"))
+    centered(rect.position.y+50, "独立决斗房间", 12, GRAY)
+    var area: Rect2 = Rect2(rect.position+Vector2(28,74),rect.size-Vector2(56,132))
+    var data: Dictionary = room_map_data()
+    var bounds: Rect2 = data["bounds"]
+    var top_left: Vector2 = map_point(bounds.position,area)
+    var lower_right: Vector2 = map_point(bounds.end,area)
+    draw_rect(Rect2(top_left,lower_right-top_left),Color("6a1a28"),false,1)
+    for platform: Rect2 in data["platforms"]:
+        var a: Vector2 = map_point(platform.position,area)
+        var b: Vector2 = map_point(platform.end,area)
+        draw_rect(Rect2(a,Vector2(maxf(2,b.x-a.x),maxf(2,minf(5,b.y-a.y)))),Color("9a8fa0"))
+    var portal: Vector2 = map_point(data["portal_at"],area)
+    draw_rect(Rect2(portal-Vector2(4,7),Vector2(8,14)),CYAN,false,2)
+    var player_at: Vector2 = map_point(state.get("player_at",Vector2(2706,300)),area)
+    draw_heart(player_at-Vector2(4,4),1,RED)
+    text(rect.position+Vector2(20,rect.size.y-32), "入口 / 返回门户",12,CYAN)
+    centered(rect.end.y-12,"TAB 或 ESC 关闭地图",12,YELLOW)

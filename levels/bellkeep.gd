@@ -2,6 +2,10 @@ extends Node2D
 ## Authored 2D route; all visible forms are original integer-grid pixel primitives.
 ## Final texture replacements may be supplied by Cursor without changing collision data.
 
+const ROOM_ID: String = "dungeon"
+const PORTAL_POSITION: Vector2 = Vector2(2560, 300)
+const PORTAL_RECT: Rect2 = Rect2(2524, 244, 72, 64)
+const ROOM_END_WALL: Rect2 = Rect2(2626, -160, 16, 460)
 const SPAWN: Vector2 = Vector2(90, 260)
 const CHECKPOINT: Vector2 = Vector2(1860, 260)
 const BOSS_TRIGGER_X: float = 2640.0
@@ -158,8 +162,9 @@ func setup(p_game: Node) -> void:
 	if _built:
 		return
 	_built = true
-	for index in range(PLATFORMS.size()):
-		var area: Rect2 = PLATFORMS[index]
+	var room_platforms: Array = get_room_spec()["platforms"]
+	for index in range(room_platforms.size()):
+		var area: Rect2 = room_platforms[index]
 		var body: StaticBody2D = StaticBody2D.new()
 		body.name = "Masonry_%02d" % index
 		body.collision_layer = 1
@@ -194,15 +199,14 @@ func _draw() -> void:
 	_draw_bell_landmark()
 	_draw_dungeon_background()
 	_draw_archive()
-	for area in PLATFORMS:
+	for area: Rect2 in get_room_spec()["platforms"]:
 		_draw_platform(area)
 	_draw_hanging_cages()
 	_draw_ground_details()
 	_draw_broken_chains()
 	_draw_shrine()
 	_draw_wayfinding()
-	_draw_gate(2640, 300, false)
-	_draw_gate(3380, 300, true)
+	_draw_room_portal()
 	_draw_gargoyles()
 	_draw_climbs()
 	_draw_water()
@@ -442,6 +446,8 @@ func _interaction_at(feet: Vector2) -> Dictionary:
 	return nearest
 
 func interaction_hint(feet: Vector2) -> String:
+	if not portal_at(feet).is_empty():
+		return "E - Enter the hollow belfry" if is_instance_valid(game) and game.get("elite_defeated") == true else "The Bellwarden seals this portal"
 	var entry: Dictionary = _interaction_at(feet)
 	if not entry.is_empty():
 		return str(entry["hint"])
@@ -768,3 +774,41 @@ func _draw_ground_details() -> void:
 		if index % 13 == 6:
 			draw_rect(Rect2(x, 300, 14, 2), BLOOD)
 			draw_rect(Rect2(x + 3, 302, 8, 1), Color("4a1220"))
+
+
+## Room data is distinct from the legacy authoring constants: the old shard
+## indices remain stable, while only dungeon-owned geometry enters this tree.
+func get_room_spec() -> Dictionary:
+	var platforms: Array[Rect2] = []
+	for authored: Rect2 in PLATFORMS:
+		if authored.position.x >= 2640.0:
+			continue
+		var clipped: Rect2 = authored
+		if clipped.end.x > ROOM_END_WALL.position.x:
+			clipped.size.x = ROOM_END_WALL.position.x - clipped.position.x
+		if clipped.size.x > 0.0:
+			platforms.append(clipped)
+	platforms.append(ROOM_END_WALL)
+	var indices: Array[int] = []
+	for index in range(SHARDS.size()):
+		if index != 11:
+			indices.append(index)
+	return {"id": ROOM_ID, "title": "THE WAKING NAVE", "bounds": Rect2(-40, -160, 2700, 860), "spawn": SPAWN, "checkpoint": CHECKPOINT, "boss_spawn": Vector2.ZERO, "portal_at": PORTAL_POSITION, "fall_limit": FALL_LIMIT, "platforms": platforms, "shard_indices": indices}
+
+func portal_at(feet: Vector2) -> Dictionary:
+	if not _contains_closed(PORTAL_RECT, feet):
+		return {}
+	return {"id": "belfry_portal", "target": "boss", "at": PORTAL_POSITION, "rect": PORTAL_RECT, "requires": "elite"}
+
+func _draw_room_portal() -> void:
+	# A freestanding stone doorway, with an opaque threshold: this is a room
+	# transition marker, not a view into the encounter in the dungeon's tree.
+	_draw_arch(2514, 164, 92, 136, MASON)
+	draw_rect(Rect2(2528, 192, 64, 108), DARK)
+	for x in [2530, 2586]:
+		draw_rect(Rect2(x, 198, 4, 96), GOLD_LOW)
+		draw_rect(Rect2(x + 1, 202, 2, 88), GOLD)
+	var pulse: int = 2 if int(_clock * 4) % 2 == 0 else 0
+	_draw_diamond(Vector2(2560, 230 - pulse), 10, GOLD_LOW)
+	_draw_diamond(Vector2(2560, 230 - pulse), 4, BONE)
+	draw_rect(Rect2(2522, 296, 76, 4), LIP)

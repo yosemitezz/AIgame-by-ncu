@@ -1,14 +1,15 @@
 extends CharacterBody2D
+## Mobility balance: quicker room-local approach and re-entry; HP, damage, warning and shot counts unchanged.
 ## Six finite enemy casts. Root owns accepted damage/projectile collision, not these tells.
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
 const KINDS: Array[String] = ["sentry","wisp","elite","lantern","jailer","bat"]
 const CASTS: Dictionary = {
-    "sentry":{"hp":3,"windup":0.52,"release":0.12,"recover":0.42,"reach":48.0,"speed":55.0,"cap":0},
-    "wisp":{"hp":2,"windup":0.66,"release":0.36,"recover":0.45,"reach":0.0,"speed":42.0,"cap":6},
-    "elite":{"hp":9,"windup":0.58,"release":0.20,"recover":0.55,"reach":72.0,"speed":88.0,"cap":8},
-    "lantern":{"hp":4,"windup":0.72,"release":0.42,"recover":0.55,"reach":0.0,"speed":32.0,"cap":12},
-    "jailer":{"hp":6,"windup":0.68,"release":0.12,"recover":0.62,"reach":92.0,"speed":42.0,"cap":0},
-    "bat":{"hp":2,"windup":0.55,"release":0.38,"recover":0.60,"reach":0.0,"speed":65.0,"cap":6},
+    "sentry":{"hp":3,"windup":0.52,"release":0.12,"recover":0.42,"reach":48.0,"speed":70.0,"cap":0},
+    "wisp":{"hp":2,"windup":0.66,"release":0.36,"recover":0.45,"reach":0.0,"speed":52.0,"cap":6},
+    "elite":{"hp":9,"windup":0.58,"release":0.20,"recover":0.48,"reach":72.0,"speed":108.0,"cap":8},
+    "lantern":{"hp":4,"windup":0.72,"release":0.42,"recover":0.55,"reach":0.0,"speed":40.0,"cap":12},
+    "jailer":{"hp":6,"windup":0.68,"release":0.12,"recover":0.62,"reach":92.0,"speed":52.0,"cap":0},
+    "bat":{"hp":2,"windup":0.55,"release":0.38,"recover":0.60,"reach":0.0,"speed":82.0,"cap":6},
 }
 static var _lane_owner: WeakRef = null
 var game: Node
@@ -180,7 +181,7 @@ func _attack_allowed() -> bool:
     var outcome: Variant = game.get("outcome")
     if outcome is String and not outcome.is_empty(): return false
     var at: Vector2 = game.player.global_position
-    return global_position.distance_to(at) <= 360.0 and _target_in_room(at) and _on_screen() and _has_los(global_position+Vector2(0,-16),at+Vector2(0,-14))
+    return global_position.distance_to(at) <= 420.0 and _target_in_room(at) and _on_screen() and _has_los(global_position+Vector2(0,-16),at+Vector2(0,-14))
 
 func _update_motion(offset: Vector2,delta: float) -> void:
     var ranged: bool = kind in ["wisp","lantern","bat"]
@@ -200,7 +201,7 @@ func _update_motion(offset: Vector2,delta: float) -> void:
             move = true
         if move and is_on_floor() and not _floor_ahead(direction): move = false
         var speed: float = float(CASTS[kind]["speed"])
-        velocity.x = move_toward(velocity.x,direction*speed if move else 0.0,650.0*delta)
+        velocity.x = move_toward(velocity.x,direction*speed if move else 0.0,850.0*delta)
         if kind == "elite" and is_on_floor() and offset.y < -32 and absf(offset.x) < 160: velocity.y = -280.0
     animation_state = "run" if absf(velocity.x) > 6 else "idle"
 
@@ -271,7 +272,7 @@ func _begin_attack() -> bool:
         return false
     attack_serial += 1
     _windup = _windup_total
-    _cooldown = maxf(lease+0.25 if _is_blocking_cast() else 0.0,_windup_total+_release_total+float(CASTS[kind]["recover"])+0.65)
+    _cooldown = maxf(lease+0.25 if _is_blocking_cast() else 0.0,_windup_total+_release_total+float(CASTS[kind]["recover"])+0.48)
     _attack_facing = facing
     _attack_target = game.player.global_position+Vector2(0,-14)
     _shot = false

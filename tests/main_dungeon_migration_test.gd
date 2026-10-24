@@ -7,6 +7,8 @@ var passed: int = 0
 var failed: int = 0
 var checks: Array[Dictionary] = []
 var map: Node2D
+var actual_terrain: Array[Rect2] = []
+var walkable: Array[Rect2] = []
 
 func check(value: bool,label: String) -> void:
 	checks.append({"test": label,"passed": value})
@@ -24,9 +26,13 @@ func run() -> void:
 	map.setup(null)
 	await physics_frame
 	var built: int = map.get_child_count()
+	for area: Rect2 in map.get_room_spec()["platforms"]:
+		actual_terrain.append(area)
+		if area != Level.ROOM_END_WALL:
+			walkable.append(area)
 	map.setup(null)
 	check(map.get_child_count() == built,"map setup is idempotent")
-	check(built == Level.PLATFORMS.size()+Level.DOORS.size(),"real terrain and all new door bodies constructed")
+	check(built == actual_terrain.size()+Level.DOORS.size(),"all room-owned real terrain and door bodies constructed")
 	check_contract()
 	check_graph()
 	check_regions()
@@ -56,7 +62,11 @@ func check_contract() -> void:
 	check(Level.BOSS_TRIGGER_X == 2640 and Level.BOSS_POSITION == Vector2(2990,250),"Boss entry and spawn unchanged")
 	check(Level.LEVEL_END == 3380,"legacy exit unchanged")
 	check(Level.WORLD_BOUNDS == Rect2(-40,-160,3520,860) and Level.FALL_LIMIT == 720,"world covers library and crypt")
-	check(Level.PLATFORMS.size() == 26 and Level.CLIMBABLES.size() == 4,"26 terrain pieces and four real chains")
+	check(Level.PLATFORMS.size() == 26 and Level.CLIMBABLES.size() == 4,"legacy authored terrain and four real chains remain stable")
+	check(actual_terrain.size() == 24 and walkable.size() == 23,"dungeon constructs 23 walking surfaces plus its solid terminal wall")
+	check(actual_terrain.has(Rect2(1798,300,828,120)),"dungeon's final floor is physically truncated at the portal wall")
+	for boss_platform: Rect2 in [Rect2(2690,252,94,12),Rect2(2834,210,104,12),Rect2(3124,252,100,12)]:
+		check(not actual_terrain.has(boss_platform),"Boss platform belongs exclusively to the other room "+str(boss_platform))
 	check(Level.DOORS.size() == 3 and Level.WATER_REGIONS.size() == 2,"three interactions and two shallow pools")
 	check(Level.SHARDS.size() == 25,"reward branch carries migrated actual pickups")
 	for i: int in ORIGINAL_SHARDS.size():
@@ -81,7 +91,7 @@ func can_fall(a: Rect2,b: Rect2) -> bool:
 		if x-7 < b.position.x or x+7 > b.end.x: continue
 		var clear: bool = true
 		var shaft: Rect2 = Rect2(x-7,a.position.y+1,14,b.position.y-a.position.y-2)
-		for terrain: Rect2 in Level.PLATFORMS:
+		for terrain: Rect2 in actual_terrain:
 			if terrain != a and terrain != b and shaft.intersects(terrain): clear = false
 		if clear: return true
 	return false
@@ -97,12 +107,12 @@ func can_climb(a: Rect2,b: Rect2) -> bool:
 
 func check_graph() -> void:
 	var reached: Array[bool] = []
-	reached.resize(Level.PLATFORMS.size())
+	reached.resize(walkable.size())
 	reached.fill(false)
 	var seed: int = -1
 	var top: float = INF
-	for i: int in Level.PLATFORMS.size():
-		var floor: Rect2 = Level.PLATFORMS[i]
+	for i: int in walkable.size():
+		var floor: Rect2 = walkable[i]
 		if Level.SPAWN.x >= floor.position.x and Level.SPAWN.x <= floor.end.x and floor.position.y >= Level.SPAWN.y and floor.position.y < top:
 			seed = i
 			top = floor.position.y
@@ -116,8 +126,8 @@ func check_graph() -> void:
 			if not reached[i]: continue
 			for j: int in reached.size():
 				if reached[j]: continue
-				var a: Rect2 = Level.PLATFORMS[i]
-				var b: Rect2 = Level.PLATFORMS[j]
+				var a: Rect2 = walkable[i]
+				var b: Rect2 = walkable[j]
 				if can_jump(a,b) or can_fall(a,b) or can_climb(a,b):
 					reached[j] = true
 					changed = true
@@ -126,9 +136,9 @@ func check_graph() -> void:
 	var west: Rect2 = Rect2(440,500,512,80)
 	var middle: Rect2 = Rect2(1032,500,384,80)
 	var east: Rect2 = Rect2(1496,500,312,80)
-	check(can_climb(Level.PLATFORMS[seed],west),"entry chain connects nave to crypt")
+	check(can_climb(walkable[seed],west),"entry chain connects nave to crypt")
 	check(can_jump(west,middle) and can_jump(middle,east),"lower route crosses both authored gaps")
-	check(can_climb(east,Rect2(1798,300,1762,120)),"return chain completes shrine-side loop")
+	check(can_climb(east,Rect2(1798,300,828,120)),"return chain completes shrine-side loop")
 	check(can_climb(middle,Rect2(1392,48,184,20)),"library reward branch connects from crypt")
 
 func check_regions() -> void:

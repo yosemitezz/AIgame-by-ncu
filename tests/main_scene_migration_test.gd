@@ -3,6 +3,7 @@ extends SceneTree
 var passed: int = 0
 var failed: int = 0
 var game: Node
+var finished: bool = false
 
 func check(ok: bool, label: String) -> void:
     if ok:
@@ -13,12 +14,18 @@ func check(ok: bool, label: String) -> void:
 
 func _initialize() -> void:
     call_deferred("run")
+    create_timer(20.0,true,false,true).timeout.connect(func() -> void:
+        if not finished:
+            push_error("FAIL bounded main scene migration timeout")
+            quit(1))
 
 func freeze() -> void:
     game.set_physics_process(false)
     game.set_process(false)
     game.player.set_physics_process(false)
     game.music.stop_score()
+    # Full-song stop intentionally enters safety; reopen only this static combat fixture.
+    game.set_story_safe(false)
     game.music.set_process(false)
     game.effects.set_process(false)
     game.level.set_process(false)
@@ -50,7 +57,7 @@ func run() -> void:
     check(low.y - high.y > 250, "camera follows actual upper and lower rooms")
     for at: Vector2 in [Vector2(-1000,-1000),Vector2(5000,5000),Vector2(1300,500)]:
         var camera: Vector2 = game.camera_target(at)
-        check(camera.x >= 400 and camera.x <= game.level.LEVEL_END-400 and camera.y >= game.level.WORLD_BOUNDS.position.y+225 and camera.y <= game.level.WORLD_BOUNDS.end.y-225, "camera retains native viewport bounds")
+        check(camera.x >= 400 and camera.x <= game.room_spec["bounds"].end.x-400 and camera.y >= game.room_spec["bounds"].position.y+225 and camera.y <= game.room_spec["bounds"].end.y-225, "camera retains native viewport bounds")
     game.player.position = Vector2(1862, 500)
     game._physics_process(0)
     check(not game.checkpoint_active, "same x in another layer cannot activate shrine")
@@ -115,10 +122,18 @@ func run() -> void:
     check(not game.boss_started, "another layer does not start Boss by x alone")
     game.player.position = Vector2(2650,300)
     game._physics_process(0)
+    check(not game.boss_started and game.room_id == "dungeon", "former floor/x threshold no longer auto-starts the Boss")
+    var retired_level: Node = game.level
+    game._start_boss()
+    check(game.room_id == "boss", "explicit integration hook enters the independent Boss room")
+    check(game.level.get_script().resource_path == "res://levels/boss_chamber.gd", "main mounts the real Boss chamber script")
+    check(game.level != retired_level and retired_level.get_parent() == null, "Boss hook removes the former dungeon tree")
     game.music.stop_score()
+    # Full-song stop intentionally enters safety; reopen only this static combat fixture.
+    game.set_story_safe(false)
     game.music.set_process(false)
-    game.boss.set_physics_process(false)
-    check(game.boss_started, "original Boss entry still activates in its actual court")
+    if is_instance_valid(game.boss): game.boss.set_physics_process(false)
+    check(game.boss_started and is_instance_valid(game.boss), "explicit Boss entry activates in its own actual court")
     for screen: String in ["pause","map",""]:
         game._set_overlay(screen)
         game._hud.queue_redraw()
@@ -126,6 +141,7 @@ func run() -> void:
     game._set_overlay("")
     game.set_story_safe(true)
     game.free()
+    finished = true
     print("Dungeon integration: %d passed, %d failed" % [passed,failed])
     quit(1 if failed else 0)
 
