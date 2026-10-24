@@ -1,0 +1,9 @@
+.godot/
+.local/
+artifacts/
+exports/
+*.tmp
+*.log
+*.mp3
+*.wav
+*.ogg
