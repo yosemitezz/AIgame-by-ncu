@@ -69,6 +69,14 @@ func run() -> void:
 	for _i: int in 60:
 		fx._process(0.05)
 	check(fx.ghost_count() == 0, "afterimages drain after the dash ends")
+	# Running leaves a trail: scarf particles, heel dust and a faint afterimage, without a dash.
+	game.player.set("velocity", Vector2(160.0, 0.0))
+	var ran_ghost: bool = false
+	for _i: int in 40:
+		fx._process(0.03)
+		ran_ghost = ran_ghost or fx.ghost_count() > 0
+	check(ran_ghost, "running spawns afterimages and trail particles")
+	game.player.set("velocity", Vector2.ZERO)
 	# Warning lanes: shown while awake, never in a story-safe section.
 	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
 	check(fx.warning_count() == 1, "warning lane recorded")

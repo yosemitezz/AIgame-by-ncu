@@ -18,7 +18,7 @@ const MAX_SHAPES: int = 64
 const MAX_WARNINGS: int = 24
 const MAX_GHOSTS: int = 28
 const MAX_TRAIL_POINTS: int = 14
-const TRAIL_LIFE: float = 0.24
+const TRAIL_LIFE: float = 0.34
 
 const RAMP_SOURCE: Dictionary = {
 	"cool": ["ffffff", "c4fff6", "72ece2", "5aa4ff", "a278ff", "ff7ad0"],
@@ -62,6 +62,8 @@ var _proj_trails: Dictionary = {}
 var _clock: float = 0.0
 var _ghost_clock: float = 0.0
 var _boss_ghost_clock: float = 0.0
+var _run_clock: float = 0.0
+var _run_ghost_clock: float = 0.0
 var _mote_clock: float = 0.0
 var _shard_clock: float = 0.0
 var _rng := RandomNumberGenerator.new()
@@ -378,9 +380,26 @@ func _follow_actors(delta: float) -> void:
 			strength = 1.0
 		elif atk_t > 0.0:
 			strength = 0.75
-		elif vel.length() > 110.0:
-			strength = 0.3
+		elif absf(vel.x) > 60.0:
+			strength = 0.55 if is_on_floor_safe(pl) else 0.4
 		_body_trail.append({"p": pl.global_position + Vector2(0.0, -14.0), "age": 0.0, "k": strength})
+		# Running: a flowing scarf of light from the shoulders, dust-and-colour kicks at the heels, and
+		# a faint afterimage every few frames so walking reads as a continuous motion path.
+		var running: bool = absf(vel.x) > 60.0 and dash_t <= 0.0
+		if running:
+			var fdir: float = 1.0 if vel.x >= 0.0 else -1.0
+			_run_clock -= delta
+			if _run_clock <= 0.0:
+				_run_clock = 0.05
+				var shoulder: Vector2 = pl.global_position + Vector2(-fdir * 4.0, -26.0)
+				_part(shoulder, Vector2(-fdir * _rng.randf_range(50.0, 110.0), _rng.randf_range(-14.0, 14.0)), _rng.randf_range(0.28, 0.5), "flow", 3, "streak", 10.0, 1.5)
+				_part(shoulder + Vector2(0.0, 6.0), Vector2(-fdir * _rng.randf_range(40.0, 90.0), _rng.randf_range(-8.0, 20.0)), _rng.randf_range(0.3, 0.55), "rainbow", 2, "twinkle", 0.0, 1.4)
+				if is_on_floor_safe(pl):
+					_part(pl.global_position + Vector2(-fdir * 6.0, -1.0), Vector2(-fdir * _rng.randf_range(20.0, 60.0), _rng.randf_range(-40.0, -12.0)), _rng.randf_range(0.2, 0.4), "dust", 2, "dot", 120.0, 2.0)
+			_run_ghost_clock -= delta
+			if _run_ghost_clock <= 0.0:
+				_run_ghost_clock = 0.07
+				_ghost(pl, "hero", Color.from_hsv(fposmod(_clock * 1.2 + 0.55, 1.0), 0.55, 1.0), 0.32, 0.26)
 		_ghost_clock -= delta
 		if dash_t > 0.0 and _ghost_clock <= 0.0:
 			_ghost_clock = 0.03
@@ -410,6 +429,9 @@ func _follow_actors(delta: float) -> void:
 		_boss_ghost_clock = 0.05
 		_ghost(boss as Node2D, "boss", Color(1.0, 0.55, 0.45), 0.5, 0.35)
 	_track_projectiles()
+
+func is_on_floor_safe(n: Node2D) -> bool:
+	return n.has_method("is_on_floor") and bool(n.call("is_on_floor"))
 
 func center_of(n: Node2D) -> Vector2:
 	return n.global_position
