@@ -185,7 +185,7 @@ func _process(delta: float) -> void:
     if is_instance_valid(player):
         var wanted: float = clampf(player.position.x + float(player.facing) * 45.0, 320, Level.LEVEL_END - 320)
         _camera.position.x = roundf(lerpf(_camera.position.x, wanted, 1.0 - exp(-delta * 5.0)))
-        _camera.offset = Vector2(sin(_clock * 79), sin(_clock * 93)) * _trauma * _trauma * 4.0
+        _camera.offset = Vector2(sin(_clock * 79), sin(_clock * 93)) * _trauma * _trauma * 7.0
     for i: int in range(_particles.size() - 1, -1, -1):
         _particles[i]["life"] -= delta
         _particles[i]["at"] += _particles[i]["velocity"] * delta
@@ -306,7 +306,7 @@ func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power
     vfx_requested.emit(kind, at, direction, power)
     # Visuals moved to vfx/fx_layer.gd (listens to vfx_requested above); only camera shake stays here.
     if kind in ["hit", "hurt", "parry", "death", "burst"]:
-        _trauma = minf(1, _trauma + (0.35 if kind == "parry" else 0.2))
+        _trauma = minf(1, _trauma + (0.75 if kind == "parry" else 0.3))
 
 func _refresh_hud() -> void:
     if not is_instance_valid(player):

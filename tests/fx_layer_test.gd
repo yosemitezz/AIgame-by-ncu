@@ -39,6 +39,15 @@ func run() -> void:
 		var after: int = fx.particle_count() + fx.shape_count()
 		check(after >= before, "%s does not crash and keeps state consistent" % kind)
 	check(fx.particle_count() > 0 and fx.shape_count() > 0, "effects produced particles and shapes")
+	# The deflect must be a burst, not a ring: it should spawn many shapes and sparks at once.
+	for _i: int in 100:
+		fx._process(0.05)
+	game.emit_fx("parry", Vector2(300, 250), Vector2.RIGHT, 1.4)
+	check(fx.shape_count() >= 8 and fx.particle_count() >= 60, "parry deflect is a full burst (%d shapes, %d particles)" % [fx.shape_count(), fx.particle_count()])
+	# Let the engine run its real draw passes (headless still executes _draw); engine errors would fail the run.
+	for _i: int in 20:
+		await process_frame
+	check(fx.shape_count() > 0, "deflect survives real draw frames")
 	# Hammer the caps.
 	for _i: int in 300:
 		game.emit_fx("burst", Vector2(300, 250), Vector2.ZERO, 3.0)

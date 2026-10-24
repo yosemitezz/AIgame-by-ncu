@@ -46,6 +46,9 @@ class Ghost extends Node2D:
 		life -= delta
 		var k: float = clampf(life / max_life, 0.0, 1.0)
 		modulate = Color(tint.r, tint.g, tint.b, base_alpha * k * k)
+		# Afterimages swell and stretch outward as they fade, so every move reads bigger than the sprite.
+		var grow: float = 1.0 - k
+		scale = Vector2(1.0 + grow * 0.34, 1.0 + grow * 0.2)
 		return life <= 0.0
 
 var game: Node = null
@@ -190,34 +193,53 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 	match kind:
 		"slash":
 			var combo: int = clampi(int(roundf(power)), 1, 3)
-			_shape("arc", at, 0.34 + 0.05 * float(combo), "flow", {"d": d, "r": 22.0 + 5.0 * float(combo), "w": 3.0 + float(combo), "flip": combo == 2, "half": 1.35 if combo < 3 else 1.95, "sweep": true})
-			_shape("arc", at, 0.28 + 0.05 * float(combo), "cool", {"d": d, "r": 15.0 + 4.0 * float(combo), "w": 2.0, "flip": combo == 2, "half": 1.1 if combo < 3 else 1.6})
-			_sparks(at + Vector2(d * 16.0, 0.0), Vector2(d, 0.0), 8 + combo * 4, "flow", 170.0, 0.5)
-			_shape("star", at + Vector2(d * 22.0, 0.0), 0.22, "flow", {"r": 7.0 + 2.0 * float(combo)})
+			# Wide, layered crescents: a big flowing outer sweep, a rainbow middle, a white-hot inner edge.
+			_shape("arc", at, 0.38 + 0.06 * float(combo), "flow", {"d": d, "r": 30.0 + 8.0 * float(combo), "w": 4.0 + float(combo) * 1.5, "flip": combo == 2, "half": 1.5 if combo < 3 else 2.2, "sweep": true})
+			_shape("arc", at, 0.32 + 0.05 * float(combo), "rainbow", {"d": d, "r": 23.0 + 6.0 * float(combo), "w": 3.0, "flip": combo == 2, "half": 1.3 if combo < 3 else 1.9})
+			_shape("arc", at, 0.26 + 0.05 * float(combo), "cool", {"d": d, "r": 15.0 + 4.0 * float(combo), "w": 2.0, "flip": combo == 2, "half": 1.1 if combo < 3 else 1.6})
+			_shape("streaks", at + Vector2(d * 10.0, 0.0), 0.3, "flow", {"d": d, "len": 38.0 + 10.0 * float(combo), "n": 4 + combo})
+			_sparks(at + Vector2(d * 18.0, 0.0), Vector2(d, 0.0), 12 + combo * 5, "flow", 200.0, 0.55)
+			_sparks(at + Vector2(d * 18.0, 0.0), Vector2(d, 0.0), 6 + combo * 2, "rainbow", 150.0, 0.7, "shard", 1.3)
+			_shape("star", at + Vector2(d * 24.0, 0.0), 0.26, "flow", {"r": 9.0 + 3.0 * float(combo)})
 			if combo == 3:
-				_shape("ring", at + Vector2(d * 10.0, 0.0), 0.44, "flow", {"r0": 6.0, "r1": 44.0, "w": 4.0, "ry": 0.75})
-				_sparks(at + Vector2(d * 20.0, 0.0), Vector2(d, 0.0), 16, "rainbow", 240.0, 0.7, "twinkle", 1.2)
+				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.5, "flow", {"r0": 6.0, "r1": 52.0, "w": 5.0, "ry": 0.75})
+				_shape("ring", at + Vector2(d * 12.0, 0.0), 0.4, "rainbow", {"r0": 4.0, "r1": 36.0, "w": 3.0, "ry": 0.75})
+				_sparks(at + Vector2(d * 22.0, 0.0), Vector2(d, 0.0), 22, "rainbow", 280.0, 0.8, "twinkle", 1.3)
 		"enemy_slash":
 			_shape("arc", at, 0.28, "warm", {"d": d, "r": 18.0 + 8.0 * power, "w": 3.0, "flip": false, "half": 1.3})
 			_sparks(at + Vector2(d * 14.0, 0.0), Vector2(d, 0.0), 8, "warm", 130.0, 0.4)
 		"parry":
-			_shape("ring", at, 0.46, "flow", {"r0": 4.0, "r1": 26.0 + 9.0 * power, "w": 4.0, "ry": 1.0})
-			_shape("ring", at, 0.34, "rainbow", {"r0": 2.0, "r1": 16.0 + 5.0 * power, "w": 3.0, "ry": 1.0})
-			_shape("ring", at, 0.6, "cool", {"r0": 6.0, "r1": 60.0, "w": 2.0, "ry": 0.7})
-			_shape("rays", at, 0.44, "flow", {"n": 14, "r1": 30.0 + 8.0 * power, "rot": 1.2})
-			_shape("star", at, 0.28, "cool", {"r": 14.0})
-			_sparks(at, dir, 26, "flow", 260.0, 0.7)
-			_sparks(at, Vector2.ZERO, 10, "rainbow", 120.0, 0.7, "twinkle")
+			# Sekiro-style deflect: one instant white-hot cross flash, then a fan of fast sparks thrown
+			# along the clash line, a hard shock ring, and long horizontal streaks. Colour only blooms
+			# afterwards, so the first frames read as steel on steel.
+			_shape("flash", at, 0.12, "cool", {"r": 34.0 + 10.0 * power})
+			_shape("cross", at, 0.2, "cool", {"r": 30.0 + 8.0 * power, "d": d})
+			_shape("streaks", at, 0.34, "flow", {"d": d, "len": 46.0, "n": 5, "both": true})
+			_shape("ring", at, 0.28, "cool", {"r0": 3.0, "r1": 40.0 + 10.0 * power, "w": 5.0, "ry": 1.0})
+			_shape("ring", at, 0.5, "flow", {"r0": 6.0, "r1": 62.0 + 14.0 * power, "w": 4.0, "ry": 1.0})
+			_shape("ring", at, 0.42, "rainbow", {"r0": 2.0, "r1": 34.0 + 8.0 * power, "w": 3.0, "ry": 1.0})
+			_shape("rays", at, 0.5, "flow", {"n": 18, "r1": 38.0 + 10.0 * power, "rot": 1.2})
+			_shape("star", at, 0.3, "cool", {"r": 18.0})
+			# Two fans: forward (where the blow came from) and back, like blades scraping apart.
+			_sparks(at, Vector2(d, -0.15), 30, "warm", 380.0, 0.55, "streak", 0.55)
+			_sparks(at, Vector2(-d, -0.25), 16, "cool", 300.0, 0.55, "streak", 0.5)
+			_sparks(at, Vector2.ZERO, 22, "flow", 260.0, 0.8, "streak", PI)
+			_sparks(at, Vector2.ZERO, 16, "rainbow", 150.0, 0.9, "shard", PI)
+			_sparks(at, Vector2.ZERO, 12, "rainbow", 100.0, 0.9, "twinkle", PI)
 			var pl: Node2D = _player()
 			if pl != null:
-				_ghost(pl, "hero", Color(0.55, 1.0, 0.95), 0.8, 0.4)
+				_ghost(pl, "hero", Color(0.55, 1.0, 0.95), 0.85, 0.45)
+				_ghost(pl, "hero", Color(1.0, 0.6, 0.95), 0.5, 0.65)
 		"parry_ready":
 			_shape("ring", at, 0.2, "cool", {"r0": 16.0, "r1": 5.0, "w": 2.0, "ry": 1.0})
 		"hit":
-			_shape("star", at, 0.22, "warm", {"r": 11.0 + 3.0 * power})
-			_shape("rays", at, 0.28, "warm", {"n": 10, "r1": 20.0 + 6.0 * power, "rot": 0.0})
-			_sparks(at, dir, 14, "warm", 220.0, 0.5, "streak", 1.2)
-			_sparks(at, dir, 7, "warm", 120.0, 0.65, "deb", 1.6)
+			_shape("flash", at, 0.1, "warm", {"r": 22.0 + 8.0 * power})
+			_shape("star", at, 0.28, "warm", {"r": 16.0 + 5.0 * power})
+			_shape("rays", at, 0.34, "warm", {"n": 14, "r1": 28.0 + 8.0 * power, "rot": 0.0})
+			_shape("ring", at, 0.3, "warm", {"r0": 2.0, "r1": 26.0 + 8.0 * power, "w": 3.0, "ry": 1.0})
+			_sparks(at, dir, 22, "warm", 260.0, 0.6, "streak", 1.2)
+			_sparks(at, dir, 12, "rainbow", 150.0, 0.8, "shard", 1.6)
+			_sparks(at, dir, 8, "warm", 120.0, 0.7, "deb", 1.6)
 		"hurt":
 			_shape("ring", at, 0.36, "hurt", {"r0": 3.0, "r1": 26.0, "w": 4.0, "ry": 1.0})
 			_shape("star", at, 0.24, "hurt", {"r": 12.0})
@@ -434,6 +456,9 @@ func _paint(c: CanvasItem, glow: bool) -> void:
 			"star": _star(c, Vector2(s["at"]).round(), float(s["r"]) * (1.0 - t), String(s["ramp"]), t, glow)
 			"pillar": _pillar(c, s, t, glow)
 			"bars": _bars(c, s, t, glow)
+			"flash": _flash(c, s, t, glow)
+			"cross": _cross(c, s, t, glow)
+			"streaks": _streaks(c, s, t, glow)
 	for q: Dictionary in _parts:
 		_particle(c, q, glow)
 	if not glow:
@@ -598,6 +623,56 @@ func _pillar(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 			c.draw_rect(Rect2(roundf(at.x - wid * 0.5), roundf(at.y - y), wid, 2.0), _col(ramp, f * 0.9 + t * 0.3, al))
 		y += 2.0
 
+func _flash(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
+	## One-to-two frame white-hot bloom at the contact point. Only drawn in the glow pass plus a tiny core.
+	var at: Vector2 = Vector2(s["at"]).round()
+	var r: float = float(s["r"]) * (0.5 + 0.8 * t)
+	var al: float = (1.0 - t) * (1.0 - t)
+	if glow:
+		for k: int in 3:
+			var rr: float = r * (1.0 - 0.28 * float(k))
+			c.draw_rect(Rect2(at - Vector2(rr, rr), Vector2(rr, rr) * 2.0), _col("cool", 0.1 + 0.25 * float(k), al * 0.22))
+	else:
+		var core: float = r * 0.28
+		c.draw_rect(Rect2(at - Vector2(core, core), Vector2(core, core) * 2.0), Color(1, 1, 1, al))
+
+func _cross(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
+	## Hard-edged four-point glint: long thin horizontal bar, shorter vertical, diagonals. Shrinks fast.
+	var at: Vector2 = Vector2(s["at"]).round()
+	var r: float = float(s["r"]) * (1.0 - t * t)
+	if r < 2.0:
+		return
+	var al: float = 1.0 - t
+	var wide: float = 4.0 if t < 0.35 else 2.0
+	if glow:
+		c.draw_line(at + Vector2(-r * 1.4, 0.0), at + Vector2(r * 1.4, 0.0), _col("cool", 0.3, al * 0.25), wide * 3.0)
+		c.draw_line(at + Vector2(0.0, -r * 0.8), at + Vector2(0.0, r * 0.8), _col("flow", 0.3, al * 0.2), wide * 3.0)
+		return
+	c.draw_line(at + Vector2(-r * 1.4, 0.0), at + Vector2(r * 1.4, 0.0), Color(1, 1, 1, al), wide)
+	c.draw_line(at + Vector2(0.0, -r * 0.8), at + Vector2(0.0, r * 0.8), Color(1, 1, 1, al), wide - 1.0)
+	var dg: float = r * 0.6
+	c.draw_line(at + Vector2(-dg, -dg), at + Vector2(dg, dg), _col("flow", t, al * 0.9), 2.0)
+	c.draw_line(at + Vector2(-dg, dg), at + Vector2(dg, -dg), _col("flow", t + 0.3, al * 0.9), 2.0)
+
+func _streaks(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
+	## Long speed lines that stretch out and slide: gradient from white at the root to colour at the tip.
+	var at: Vector2 = Vector2(s["at"]).round()
+	var ramp: String = s["ramp"]
+	var n: int = int(s["n"])
+	var d: float = s["d"]
+	var both: bool = s.get("both", false)
+	var reach: float = float(s["len"]) * (1.0 - (1.0 - t) * (1.0 - t))
+	var al: float = (1.0 - t) * (0.2 if glow else 1.0)
+	for i: int in n:
+		var off: float = (float(i) - float(n - 1) * 0.5) * 5.0
+		var shrink: float = 1.0 - absf(float(i) - float(n - 1) * 0.5) / float(n) * 0.9
+		for side: int in (2 if both else 1):
+			var sgn: float = d * (1.0 if side == 0 else -1.0)
+			var p0: Vector2 = (at + Vector2(sgn * reach * 0.12, off)).round()
+			var p1: Vector2 = (at + Vector2(sgn * reach * shrink, off * 1.5)).round()
+			var cols := PackedColorArray([Color(1, 1, 1, al), _col(ramp, 0.4 + t * 0.5, al * 0.7, float(i) * 0.12)])
+			c.draw_polyline_colors(PackedVector2Array([p0, p1]), cols, (6.0 if glow else (3.0 if i == n / 2 else 2.0)), false)
+
 func _bars(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	var at: Vector2 = s["at"]
 	var ramp: String = s["ramp"]
@@ -628,6 +703,19 @@ func _particle(c: CanvasItem, q: Dictionary, glow: bool) -> void:
 			else:
 				var tail: Vector2 = (p - Vector2(q["v"]) * 0.07).round()
 				c.draw_line(p, tail, _col(ramp, u, al, h), 3.0 if life_ratio > 0.5 else 2.0)
+		"shard":
+			# Tumbling coloured crystal chip: a rotating diamond whose hue drifts as it flies.
+			var spin: float = _clock * 14.0 + h * TAU
+			var len_a: float = float(size) * 2.4
+			var len_b: float = float(size) * 1.0
+			var ax: Vector2 = Vector2.from_angle(spin) * len_a
+			var bx: Vector2 = Vector2.from_angle(spin + PI * 0.5) * len_b
+			var pts := PackedVector2Array([p + ax, p + bx, p - ax, p - bx])
+			if glow:
+				c.draw_rect(Rect2(p - Vector2(4, 4), Vector2(8, 8)), _col(ramp, u, al * 0.16, h))
+			else:
+				c.draw_colored_polygon(pts, _col(ramp, u * 0.8, al, h))
+				c.draw_rect(Rect2(p, Vector2.ONE), Color(1, 1, 1, al))
 		"twinkle":
 			var arm: float = roundf(float(size) * (0.8 + life_ratio * 1.8))
 			if glow:
