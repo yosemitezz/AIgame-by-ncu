@@ -4,6 +4,7 @@ extends CharacterBody2D
 const PixelActor = preload("res://assets/art/pixel_actor.gd")
 var game: Node
 var kind: String = "sentry"
+var patrol_bounds: Rect2 = Rect2()
 var health: int = 3
 var max_health: int = 3
 var dead: bool = false
@@ -97,7 +98,7 @@ func _physics_process(delta: float) -> void:
 		return
 	var target: Node2D = game.player
 	var offset: Vector2 = target.global_position - global_position
-	var safe: bool = story_rest or bool(target.dead)
+	var safe: bool = story_rest or bool(target.dead) or not _target_in_room(target.global_position)
 	if kind != "wisp":
 		velocity.y = minf(velocity.y + 900.0 * delta, 620.0)
 	if safe:
@@ -141,6 +142,11 @@ func _physics_process(delta: float) -> void:
 		_die()
 	_publish_animation()
 	queue_redraw()
+
+func _target_in_room(at: Vector2) -> bool:
+	if patrol_bounds.has_area():
+		return patrol_bounds.grow(24).has_point(at)
+	return absf(at.y - _home.y) < 150.0
 
 func _publish_animation() -> void:
 	if animation_state == _last_state and frame == _last_frame and facing == _last_facing:

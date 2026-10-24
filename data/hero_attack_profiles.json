@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "coordinate_system": "feet-local pixels; facing right; positive angles turn downward",
+  "origin": [
+    0,
+    -24
+  ],
+  "contact_start": 0.25,
+  "arc_step_degrees": 3.0,
+  "combos": {
+    "1": {
+      "id": "descending_moon",
+      "radii": [
+        180,
+        72
+      ],
+      "angle_keys": [
+        [
+          0.0,
+          -78
+        ],
+        [
+          0.25,
+          -46
+        ],
+        [
+          0.5,
+          18
+        ],
+        [
+          0.75,
+          42
+        ],
+        [
+          1.0,
+          62
+        ]
+      ],
+      "blade_span_degrees": 28,
+      "sprite_tip_ratio": 0.26,
+      "phase_seconds": {
+        "windup": 0.065,
+        "active": 0.105,
+        "recover": 0.14
+      },
+      "lunge_speed": 130,
+      "lunge_seconds": 0.085
+    },
+    "2": {
+      "id": "rising_tide",
+      "radii": [
+        204,
+        84
+      ],
+      "angle_keys": [
+        [
+          0.0,
+          72
+        ],
+        [
+          0.25,
+          18
+        ],
+        [
+          0.5,
+          -18
+        ],
+        [
+          0.75,
+          -46
+        ],
+        [
+          1.0,
+          -68
+        ]
+      ],
+      "blade_span_degrees": 30,
+      "sprite_tip_ratio": 0.26,
+      "phase_seconds": {
+        "windup": 0.08,
+        "active": 0.12,
+        "recover": 0.16
+      },
+      "lunge_speed": 170,
+      "lunge_seconds": 0.085
+    },
+    "3": {
+      "id": "cleaving_star",
+      "radii": [
+        228,
+        96
+      ],
+      "angle_keys": [
+        [
+          0.0,
+          -64
+        ],
+        [
+          0.25,
+          -8
+        ],
+        [
+          0.5,
+          4
+        ],
+        [
+          0.75,
+          26
+        ],
+        [
+          1.0,
+          50
+        ]
+      ],
+      "blade_span_degrees": 40,
+      "sprite_tip_ratio": 0.26,
+      "phase_seconds": {
+        "windup": 0.11,
+        "active": 0.15,
+        "recover": 0.23
+      },
+      "lunge_speed": 210,
+      "lunge_seconds": 0.085
+    }
+  },
+  "timing_source": "main-project original attack cadence and step, retained during selective migration"
+}

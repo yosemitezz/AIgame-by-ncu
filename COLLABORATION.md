@@ -67,3 +67,8 @@ Baseline b262ed4 on feat/combat-feel-20261024. Cursor remote still a2c857b; its 
 - Reviewer: independent read only after implementation.
 
 Root on_parry_contact(defender,source,contact,kind) dispatches exactly one VFX/sound/local hold for genuine accepted contact. No perfect-parry mechanic is added. Projectile reflection and melee clashes are distinct. No Engine.time_scale writes; music remains independent. Same play.cmd entry, bounded tests and static keyframes only.
+
+
+## Unified main migration
+
+User selected this integrate/vfx-primary checkout as the main project. Baseline d6133d9586a5a175410f25fceb2384f264defb22 includes newer layered sounds and the longer hero; preserve those commits and source assets. Lead owns main/project/HUD/projectile/enemy integration and delivery. Player agent owns player/attack profile/query; Level owns bellkeep; Motion owns actor renderer/katana and FX; Boss owns boss/friend_rhythm/authored config/hazards; independent reviewer is read only. Source milestone e895 is selectively ported, not merged wholesale. No edits to other checkouts, main branch or original boss_attack subproject/audio/chart. Runtime music remains the distributable placeholder.

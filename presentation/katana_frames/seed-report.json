@@ -1,0 +1,56 @@
+{
+  "A": {
+    "sha256": "a5878ac6a1ea356d31436921b613af67a9b65d19c3c274db32fec6adc5595b5a",
+    "opaque_colors": 19,
+    "alpha_values": [
+      0,
+      255
+    ],
+    "bbox": [
+      17,
+      47,
+      122,
+      117
+    ],
+    "hand_guard_tip_in_bounds": true,
+    "forward_tip_distance_px": 73,
+    "main_body_height_px": 67,
+    "feet_anchor_preserved": true
+  },
+  "B": {
+    "sha256": "de0379deb407480834abeff212887c92b3bf5865f875297f5789170f056e4c05",
+    "opaque_colors": 20,
+    "alpha_values": [
+      0,
+      255
+    ],
+    "bbox": [
+      18,
+      39,
+      123,
+      117
+    ],
+    "hand_guard_tip_in_bounds": true,
+    "forward_tip_distance_px": 74,
+    "main_body_height_px": 68,
+    "feet_anchor_preserved": true
+  },
+  "C": {
+    "sha256": "fc3474bc92edf91d323809755a6b14cfdfdf55d5add4ac9638abcdf295e8c736",
+    "opaque_colors": 18,
+    "alpha_values": [
+      0,
+      255
+    ],
+    "bbox": [
+      17,
+      50,
+      123,
+      117
+    ],
+    "hand_guard_tip_in_bounds": true,
+    "forward_tip_distance_px": 74,
+    "main_body_height_px": 66,
+    "feet_anchor_preserved": true
+  }
+}

@@ -33,6 +33,8 @@ func run() -> void:
     target.position = Vector2(2232, 300)
     game.player._start_attack()
     game.player._enter_attack_phase("active")
+    game.player.attack_sweep_from = 0.25
+    game.player.attack_sweep_to = 1.0
     game.player.attack_serial = 100
     var before: int = target.health
     var impacts_before: int = game.impact.impact_count
@@ -65,7 +67,13 @@ func run() -> void:
     check(projectile.position.x > at.x, "projectiles keep moving during actor-local hit-stop")
     projectile.clear()
     target._hurt_flash = 0
-    game.player.attack_serial += 1
+    game.player.combat_freeze = 0.0
+    game.player._clear_parry()
+    game.player._cancel_attack()
+    game.player._start_attack()
+    game.player._enter_attack_phase("active")
+    game.player.attack_sweep_from = 0.25
+    game.player.attack_sweep_to = 1.0
     game.hero_attack(game.player, 1, 55, 1)
     check(target.health == before - 3, "next attack serial can hit same target again")
     var bounded: bool = true
@@ -79,20 +87,23 @@ func run() -> void:
     check(game.impact.sample_camera(0.01) == Vector2.ZERO, "reduced camera feedback disables displacement")
     check(Renderer.hero_region("windup", 2, 1) != Renderer.hero_region("attack", 2, 1), "windup and active map to different authored poses")
     check(Renderer.hero_region("attack", 2, 1) != Renderer.hero_region("attack", 2, 3), "finisher has a distinct authored active pose")
+    var gradient: Node = game.get_node("FxLayer")
+    game.player.dash_timer = 0.12
     for i: int in 12:
         game.player.position.x += 8
         game.emit_fx("dash", game.player.position - Vector2(0, 13), Vector2.LEFT, 0.5)
-        game.effects._process(0.05)
-    var counts: Dictionary = game.effects.counts()
-    check(int(counts.get("ghosts", 0)) <= 3, "dash ghosts have a hard three-copy cap")
+        gradient._process(0.04)
+    var counts: Dictionary = gradient.counts()
+    check(int(counts.get("ghosts", 0)) > 0 and int(counts.get("ghosts", 0)) <= 5, "moving dash produces bounded real owner ghosts")
     game.warning_issued.emit("fan", Vector2(2240, 240), 0.5)
     game.emit_fx("enemy_slash", Vector2(2220, 280), Vector2.LEFT, 1)
+    check(not gradient.draw_warnings and int(gradient.counts().get("warnings",0)) == 0 and int(game.effects.counts().get("warnings",0)) > 0, "one warning authority holds the issued warning without a duplicate gradient overlay")
     game.set_story_safe(true)
     var impact_count: int = game.impact.impact_count
     game.request_impact(game.player, target, true, true)
     check(game.player.combat_freeze == 0 and game.impact.impact_count == impact_count, "rest clears actor hold and rejects new impact requests")
     counts = game.effects.counts()
-    check(int(counts.get("warnings", 0)) == 0, "rest clears visual hostile warnings")
+    check(int(counts.get("warnings", 0)) == 0 and int(gradient.counts().get("warnings",0)) == 0, "rest clears both hostile warning layers")
     game.music.stop_score()
     print("Impact integration: %d passed, %d failed" % [passed, failed])
     quit(1 if failed else 0)

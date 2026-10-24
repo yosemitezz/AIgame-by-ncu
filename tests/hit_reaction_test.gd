@@ -38,6 +38,10 @@ func run() -> void:
 		game.add_child(foe)
 		await physics_frame
 		hero.attack_serial += 1
+		hero.attack_phase = "active"
+		hero.combo = combo
+		hero.attack_sweep_from = 0.0
+		hero.attack_sweep_to = 1.0
 		game.hero_attack(hero, 1, 42.0, combo)
 		check(foe.reaction == expected[combo - 1], "combo %d gives %s (%s)" % [combo, expected[combo - 1], foe.reaction])
 		check(foe.velocity.x > 0.0, "combo %d pushes the enemy away from the hero" % combo)
@@ -112,7 +116,7 @@ func run() -> void:
 	var Hero = load("res://actors/player.gd")
 	check(Hero.HIT_REACH.size() == 3 and Hero.HIT_REACH[0] < Hero.HIT_REACH[1] and Hero.HIT_REACH[1] < Hero.HIT_REACH[2], "reach grows with each combo stage %s" % str(Hero.HIT_REACH))
 	check(Hero.HIT_REACH[0] >= 60.0 and Hero.HIT_REACH[2] >= 78.0, "reach is wide enough to match the swing effects")
-	var probes: Array = [[1, 70.0, true], [1, 90.0, false], [2, 78.0, true], [2, 95.0, false], [3, 88.0, true], [3, 108.0, false]]
+	var probes: Array = [[1, 170.0, true], [1, 210.0, false], [2, 195.0, true], [2, 230.0, false], [3, 220.0, true], [3, 250.0, false]]
 	for probe: Array in probes:
 		var target: CharacterBody2D = Enemy.new()
 		target.configure(game, "sentry", Vector2(float(probe[1]), 300.0))
@@ -120,6 +124,10 @@ func run() -> void:
 		game.add_child(target)
 		await physics_frame
 		hero.attack_serial += 1
+		hero.attack_phase = "active"
+		hero.combo = int(probe[0])
+		hero.attack_sweep_from = 0.0
+		hero.attack_sweep_to = 1.0
 		game.hero_attack(hero, 1, Hero.HIT_REACH[int(probe[0]) - 1], int(probe[0]))
 		check((target.health < target.max_health) == bool(probe[2]), "combo %d at %d px: %s" % [probe[0], int(probe[1]), "hit" if probe[2] else "out of range"])
 		target.queue_free()
@@ -130,6 +138,10 @@ func run() -> void:
 	game.add_child(high)
 	await physics_frame
 	hero.attack_serial += 1
+	hero.attack_phase = "active"
+	hero.combo = 1
+	hero.attack_sweep_from = 0.0
+	hero.attack_sweep_to = 1.0
 	game.hero_attack(hero, 1, Hero.HIT_REACH[0], 1)
 	check(high.health < high.max_health, "a foe 36 px higher is still hit")
 	high.queue_free()

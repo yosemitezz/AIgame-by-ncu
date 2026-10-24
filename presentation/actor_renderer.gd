@@ -1,4 +1,5 @@
 extends RefCounted
+const KatanaVisual = preload("res://presentation/katana_visual.gd")
 ## Sprite presentation only; phase and facing come from gameplay.
 ## New integer-grid poses retain a stable feet anchor. No gameplay transforms.
 const HERO_ANCHOR := Vector2(66, 108)
@@ -22,6 +23,9 @@ static func _data() -> Dictionary:
     return _manifest
 
 static func is_airborne(actor: Object) -> bool:
+    var saved: Variant = actor.get("airborne")
+    if saved != null:
+        return bool(saved)
     return actor is CharacterBody2D and not (actor as CharacterBody2D).is_on_floor()
 
 static func _combo(actor: Object) -> int:
@@ -101,6 +105,9 @@ static func _parry_pose(actor: Object, kind: String, state: String, frame: int) 
     return {"state": key, "progress": progress}
 
 static func paint(canvas: Node2D, kind: String, state: String, frame: int, facing: int) -> void:
+    if kind == "boss":
+        KatanaVisual.paint(canvas, state, frame, facing)
+        return
     var region: Rect2
     var anchor: Vector2
     var frame_size: Vector2

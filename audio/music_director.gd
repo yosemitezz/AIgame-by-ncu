@@ -74,6 +74,10 @@ func is_advance_queued() -> bool:
 func get_section_beat() -> int:
     return _section_beats
 
+func get_score_time() -> float:
+    # Read the existing latency-compensated monotonic clock; no extra timer.
+    return _last_clock
+
 func seconds_per_beat() -> float:
     return 60.0 / bpm
 

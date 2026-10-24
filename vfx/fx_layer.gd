@@ -9,6 +9,7 @@ extends Node2D
 ##   big moments (burst, checkpoint, pickups) = rainbow.
 ## Layers: crisp pixel pass (this node) + additive glow pass (child) + additive afterimages (Ghost nodes).
 
+const GhostOutline = preload("res://presentation/ghost_outline.gdshader")
 const Level = preload("res://levels/bellkeep.gd")
 
 const SIZE_BOOST: float = 1.75   # ring / ray / star / arc radii are this much larger than the first version
@@ -18,7 +19,13 @@ const MAX_SHAPES: int = 64
 const MAX_WARNINGS: int = 24
 const MAX_GHOSTS: int = 28
 const MAX_TRAIL_POINTS: int = 14
-const TRAIL_LIFE: float = 0.34
+const TRAIL_LIFE: float = 0.14
+const SLASH_TAIL_LIFE: float = 0.10
+const MAX_OWNER_GHOSTS: int = 5
+const GHOST_INTERVAL: float = 0.032
+const GHOST_MIN_DISTANCE: float = 5.0
+const SWEEP_STEPS: int = 12
+const SAFE_DECOR: Array[String] = ["pickup", "checkpoint", "burst", "boss_defeat"]
 
 const RAMP_SOURCE: Dictionary = {
 	"cool": ["ffffff", "c4fff6", "72ece2", "5aa4ff", "a278ff", "ff7ad0"],
@@ -35,6 +42,20 @@ class Ghost extends Node2D:
 	var frame_index: int = 0
 	var face: int = 1
 	var combo: int = 1
+	var parry_phase: String = "none"
+	var parry_progress: float = 0.0
+	var reaction_state: String = "none"
+	var reaction_progress: float = 0.0
+	var impact_flash: float = 0.0
+	var source_id: int = 0
+	var airborne: bool = false
+	var boss_pose_snapshot: Dictionary = {}
+
+	func is_on_floor() -> bool:
+		return not airborne
+
+	func get_parry_progress() -> float:
+		return parry_progress
 	var life: float = 0.3
 	var max_life: float = 0.3
 	var tint: Color = Color.WHITE
@@ -47,15 +68,21 @@ class Ghost extends Node2D:
 		life -= delta
 		var k: float = clampf(life / max_life, 0.0, 1.0)
 		modulate = Color(tint.r, tint.g, tint.b, base_alpha * k * k)
-		# Afterimages swell and stretch outward as they fade, so every move reads bigger than the sprite.
-		var grow: float = 1.0 - k
-		scale = Vector2(1.0 + grow * 0.34, 1.0 + grow * 0.2)
+		# Native pixel cells never inflate while fading.
+		scale = Vector2.ONE
 		return life <= 0.0
 
 var game: Node = null
 ## The pixel-frame layer (presentation/combat_vfx.gd) owns telegraph drawing because it knows the attack
 ## type (rain, armored, unblockable). Turn this on only when running this layer standalone.
 var draw_warnings: bool = false
+var _spawn_event: String = ""
+var _safe_seen: bool = false
+var _attack_profile: Script = null
+var _ghost_material: ShaderMaterial
+var _ghost_samples: Dictionary = {}
+var _trail_canvas: Node2D
+var _katana_visual: Script = preload("res://presentation/katana_visual.gd")
 var _ramps: Dictionary = {}
 var _parts: Array[Dictionary] = []
 var _shapes: Array[Dictionary] = []
@@ -85,6 +112,7 @@ var _glow: Node2D = null
 var _add_material: CanvasItemMaterial = null
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	z_index = 6
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_rng.seed = 20261024
@@ -95,6 +123,13 @@ func _ready() -> void:
 		_ramps[key] = stops
 	_add_material = CanvasItemMaterial.new()
 	_add_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_ghost_material = ShaderMaterial.new()
+	_ghost_material.shader = GhostOutline
+	_trail_canvas = Node2D.new()
+	_trail_canvas.z_as_relative = false
+	_trail_canvas.z_index = 1
+	add_child(_trail_canvas)
+	_trail_canvas.draw.connect(func() -> void: _draw_body_trail(_trail_canvas, false))
 	_glow = Node2D.new()
 	_glow.material = _add_material
 	_glow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -102,9 +137,88 @@ func _ready() -> void:
 	_glow.draw.connect(func() -> void: _paint(_glow, true))
 
 func setup(p_game: Node) -> void:
+	if is_instance_valid(game) and game != p_game:
+		if game.vfx_requested.is_connected(spawn):
+			game.vfx_requested.disconnect(spawn)
+		if game.warning_issued.is_connected(_on_warning):
+			game.warning_issued.disconnect(_on_warning)
 	game = p_game
-	game.vfx_requested.connect(spawn)
-	game.warning_issued.connect(_on_warning)
+	if not game.vfx_requested.is_connected(spawn):
+		game.vfx_requested.connect(spawn)
+	if not game.warning_issued.is_connected(_on_warning):
+		game.warning_issued.connect(_on_warning)
+
+func counts() -> Dictionary:
+	return {"effects": _shapes.size(), "chips": _parts.size(), "ghosts": _ghosts.size(),
+		"warnings": _warns.size(), "trails": _body_trail.size() + _proj_trails.size()}
+
+func _safe() -> bool:
+	return is_instance_valid(game) and bool(game.get("story_safe"))
+
+func _suspended() -> bool:
+	if _safe() or get_tree().paused:
+		return true
+	if not is_instance_valid(game):
+		return false
+	var overlay: Variant = game.get("_overlay")
+	return bool(game.get("_paused")) or (overlay != null and String(overlay) != "")
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PAUSED:
+		clear_motion_decor()
+
+func clear_motion_decor() -> void:
+	# Pause suspends combat rather than cancelling it: retain primary shapes and warnings.
+	_body_trail.clear()
+	_proj_trails.clear()
+	for ghost: Ghost in _ghosts:
+		ghost.hide()
+		ghost.queue_free()
+	_ghosts.clear()
+	_ghost_samples.clear()
+	for index: int in range(_parts.size() - 1, -1, -1):
+		if String(_parts[index].get("event", "")) in ["", "dash", "dash_start", "dash_ghost", "enemy_dash", "jump", "air_jump", "land", "water_splash"]:
+			_parts.remove_at(index)
+	_ghost_clock = 0.0
+	_boss_ghost_clock = 0.0
+	_run_clock = 0.0
+	_run_ghost_clock = 0.0
+	_mote_clock = 0.0
+	_shard_clock = 0.0
+	queue_redraw()
+	if is_instance_valid(_trail_canvas):
+		_trail_canvas.queue_redraw()
+	if is_instance_valid(_glow):
+		_glow.queue_redraw()
+
+func clear_hostile() -> void:
+	# Keep an already-issued victory/checkpoint celebration, never an old attack or ambient trail.
+	for i: int in range(_parts.size() - 1, -1, -1):
+		if String(_parts[i].get("event", "")) not in SAFE_DECOR:
+			_parts.remove_at(i)
+	for i: int in range(_shapes.size() - 1, -1, -1):
+		if String(_shapes[i].get("event", "")) not in SAFE_DECOR:
+			_shapes.remove_at(i)
+	_warns.clear()
+	_body_trail.clear()
+	_proj_trails.clear()
+	for ghost: Ghost in _ghosts:
+		ghost.hide()
+		ghost.queue_free()
+	_ghosts.clear()
+	_ghost_samples.clear()
+	_ghost_clock = 0.0
+	_boss_ghost_clock = 0.0
+	_run_clock = 0.0
+	_run_ghost_clock = 0.0
+	_mote_clock = 0.0
+	_shard_clock = 0.0
+	_safe_seen = _safe()
+	queue_redraw()
+	if is_instance_valid(_trail_canvas):
+		_trail_canvas.queue_redraw()
+	if is_instance_valid(_glow):
+		_glow.queue_redraw()
 
 func particle_count() -> int:
 	return _parts.size()
@@ -151,12 +265,12 @@ func _player() -> Node2D:
 func _part(at: Vector2, vel: Vector2, life: float, ramp: String, size: int = 2, kind: String = "dot", grav: float = 100.0, drag: float = 0.0) -> void:
 	if _parts.size() >= MAX_PARTS:
 		return
-	_parts.append({"p": at, "v": vel, "life": life, "max": life, "ramp": ramp, "size": size, "kind": kind, "grav": grav, "drag": drag, "h": fposmod(_hue_shift + _rng.randf() * 0.32, 1.0)})
+	_parts.append({"p": at, "v": vel, "life": life, "max": life, "event": _spawn_event, "ramp": ramp, "size": size, "kind": kind, "grav": grav, "drag": drag, "h": fposmod(_hue_shift + _rng.randf() * 0.32, 1.0)})
 
 func _shape(type: String, at: Vector2, life: float, ramp: String, extra: Dictionary = {}) -> void:
 	if _shapes.size() >= MAX_SHAPES:
 		_shapes.remove_at(0)
-	var s: Dictionary = {"type": type, "at": at, "life": life, "max": life, "ramp": ramp, "sh": _hue_shift, "seed": _rng.randf() * 100.0}
+	var s: Dictionary = {"type": type, "at": at, "life": life, "max": life, "event": _spawn_event, "ramp": ramp, "sh": _hue_shift, "seed": _rng.randf() * 100.0}
 	for key: String in extra:
 		var v: Variant = extra[key]
 		if key in ["r", "r0", "r1", "h", "w0", "len"]:
@@ -164,10 +278,15 @@ func _shape(type: String, at: Vector2, life: float, ramp: String, extra: Diction
 		elif key == "w":
 			v = float(v) * 1.5
 		s[key] = v
-	if type == "arc":
-		var pl: Node2D = _player()
-		if pl != null:
-			s["rel"] = at - pl.global_position   # the crescent rides along with the hero
+	if _spawn_event == "slash":
+		var actor: Node2D = _player()
+		if actor != null and str(actor.get("attack_phase")) == "active":
+			s["actor_ref"] = weakref(actor)
+			s["serial"] = int(actor.get("attack_serial"))
+			s["rel"] = at - actor.global_position
+			s["phase_bound"] = true
+			s["visual_t"] = 0.0
+			s["spark_step"] = 0
 	_shapes.append(s)
 
 func _sparks(at: Vector2, dir: Vector2, n: int, ramp: String, speed: float, life: float, kind: String = "streak", spread: float = 0.9) -> void:
@@ -185,9 +304,28 @@ func _hostile_near(at: Vector2) -> bool:
 	return b != null and is_instance_valid(b) and at.distance_to((b as Node2D).global_position) < 90.0
 
 func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float) -> void:
+	if not is_instance_valid(source) or _safe():
+		return
+	var id: int = source.get_instance_id()
+	var previous: Dictionary = _ghost_samples.get(id, {})
+	if not previous.is_empty() and (_clock - float(previous["time"]) < GHOST_INTERVAL or source.global_position.distance_to(Vector2(previous["at"])) < GHOST_MIN_DISTANCE):
+		return
+	_ghost_samples[id] = {"time": _clock, "at": source.global_position}
+	var owned: int = 0
+	for ghost: Ghost in _ghosts:
+		if ghost.source_id == id:
+			owned += 1
+	if owned >= MAX_OWNER_GHOSTS:
+		for index: int in _ghosts.size():
+			if _ghosts[index].source_id == id:
+				_ghosts[index].hide()
+				_ghosts[index].queue_free()
+				_ghosts.remove_at(index)
+				break
 	if _ghosts.size() >= MAX_GHOSTS:
-		var old: Ghost = _ghosts.pop_front()
-		old.queue_free()
+		var oldest: Ghost = _ghosts.pop_front()
+		oldest.hide()
+		oldest.queue_free()
 	var g := Ghost.new()
 	g.kind = kind
 	g.state = String(source.get("animation_state"))
@@ -195,31 +333,53 @@ func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float
 	g.face = int(source.get("facing"))
 	var cmb: Variant = source.get("combo")
 	g.combo = clampi(int(cmb), 1, 3) if cmb != null else 1
-	g.life = life
-	g.max_life = life
+	# Scalars only: a snapshot must not consult the moving actor during its later draw passes.
+	var phase: Variant = source.get("parry_phase")
+	g.parry_phase = String(phase) if phase != null else "none"
+	if source.has_method("get_parry_progress"):
+		g.parry_progress = float(source.call("get_parry_progress"))
+	var reaction: Variant = source.get("reaction_state")
+	g.reaction_state = String(reaction) if reaction != null else "none"
+	var progress: Variant = source.get("reaction_progress")
+	g.reaction_progress = float(progress) if progress != null else 0.0
+	# Clash/break poses stay readable; a live hurt flash must not repaint an old ghost.
+	g.impact_flash = 0.0
+	g.life = minf(life, 0.16 if kind == "boss" else 0.14)
+	g.max_life = g.life
+	g.source_id = id
+	g.airborne = source.has_method("is_on_floor") and not bool(source.call("is_on_floor"))
+	if kind == "boss" and _katana_visual != null:
+		var snapshot: Variant = _katana_visual.call("describe", source, g.state, g.frame_index)
+		if snapshot is Dictionary:
+			g.boss_pose_snapshot = snapshot.duplicate(true)
 	g.tint = tint
-	g.base_alpha = alpha
-	g.material = _add_material
+	g.base_alpha = minf(alpha, 0.38 if kind == "boss" else 0.32)
+	g.material = _ghost_material
 	g.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	g.z_index = -4
-	g.position = source.global_position
+	g.z_as_relative = false
+	g.z_index = 1
+	g.scale = Vector2.ONE
+	g.position = source.global_position.round()
 	add_child(g)
 	_ghosts.append(g)
 
 func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
+	if _suspended() and kind not in SAFE_DECOR:
+		return
+	_spawn_event = kind
+	_spawn_impl(kind, at, dir, power)
+	_spawn_event = ""
+
+func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 	var d: float = 1.0 if dir.x >= 0.0 else -1.0
 	# Event names from the combat-feel branch map onto this layer.
 	match kind:
 		"blade_parry", "projectile_parry", "guard_break":
 			# Same clash, scaled: reflected shots small, blade-on-blade full, guard break biggest.
-			if _recent_deflect(at):
-				return
 			var scale_p: float = 0.7 if kind == "projectile_parry" else (1.0 if kind == "blade_parry" else 1.7)
 			_deflect(at, dir, scale_p, kind == "guard_break")
 			return
 		"parry":
-			if _recent_deflect(at):
-				return
 			_deflect(at, dir, power, false)
 			return
 		"dash_ghost":
@@ -254,6 +414,10 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 		"slash":
 			var combo: int = clampi(int(roundf(power)), 1, 3)
 			_roll_style()
+			var actor: Node2D = _player()
+			if actor != null and str(actor.get("attack_phase")) == "active" and _ensure_profile():
+				_profile_slash(actor, combo)
+				return
 			var c3: float = float(combo)
 			var tip: Vector2 = at + Vector2(d * 18.0, 0.0)
 			# Six swing personalities. Each re-rolls hue, and never repeats the previous swing's pick.
@@ -344,7 +508,7 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 			_shape("crystal", at, 0.3, "hurt", {"r": 18.0, "rot": _rng.randf() * TAU, "spin": 0.5})
 			_sparks(at, dir, 16, "hurt", 200.0, 0.55, "streak", 1.6)
 		"dash":
-			var hostile: bool = _hostile_near(at)
+			var hostile: bool = false # enemy_dash is explicit; proximity never changes hero effect ownership.
 			_shape("bars", at, 0.4, "warm" if hostile else "flow", {"d": 1.0 if dir.x >= 0.0 else -1.0, "len": 26.0 * clampf(power, 0.5, 1.5)})
 			_sparks(at, dir, 3, "warm" if hostile else "flow", 60.0, 0.4, "twinkle", 1.0)
 		"jump":
@@ -439,7 +603,7 @@ func _deflect(at: Vector2, dir: Vector2, power: float, guard_break: bool) -> voi
 	var d: float = 1.0 if dir.x >= 0.0 else -1.0
 	var k: float = clampf(power, 0.5, 2.0)
 	var n_fan: int = int(30.0 * minf(k, 1.4))
-	_shape("flash", at, 0.12, "cool", {"r": 34.0 * k})
+	_shape("flash", at, 0.033, "cool", {"r": minf(12.0 * k, 18.0) / SIZE_BOOST, "contact_core": true})
 	_shape("cross", at, 0.2, "cool", {"r": 30.0 * k, "d": d})
 	_shape("streaks", at, 0.34, "flow", {"d": d, "len": 46.0 * k, "n": 5, "both": true})
 	_shape("ring", at, 0.28, "cool", {"r0": 3.0, "r1": 40.0 * k, "w": 5.0, "ry": 1.0})
@@ -462,18 +626,27 @@ func _deflect(at: Vector2, dir: Vector2, power: float, guard_break: bool) -> voi
 		_shape("rays", at, 0.8, "rainbow", {"n": 24, "r1": 70.0, "rot": -2.0})
 		_sparks(at, Vector2.ZERO, 30, "rainbow", 320.0, 1.0, "shard", PI)
 
-func _on_warning(_kind: String, at: Vector2, duration: float) -> void:
+func _on_warning(kind: String, at: Vector2, duration: float) -> void:
 	if not draw_warnings or (is_instance_valid(game) and bool(game.get("story_safe"))):
 		return
 	if _warns.size() >= MAX_WARNINGS:
 		_warns.remove_at(0)
-	_warns.append({"at": at, "life": duration, "max": maxf(duration, 0.05)})
+	_warns.append({"kind": kind, "at": at, "life": duration, "max": maxf(duration, 0.05)})
 
 # ------------------------------------------------------------------ simulation
 
 func _process(delta: float) -> void:
+	# A manual check can call this during tree pause; it must obey the same frozen stage.
+	if not _safe() and _suspended():
+		clear_motion_decor()
+		return
 	_clock += delta
-	_follow_actors(delta)
+	var safe: bool = _safe()
+	if safe and not _safe_seen:
+		clear_hostile()
+	_safe_seen = safe
+	if not safe:
+		_follow_actors(delta)
 	for i: int in range(_parts.size() - 1, -1, -1):
 		var q: Dictionary = _parts[i]
 		q["life"] = float(q["life"]) - delta
@@ -487,9 +660,20 @@ func _process(delta: float) -> void:
 		q["p"] = Vector2(q["p"]) + v * delta
 	for i: int in range(_shapes.size() - 1, -1, -1):
 		var s: Dictionary = _shapes[i]
+		if bool(s.get("phase_bound", false)):
+			if not _sync_slash(s):
+				_shapes.remove_at(i)
+			continue
+		if s.has("tail_age"):
+			s["tail_age"] = float(s["tail_age"]) + delta
+			var tail: float = clampf(float(s["tail_age"]) / SLASH_TAIL_LIFE, 0.0, 1.0)
+			s["visual_t"] = lerpf(float(s["tail_start"]), 1.0, tail)
+			if tail >= 1.0:
+				_shapes.remove_at(i)
+			continue
 		s["life"] = float(s["life"]) - delta
 		if s.get("sweep", false):
-			_sweep_sparks(s)
+			_sweep_sparks(s, 1.0 - float(s["life"]) / float(s["max"]))
 		if float(s["life"]) <= 0.0:
 			_shapes.remove_at(i)
 	if is_instance_valid(game) and bool(game.get("story_safe")):
@@ -503,32 +687,140 @@ func _process(delta: float) -> void:
 			_ghosts[i].queue_free()
 			_ghosts.remove_at(i)
 	queue_redraw()
+	if is_instance_valid(_trail_canvas):
+		_trail_canvas.queue_redraw()
 	if _glow != null:
 		_glow.queue_redraw()
 
+func _ensure_profile() -> bool:
+	if _attack_profile == null and ResourceLoader.exists("res://combat/attack_profile.gd"):
+		_attack_profile = load("res://combat/attack_profile.gd")
+	return _attack_profile != null
+
+func _profile_call(method: String, arguments: Array = []) -> Variant:
+	return _attack_profile.callv(method, arguments)
+
+func _profile_slash(actor: Node2D, combo: int) -> void:
+	_shape("profile", actor.global_position, 0.12, "flow", {"combo": combo, "style": style_kind, "profile": true, "sample_step": -1})
+	_profile_geometry(_shapes.back(), actor)
+
+func _profile_geometry(shape: Dictionary, actor: Node2D) -> void:
+	var progress: float = float(actor.call("get_attack_progress"))
+	if progress < float(_profile_call("contact_start")):
+		shape["polygon"] = PackedVector2Array()
+		return
+	var from_value: Variant = actor.get("attack_sweep_from")
+	var to_value: Variant = actor.get("attack_sweep_to")
+	var first: float = float(from_value) if from_value != null else progress
+	var last: float = float(to_value) if to_value != null else progress
+	shape["polygon"] = _profile_call("world_polygon", [actor, first, last])
+	var facing: float = -1.0 if int(actor.get("facing")) < 0 else 1.0
+	var edge: Vector2 = _profile_call("leading_edge", [int(shape["combo"]), last])
+	shape["leading"] = actor.global_position + Vector2(edge.x * facing, edge.y)
+	shape["origin"] = actor.global_position + Vector2(Vector2(_profile_call("origin")).x * facing, Vector2(_profile_call("origin")).y)
+	# Angular/time progress is the sampling clock. Holding hit-stop emits no repeated fragments.
+	var sample: int = clampi(int(progress * 8.0), 0, 8)
+	var previous: int = maxi(int(float(_profile_call("contact_start")) * 8.0) - 1, int(shape.get("sample_step", -1)))
+	for step: int in range(previous + 1, sample + 1):
+		var sample_edge: Vector2 = _profile_call("leading_edge", [int(shape["combo"]), float(step) / 8.0])
+		var at: Vector2 = actor.global_position + Vector2(sample_edge.x * facing, sample_edge.y)
+		for _i: int in 2:
+			_part(at, Vector2(_rng.randf_range(-30, 30), _rng.randf_range(-24, 24)), 0.10, "flow", 2, "streak", 0.0, 1.0)
+			if not _parts.is_empty():
+				_parts.back()["fade_scale"] = 0.25
+	shape["sample_step"] = maxi(previous, sample)
+
+func _draw_profile(c: CanvasItem, shape: Dictionary, glow: bool) -> void:
+	var polygon: PackedVector2Array = shape.get("polygon", PackedVector2Array())
+	if polygon.size() < 3:
+		return
+	var active: bool = bool(shape.get("phase_bound", false))
+	var fade: float = 1.0 if active else 0.18 * (1.0 - clampf(float(shape.get("tail_age", 0.0)) / SLASH_TAIL_LIFE, 0.0, 1.0))
+	var alpha: float = fade * (0.12 if glow else 1.0)
+	var edge := PackedVector2Array()
+	var colors := PackedColorArray()
+	for index: int in range(1, polygon.size()):
+		edge.append(polygon[index].round())
+		colors.append(_col("flow", float(index) / polygon.size(), alpha, float(shape.get("style", 0)) * 0.11))
+	# The query supplies the exact outer limit; inset triangles keep the primary branch's cut-crystal style.
+	if not glow:
+		var center: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
+		var stride: int = maxi(1, int((polygon.size()-1)/5))
+		for index: int in range(1, polygon.size()-1, stride):
+			var last: int = mini(polygon.size()-1, index+stride)
+			var a: Vector2 = polygon[index].round()
+			var b: Vector2 = polygon[last].round()
+			var inset: Vector2 = center.lerp((a+b)*0.5, 0.62).round()
+			c.draw_colored_polygon(PackedVector2Array([a,b,inset]), _col("flow", float(index)/polygon.size(), fade*0.25, float(shape.get("style",0))*0.11))
+	# The very same queried polygon is the energy's limit; no old circle or long needle outside it.
+	if not glow:
+		c.draw_colored_polygon(polygon, _col("flow", 0.5, 0.06 * fade))
+	c.draw_polyline_colors(edge, colors, 7.0 if glow else 4.0, false)
+	var origin: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
+	var leading: Vector2 = Vector2(shape.get("leading", polygon[polygon.size()-1])).round()
+	c.draw_line(origin, leading, _col("flow", 0.35, alpha * 0.75), 8.0 if glow else 5.0, false)
+	if not glow:
+		c.draw_line(origin, leading, Color(1, 1, 0.94, fade * 0.88), 2.0, false)
+
+func _sync_slash(s: Dictionary) -> bool:
+	var actor_ref: WeakRef = s["actor_ref"]
+	var actor: Node2D = actor_ref.get_ref() as Node2D
+	if not is_instance_valid(actor) or bool(actor.get("dead")):
+		return false
+	if int(actor.get("attack_serial")) != int(s["serial"]):
+		return false
+	var phase: String = String(actor.get("attack_phase"))
+	# All six slash personalities share one origin, including rings/stars/thrust streaks.
+	s["at"] = _arc_at(s)
+	if phase == "active":
+		# Real phase progress stops during local impact freeze. No real-age crescent can race ahead.
+		var progress: float = clampf(float(actor.call("get_attack_progress")), 0.0, 1.0)
+		s["visual_t"] = progress * 0.58
+		if bool(s.get("profile", false)):
+			_profile_geometry(s, actor)
+		if s.get("sweep", false):
+			_sweep_sparks(s, progress * 0.4)
+		return true
+	if phase == "recover":
+		if s.get("sweep", false):
+			_sweep_sparks(s, 0.4)
+		s["at"] = _arc_at(s)
+		s.erase("rel")
+		s.erase("actor_ref")
+		s["phase_bound"] = false
+		s["tail_age"] = 0.0
+		s["tail_start"] = maxf(0.58, float(s.get("visual_t", 0.0)))
+		s["visual_t"] = s["tail_start"]
+		return true
+	# Dash, parry, damage and death cancellations cut the primary stroke immediately.
+	return false
+
 func _arc_at(s: Dictionary) -> Vector2:
 	var at: Vector2 = s["at"]
-	if s.has("rel"):
-		var pl: Node2D = _player()
-		if pl != null:
-			at = pl.global_position + Vector2(s["rel"])
+	if s.has("rel") and s.has("actor_ref"):
+		var actor_ref: WeakRef = s["actor_ref"]
+		var actor: Node2D = actor_ref.get_ref() as Node2D
+		if is_instance_valid(actor):
+			at = actor.global_position + Vector2(s["rel"])
 	return at
 
-func _sweep_sparks(s: Dictionary) -> void:
-	## Sparks leave the tip of the crescent as it sweeps, so the light visibly travels along the cut.
-	var t: float = 1.0 - float(s["life"]) / float(s["max"])
-	if t > 0.5 or _parts.size() > MAX_PARTS - 40:
-		return
-	var pos: float = minf(clampf(t / 0.4, 0.0, 1.0) * 1.2, 1.0)
-	var half: float = s["half"]
-	var a: float = -half + 2.0 * half * pos
-	var ys: float = -1.0 if bool(s["flip"]) else 1.0
-	var d: float = s["d"]
-	var r: float = float(s["r"])
-	var tip: Vector2 = _arc_at(s) + Vector2(cos(a) * r * d, sin(a) * r * 0.95 * ys)
-	var out: Vector2 = (tip - _arc_at(s)).normalized()
-	for _i: int in 2:
-		_part(tip, out * _rng.randf_range(30.0, 110.0) + Vector2(_rng.randf_range(-20.0, 20.0), _rng.randf_range(-20.0, 20.0)), _rng.randf_range(0.25, 0.5), "flow", _rng.randi_range(2, 3), "streak", 40.0, 2.0)
+func _sweep_sparks(s: Dictionary, t: float) -> void:
+	# Fixed angular buckets, rather than two particles on every render frame. All frame rates
+	# sample the same twelve points; holding the actual attack phase emits nothing more.
+	var target: int = clampi(int(minf(t / 0.4, 1.0) * SWEEP_STEPS), 0, SWEEP_STEPS)
+	var previous: int = int(s.get("spark_step", 0))
+	for step: int in range(previous + 1, target + 1):
+		var fraction: float = float(step) / float(SWEEP_STEPS)
+		var half: float = s["half"]
+		var angle: float = -half + 2.0 * half * fraction
+		var ys: float = -1.0 if bool(s["flip"]) else 1.0
+		var radius: float = float(s["r"])
+		var center: Vector2 = _arc_at(s)
+		var tip: Vector2 = center + Vector2(cos(angle) * radius * float(s["d"]), sin(angle) * radius * 0.95 * ys)
+		var outward: Vector2 = (tip - center).normalized()
+		for _i: int in 2:
+			_part(tip, outward * _rng.randf_range(30.0, 110.0) + Vector2(_rng.randf_range(-20.0, 20.0), _rng.randf_range(-20.0, 20.0)), _rng.randf_range(0.25, 0.5), "flow", _rng.randi_range(2, 3), "streak", 40.0, 2.0)
+	s["spark_step"] = maxi(previous, target)
 
 func _follow_actors(delta: float) -> void:
 	var pl: Node2D = _player()
@@ -545,7 +837,9 @@ func _follow_actors(delta: float) -> void:
 			strength = 0.75
 		elif absf(vel.x) > 60.0:
 			strength = 0.55 if is_on_floor_safe(pl) else 0.4
-		_body_trail.append({"p": pl.global_position + Vector2(0.0, -14.0), "age": 0.0, "k": strength})
+		var trail_at: Vector2 = pl.global_position + Vector2(0.0, -14.0)
+		if strength > 0.0 and (_body_trail.is_empty() or (trail_at.distance_to(Vector2(_body_trail.back()["p"])) >= 4.0 and _clock - float(_body_trail.back().get("time", 0.0)) >= 0.025)):
+			_body_trail.append({"p": trail_at.round(), "age": 0.0, "k": strength, "time": _clock})
 		# Running: a flowing scarf of light from the shoulders, dust-and-colour kicks at the heels, and
 		# a faint afterimage every few frames so walking reads as a continuous motion path.
 		var running: bool = absf(vel.x) > 60.0 and dash_t <= 0.0
@@ -555,8 +849,8 @@ func _follow_actors(delta: float) -> void:
 			if _run_clock <= 0.0:
 				_run_clock = 0.05
 				var shoulder: Vector2 = pl.global_position + Vector2(-fdir * 4.0, -26.0)
-				_part(shoulder, Vector2(-fdir * _rng.randf_range(50.0, 110.0), _rng.randf_range(-14.0, 14.0)), _rng.randf_range(0.28, 0.5), "flow", 3, "streak", 10.0, 1.5)
-				_part(shoulder + Vector2(0.0, 6.0), Vector2(-fdir * _rng.randf_range(40.0, 90.0), _rng.randf_range(-8.0, 20.0)), _rng.randf_range(0.3, 0.55), "rainbow", 2, "twinkle", 0.0, 1.4)
+				_part(shoulder, Vector2(-fdir * _rng.randf_range(50.0, 110.0), _rng.randf_range(-14.0, 14.0)), _rng.randf_range(0.08, 0.14), "flow", 3, "streak", 10.0, 1.5)
+				_part(shoulder + Vector2(0.0, 6.0), Vector2(-fdir * _rng.randf_range(40.0, 90.0), _rng.randf_range(-8.0, 20.0)), _rng.randf_range(0.08, 0.14), "rainbow", 2, "twinkle", 0.0, 1.4)
 				if is_on_floor_safe(pl):
 					_part(pl.global_position + Vector2(-fdir * 6.0, -1.0), Vector2(-fdir * _rng.randf_range(20.0, 60.0), _rng.randf_range(-40.0, -12.0)), _rng.randf_range(0.2, 0.4), "dust", 2, "dot", 120.0, 2.0)
 			_run_ghost_clock -= delta
@@ -583,7 +877,7 @@ func _follow_actors(delta: float) -> void:
 		_body_trail[i]["age"] = float(_body_trail[i]["age"]) + delta
 		if float(_body_trail[i]["age"]) > TRAIL_LIFE:
 			_body_trail.remove_at(i)
-	while _body_trail.size() > MAX_TRAIL_POINTS * 2:
+	while _body_trail.size() > MAX_TRAIL_POINTS:
 		_body_trail.remove_at(0)
 	# Boss dash afterimages in the hostile (warm) palette.
 	var boss: Variant = game.get("boss") if is_instance_valid(game) else null
@@ -611,11 +905,12 @@ func _shimmer_shard(near: Vector2) -> void:
 func _track_projectiles() -> void:
 	var seen: Dictionary = {}
 	for node: Node in get_tree().get_nodes_in_group("projectiles"):
-		if not is_instance_valid(node):
+		if not is_instance_valid(node) or node.is_queued_for_deletion() or bool(node.get("_cleared")):
 			continue
 		var id: int = node.get_instance_id()
 		seen[id] = true
-		var trail: Array = _proj_trails.get(id, [])
+		var cached: Dictionary = _proj_trails.get(id, {})
+		var trail: Array = cached.get("pts", [])
 		trail.append((node as Node2D).global_position)
 		while trail.size() > 12:
 			trail.pop_front()
@@ -631,11 +926,11 @@ func _draw() -> void:
 
 func _paint(c: CanvasItem, glow: bool) -> void:
 	_draw_projectile_trails(c, glow)
-	_draw_body_trail(c, glow)
 	for s: Dictionary in _shapes:
-		var t: float = 1.0 - float(s["life"]) / float(s["max"])
+		var t: float = float(s.get("visual_t", 1.0 - float(s["life"]) / float(s["max"])))
 		_draw_hue = float(s.get("sh", 0.0))
 		match String(s["type"]):
+			"profile": _draw_profile(c, s, glow)
 			"arc": _arc(c, s, t, glow)
 			"ring": _ring(c, s, t, glow)
 			"rays": _rays(c, s, t, glow)
@@ -667,10 +962,10 @@ func _draw_body_trail(c: CanvasItem, glow: bool) -> void:
 			continue
 		var life: float = 1.0 - float(b["age"]) / TRAIL_LIFE
 		var u: float = float(i) / float(n)
-		var width: float = roundf((2.0 + 9.0 * k) * life) * (2.4 if glow else 1.0)
+		var width: float = maxf(1.0, roundf((1.0 + k) * life))
 		if width < 1.0:
 			continue
-		var al: float = life * k * (0.2 if glow else 0.85)
+		var al: float = life * k * 0.16
 		var pa: Vector2 = Vector2(a["p"]).round()
 		var pb: Vector2 = Vector2(b["p"]).round()
 		if pa.distance_to(pb) > 60.0:
@@ -877,6 +1172,8 @@ func _flash(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 	## One-to-two frame white-hot bloom at the contact point. Only drawn in the glow pass plus a tiny core.
 	var at: Vector2 = Vector2(s["at"]).round()
 	var r: float = float(s["r"]) * (0.5 + 0.8 * t)
+	if bool(s.get("contact_core", false)):
+		r = minf(r, 18.0)
 	var al: float = (1.0 - t) * (1.0 - t)
 	if glow:
 		for k: int in 3:
@@ -958,7 +1255,7 @@ func _bars(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:
 func _particle(c: CanvasItem, q: Dictionary, glow: bool) -> void:
 	var life_ratio: float = float(q["life"]) / float(q["max"])
 	var u: float = 1.0 - life_ratio
-	var al: float = minf(1.0, life_ratio * 2.0)
+	var al: float = minf(1.0, life_ratio * 2.0) * float(q.get("fade_scale", 1.0))
 	var ramp: String = q["ramp"]
 	var h: float = q["h"]
 	var p: Vector2 = Vector2(q["p"]).round()

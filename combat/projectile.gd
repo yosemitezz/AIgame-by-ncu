@@ -4,15 +4,18 @@ extends Node2D
 var game: Node
 var velocity: Vector2 = Vector2.ZERO
 var friendly: bool = false
+var style: String = "default"
 var _age: float = 0.0
+var lifetime: float = 6.0
 var _cleared: bool = false
 var _trail: Array[Vector2] = []
 
-func configure(owner_game: Node, at: Vector2, motion: Vector2, is_friendly: bool = false) -> void:
+func configure(owner_game: Node, at: Vector2, motion: Vector2, is_friendly: bool = false, shot_style: String = "default") -> void:
 	game = owner_game
 	position = at
 	velocity = motion
 	friendly = is_friendly
+	style = shot_style if shot_style in ["sentry_shard", "wisp_seed", "elite_rune"] else "default"
 
 func _ready() -> void:
 	add_to_group("projectiles")
@@ -26,7 +29,7 @@ func _physics_process(delta: float) -> void:
 		clear()
 		return
 	_age += delta
-	if _age > 6.0 or global_position.y > 720.0 or global_position.y < -350.0:
+	if _age > clampf(lifetime, 0.1, 8.0) or global_position.y > 720.0 or global_position.y < -350.0:
 		clear()
 		return
 	var previous: Vector2 = global_position
@@ -128,13 +131,28 @@ func clear() -> void:
 	remove_from_group("projectiles")
 	queue_free()
 
+func core_color() -> Color:
+	if friendly:
+		return Color("73f6df")
+	return {"sentry_shard": Color("f4b95f"), "wisp_seed": Color("ed88d9"), "elite_rune": Color("cce675")}.get(style, Color("ffd47c"))
+
 func _draw() -> void:
-	var ink: Color = Color("73f6df") if friendly else Color("ffd47c")
-	for index in range(_trail.size() - 1, -1, -1):
-		var local: Vector2 = (_trail[index] - global_position).round()
-		var tail: Color = ink
-		tail.a = 0.40 * (1.0 - float(index) / 6.0)
-		draw_rect(Rect2(local - Vector2.ONE, Vector2(3.0, 3.0)), tail)
-	draw_rect(Rect2(-2.0, -4.0, 4.0, 8.0), ink)
-	draw_rect(Rect2(-4.0, -2.0, 8.0, 4.0), ink)
-	draw_rect(Rect2(-1.0, -2.0, 2.0, 4.0), Color("f3ffea"))
+	# Only the collision-readable core lives here. The scene FxLayer owns every tail.
+	var ink: Color = core_color()
+	var outline := Color("151829")
+	if style == "sentry_shard":
+		draw_colored_polygon(PackedVector2Array([Vector2(0,-5),Vector2(4,0),Vector2(0,5),Vector2(-4,0)]), outline)
+		draw_colored_polygon(PackedVector2Array([Vector2(0,-4),Vector2(3,0),Vector2(0,4),Vector2(-3,0)]), ink)
+	elif style == "wisp_seed":
+		var axis: Vector2 = velocity.normalized() if velocity.length_squared() > 0 else Vector2.RIGHT
+		var side := Vector2(-axis.y, axis.x)
+		draw_colored_polygon(PackedVector2Array([(axis*5).round(),(-axis*3+side*4).round(),(-axis*4).round(),(-axis*3-side*4).round()]), outline)
+		draw_colored_polygon(PackedVector2Array([(axis*4).round(),(-axis*2+side*3).round(),(-axis*3).round(),(-axis*2-side*3).round()]), ink)
+	elif style == "elite_rune":
+		draw_rect(Rect2(-4,-4,8,8), outline)
+		draw_rect(Rect2(-3,-3,6,6), ink)
+		draw_rect(Rect2(-1,-2,2,4), outline)
+	else:
+		draw_rect(Rect2(-2,-4,4,8), ink)
+		draw_rect(Rect2(-4,-2,8,4), ink)
+	draw_rect(Rect2(-1,-1,2,2), Color("f3ffea"))

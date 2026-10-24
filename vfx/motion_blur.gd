@@ -1,152 +1,112 @@
+## Legacy node name retained for main/F3; no SCREEN_UV or screen texture is sampled.
 extends CanvasLayer
-## Screen-space impact blur. Presentation only: it reads vfx_requested and actor state and never
-## touches physics, damage or timing. Sits below the HUD layer (30) so UI text stays sharp.
-##   directional blur  = the swing / hit / dash direction, a smear along the motion
-##   radial blur       = zoom-style rush out from the contact point (parry, guard break, hurt)
-##   chroma split      = red and blue pulled apart for a few frames after a big contact
-## Everything decays in about 0.1 to 0.2 s and the layer hides itself when idle, so it costs nothing
-## between blows. F2 (reduced motion) disables it together with the camera shake.
-
-const MAX_BLUR: float = 0.075      # uv units; 0.01 is about 6 native pixels across
-const MAX_RADIAL: float = 0.34
-const MAX_CHROMA: float = 0.034
-const DECAY: float = 9.0
-
-const SHADER_CODE: String = """
-shader_type canvas_item;
-uniform sampler2D screen_tex : hint_screen_texture, filter_linear, repeat_disable;
-uniform vec2 blur_vec = vec2(0.0);
-uniform float radial = 0.0;
-uniform vec2 center = vec2(0.5, 0.5);
-uniform float chroma = 0.0;
-
-void fragment() {
-	vec2 uv = SCREEN_UV;
-	vec2 to_c = uv - center;
-	vec2 v = blur_vec + to_c * radial;
-	vec3 sum = vec3(0.0);
-	float wsum = 0.0;
-	for (int i = 0; i < 14; i++) {
-		float f = float(i) / 13.0 - 0.5;
-		float w = 1.0 - abs(f) * 1.1;
-		vec2 o = uv + v * f;
-		vec3 s;
-		s.r = texture(screen_tex, o + to_c * chroma).r;
-		s.g = texture(screen_tex, o).g;
-		s.b = texture(screen_tex, o - to_c * chroma).b;
-		sum += s * w;
-		wsum += w;
-	}
-	COLOR = vec4(sum / wsum, 1.0);
-}
-"""
-
-var game: Node = null
-var blur_vec: Vector2 = Vector2.ZERO
-var radial: float = 0.0
-var chroma: float = 0.0
-var center_uv: Vector2 = Vector2(0.5, 0.5)
+## Background-only native-pixel motion accents; camera lead is returned, never applied here.
+const MAX_MARKS: int = 64
 var enabled_by_user: bool = true
-var _rect: ColorRect = null
-var _material: ShaderMaterial = null
+var _background: Node2D
+var game: Node
+var _marks: Array[Dictionary] = []
+var _lead: float = 0.0
+var _clock: float = 0.0
+var _spawn_clock: float = 0.0
+var _last_at: Vector2 = Vector2.INF
+var _rng := RandomNumberGenerator.new()
 
-func _ready() -> void:
-	layer = 20
-	_material = ShaderMaterial.new()
-	var shader := Shader.new()
-	shader.code = SHADER_CODE
-	_material.shader = shader
-	_rect = ColorRect.new()
-	_rect.material = _material
-	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_rect.visible = false
-	add_child(_rect)
+func setup(owner_game: Node) -> void:
+	configure(owner_game)
 
-func setup(p_game: Node) -> void:
-	game = p_game
-	game.vfx_requested.connect(_on_fx)
+func configure(owner_game: Node) -> void:
+	game = owner_game
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+	layer = -10
+	if not is_instance_valid(_background):
+		_background = Node2D.new()
+		_background.name = "BackgroundSpeedLines"
+		_background.z_as_relative = false
+		_background.z_index = 1
+		_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		game.add_child(_background)
+		_background.draw.connect(func() -> void: _draw_background(_background))
+	_rng.seed = 20261025
 
-func is_active() -> bool:
-	return _rect != null and _rect.visible
+func _level() -> int:
+	var value: Variant = game.get("speed_effects_level") if is_instance_valid(game) else null
+	return clampi(int(value), 0, 2) if value != null else 1
 
-func _reduced() -> bool:
-	if not is_instance_valid(game):
-		return false
-	var imp: Variant = game.get("impact")
-	return imp != null and is_instance_valid(imp) and bool(imp.get("reduced_motion"))
+func _blocked() -> bool:
+	if not is_instance_valid(game) or not is_instance_valid(game.get("player")):
+		return true
+	if not enabled_by_user or _level() == 0 or bool(game.get("story_safe")) or bool(game.get("_paused")) or get_tree().paused:
+		return true
+	var overlay: Variant = game.get("_overlay")
+	if overlay != null and String(overlay) != "":
+		return true
+	var impact: Variant = game.get("impact")
+	return impact != null and is_instance_valid(impact) and bool(impact.get("reduced_motion"))
 
-func _to_uv(world: Vector2) -> Vector2:
-	var vp: Viewport = get_viewport()
-	if vp == null:
-		return Vector2(0.5, 0.5)
-	var size: Vector2 = vp.get_visible_rect().size
-	var screen: Vector2 = vp.get_canvas_transform() * world
-	return Vector2(clampf(screen.x / size.x, 0.0, 1.0), clampf(screen.y / size.y, 0.0, 1.0))
+func clear() -> void:
+	_marks.clear()
+	_lead = 0.0
+	_spawn_clock = 0.0
+	_last_at = Vector2.INF
+	if is_instance_valid(_background):
+		_background.queue_redraw()
 
-func _kick(direction: Vector2, amount: float, rad: float, chr: float, at: Vector2) -> void:
-	if _reduced() or not enabled_by_user or (is_instance_valid(game) and bool(game.get("story_safe"))):
-		return
-	var horizontal: Vector2 = Vector2(direction.x, direction.y * 0.35)
-	if horizontal.length() < 0.01:
-		horizontal = Vector2.RIGHT
-	var wanted: Vector2 = horizontal.normalized() * amount
-	if wanted.length() > blur_vec.length():
-		blur_vec = wanted
-	radial = maxf(radial, rad)
-	chroma = maxf(chroma, chr)
-	if rad > 0.0 or chr > 0.0:
-		center_uv = _to_uv(at)
-	_clamp()
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PAUSED:
+		clear()
 
-func _clamp() -> void:
-	blur_vec = blur_vec.limit_length(MAX_BLUR)
-	radial = minf(radial, MAX_RADIAL)
-	chroma = minf(chroma, MAX_CHROMA)
-
-func _on_fx(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
-	var p: float = clampf(power, 0.4, 3.0)
-	match kind:
-		"slash":
-			_kick(dir, 0.016 + 0.007 * p, 0.0, 0.0, at)
-		"hit", "impact":
-			_kick(dir, 0.026 * p, 0.06 * p, 0.006 * p, at)
-		"hurt":
-			_kick(dir, 0.03, 0.2, 0.026, at)
-		"parry", "blade_parry":
-			_kick(dir, 0.045, 0.22, 0.026, at)
-		"projectile_parry":
-			_kick(dir, 0.02, 0.1, 0.012, at)
-		"guard_break":
-			_kick(dir, 0.07, 0.34, 0.034, at)
-		"dash_start", "enemy_dash":
-			_kick(dir, 0.04, 0.05, 0.0, at)
-		"lunge":
-			_kick(dir, 0.02 + 0.008 * p, 0.0, 0.0, at)
-		"death", "boss_defeat", "burst":
-			_kick(Vector2.RIGHT, 0.02, 0.3, 0.03, at)
+func sample_camera_lead(delta: float) -> float:
+	if _blocked():
+		clear()
+		return 0.0
+	var player: Node2D = game.get("player")
+	var dash: bool = float(player.get("dash_timer")) > 0.0
+	var attack: bool = String(player.get("attack_phase")) == "active"
+	var facing: float = -1.0 if int(player.get("facing")) < 0 else 1.0
+	var target: float = facing * (24.0 if dash else (12.0 if attack else 0.0))
+	_lead = move_toward(_lead, target, (480.0 if absf(target) > absf(_lead) else 360.0) * maxf(delta, 0.0))
+	return clampf(_lead, -24.0, 24.0)
 
 func _process(delta: float) -> void:
-	if not is_instance_valid(game):
+	if _blocked():
+		clear()
 		return
-	# Sustained smear while the hero is mid-dash.
-	var pl: Variant = game.get("player")
-	if pl != null and is_instance_valid(pl) and float(pl.get("dash_timer")) > 0.0:
-		_kick(Vector2(float(pl.get("facing")), 0.0), 0.034, 0.03, 0.0, (pl as Node2D).global_position)
-	var k: float = exp(-DECAY * delta)
-	blur_vec *= k
-	radial *= k
-	chroma *= k
-	var live: bool = blur_vec.length() > 0.0015 or radial > 0.004 or chroma > 0.0008
-	if _reduced() or not enabled_by_user or bool(game.get("_paused")):
-		live = false
-		blur_vec = Vector2.ZERO
-		radial = 0.0
-		chroma = 0.0
-	if _rect.visible != live:
-		_rect.visible = live
-	if live:
-		_material.set_shader_parameter("blur_vec", blur_vec)
-		_material.set_shader_parameter("radial", radial)
-		_material.set_shader_parameter("chroma", chroma)
-		_material.set_shader_parameter("center", center_uv)
+	_clock += delta
+	for index: int in range(_marks.size() - 1, -1, -1):
+		_marks[index]["life"] = float(_marks[index]["life"]) - delta
+		if float(_marks[index]["life"]) <= 0.0:
+			_marks.remove_at(index)
+	var player: Node2D = game.get("player")
+	var velocity: Vector2 = player.get("velocity")
+	var dash: bool = float(player.get("dash_timer")) > 0.0
+	var attack: bool = String(player.get("attack_phase")) == "active"
+	var moving: bool = absf(velocity.x) > 140.0 or dash or attack
+	_spawn_clock -= delta
+	if moving and _spawn_clock <= 0.0 and (_last_at == Vector2.INF or _last_at.distance_to(player.global_position) >= 6.0):
+		_spawn_clock = 0.018 if _level() == 2 else 0.035
+		_last_at = player.global_position
+		var direction: float = -1.0 if int(player.get("facing")) < 0 else 1.0
+		for index: int in (4 if _level() == 2 else 2):
+			if _marks.size() >= MAX_MARKS:
+				break
+			var offset := Vector2(-direction * _rng.randf_range(100, 290), _rng.randf_range(-150, -70) if index % 2 == 0 else _rng.randf_range(18, 50))
+			_marks.append({"at": (player.global_position + offset).round(), "life": 0.12, "max": 0.12, "d": direction, "length": _rng.randi_range(12, 30) if dash else _rng.randi_range(6, 18), "edge": index % 3 == 2})
+	if is_instance_valid(_background):
+		_background.queue_redraw()
+
+func is_active() -> bool:
+	return not _marks.is_empty()
+
+func _exit_tree() -> void:
+	if is_instance_valid(_background):
+		_background.queue_free()
+
+func _draw_background(canvas: CanvasItem) -> void:
+	for mark: Dictionary in _marks:
+		var alpha: float = float(mark["life"]) / float(mark["max"]) * (0.25 if _level() == 2 else 0.16)
+		var at: Vector2 = mark["at"]
+		var back: Vector2 = Vector2(-float(mark["d"]) * float(mark["length"]), 0)
+		canvas.draw_line(at, (at + back).round(), Color(0.48, 0.59, 0.66, alpha), 1.0, false)
+		if bool(mark["edge"]):
+			canvas.draw_line(at, at + Vector2(0, -3), Color(0.48, 0.59, 0.66, alpha), 1.0, false)

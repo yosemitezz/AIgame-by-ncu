@@ -7,6 +7,7 @@ signal vfx_requested(kind: String, at: Vector2, direction: Vector2, power: float
 signal animation_event(actor: Node, state: String, frame: int, facing: int)
 signal parry_contacted(defender: Node, source: Node, contact: Vector2, kind: String)
 
+const MeleeQuery = preload("res://combat/melee_query.gd")
 const Player = preload("res://actors/player.gd")
 const Enemy = preload("res://actors/enemy.gd")
 const Projectile = preload("res://combat/projectile.gd")
@@ -22,7 +23,7 @@ const CombatVFX = preload("res://presentation/combat_vfx.gd")
 ## Effects owned by the gradient layer (vfx/fx_layer.gd) AND mirrored to the pixel-frame layer
 ## (presentation/combat_vfx.gd) so its crisp sprite cores sit under the colour. Everything else
 ## (dash ghosts, dust, pickups, warnings) is drawn once, by one owner, to avoid doubled effects.
-const PIXEL_CORE_FX: Array[String] = ["slash", "enemy_slash", "parry", "blade_parry", "projectile_parry", "guard_break", "hit", "hurt", "impact", "parry_ready"]
+const PIXEL_CORE_FX: Array[String] = ["enemy_slash", "parry", "blade_parry", "projectile_parry", "guard_break", "hit", "hurt", "impact", "parry_ready"]
 
 var player: CharacterBody2D
 var boss: CharacterBody2D
@@ -30,6 +31,8 @@ var music: Node
 var level: Node2D
 var impact: Node
 var effects: Node2D
+var _motion_fx: Node
+var speed_effects_level: int = 1
 var _attack_hits: Dictionary = {}
 var parry_feedback_count: int = 0
 var last_parry_kind: String = ""
@@ -59,6 +62,7 @@ var _trauma: float = 0.0
 var _hud_clock: float = 0.0
 var _ending_clock: float = 0.0
 var _paused: bool = false
+var _overlay: String = ""
 var _reloading: bool = false
 var _zone: int = 0
 var _rng := RandomNumberGenerator.new()
@@ -77,6 +81,7 @@ func _ready() -> void:
     level.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(level)
     level.setup(self)
+    level.restore_opened_ids(get_tree().get_meta("bellkeep_doors", []))
     # Presentation-only combat VFX: reads vfx_requested / warning_issued, never touches gameplay.
     var fx := FxLayer.new()
     fx.name = "FxLayer"
@@ -91,7 +96,7 @@ func _ready() -> void:
     player.died.connect(_on_player_died)
     add_child(player)
     _camera = Camera2D.new()
-    _camera.position = Vector2(clampf(player.position.x, 320, Level.LEVEL_END - 320), 180)
+    _camera.position = camera_target(player.position, player.facing)
     _camera.position_smoothing_enabled = false
     add_child(_camera)
     _camera.make_current()
@@ -113,12 +118,13 @@ func _ready() -> void:
     blur.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(blur)
     blur.setup(self)
+    _motion_fx = blur
     for entry: Dictionary in Level.ENEMIES:
         if entry["kind"] == "elite" and elite_defeated:
             continue
         if checkpoint_active and entry["at"].x < Level.CHECKPOINT.x:
             continue
-        spawn_enemy(entry["kind"], entry["at"])
+        spawn_enemy(entry["kind"], entry["at"], entry.get("patrol", Rect2()))
     if not elite_defeated:
         _elite_gate = _make_gate(2580)
     var canvas := CanvasLayer.new()
@@ -134,7 +140,10 @@ func _ready() -> void:
 func _setup_input() -> void:
     _bind("move_left", [KEY_A, KEY_LEFT])
     _bind("move_right", [KEY_D, KEY_RIGHT])
-    _bind("jump", [KEY_SPACE, KEY_W, KEY_UP])
+    _bind("jump", [KEY_SPACE])
+    _bind("climb_up", [KEY_W, KEY_UP])
+    _bind("climb_down", [KEY_S, KEY_DOWN])
+    _bind("interact", [KEY_E])
     _bind("dash", [KEY_SHIFT, KEY_L])
     _bind("attack", [KEY_J, KEY_Z])
     _bind("parry", [KEY_K, KEY_X])
@@ -152,10 +161,11 @@ func _bind(action: String, keys: Array) -> void:
         event.physical_keycode = key
         InputMap.action_add_event(action, event)
 
-func spawn_enemy(kind: String, at: Vector2) -> Node2D:
+func spawn_enemy(kind: String, at: Vector2, patrol: Rect2 = Rect2()) -> Node2D:
     var enemy := Enemy.new()
     enemy.process_mode = Node.PROCESS_MODE_PAUSABLE
     enemy.configure(self, kind, at)
+    enemy.patrol_bounds = patrol
     enemy.z_index = 2
     add_child(enemy)
     return enemy
@@ -177,14 +187,22 @@ func _physics_process(_delta: float) -> void:
     if _paused or not is_instance_valid(player) or outcome != "":
         return
     player.position.x = clampf(player.position.x, 12, Level.LEVEL_END - 20)
-    if player.position.y > 460:
+    if player.position.y > Level.FALL_LIMIT:
         damage_player(1, player.position + Vector2(0, 50))
         if not player.dead:
+            player.reset_traversal()
+            player._cancel_attack()
+            player._clear_parry()
+            player.dash_timer = 0.0
+            player.combat_freeze = 0.0
             player.position = checkpoint
             player.velocity = Vector2.ZERO
             player.invuln = 1.0
             announce("Voice: A fall is not the end. The shrine remembers.", 3.0)
-    if not checkpoint_active and player.position.x >= Level.CHECKPOINT.x:
+    if Input.is_action_just_pressed("interact") and not player.dead:
+        if level.try_interact(player.position):
+            get_tree().set_meta("bellkeep_doors", level.get_opened_ids())
+    if not checkpoint_active and Level.CHECKPOINT_RECT.has_point(player.position):
         checkpoint_active = true
         checkpoint = Level.CHECKPOINT
         get_tree().set_meta("bellkeep_checkpoint", true)
@@ -204,7 +222,7 @@ func _physics_process(_delta: float) -> void:
     for i: int in Level.ZONES.size():
         if player.position.x >= float(Level.ZONES[i]["x"]):
             _zone = i
-    if elite_defeated and not boss_started and player.position.x >= Level.BOSS_TRIGGER_X:
+    if elite_defeated and not boss_started and Rect2(Level.BOSS_TRIGGER_X, 160, Level.LEVEL_END - Level.BOSS_TRIGGER_X, 180).has_point(player.position):
         _start_boss()
 
 func _process(delta: float) -> void:
@@ -214,8 +232,9 @@ func _process(delta: float) -> void:
     _parry_notice_time = maxf(0, _parry_notice_time - delta)
     _announcement_time = maxf(0, _announcement_time - delta)
     if is_instance_valid(player):
-        var wanted: float = clampf(player.position.x + float(player.facing) * 45.0, 320, Level.LEVEL_END - 320)
-        _camera.position.x = roundf(lerpf(_camera.position.x, wanted, 1.0 - exp(-delta * 5.0)))
+        var lead: float = _motion_fx.sample_camera_lead(delta) if is_instance_valid(_motion_fx) else 0.0
+        var wanted: Vector2 = camera_target(player.position, player.facing, lead)
+        _camera.position = _camera.position.lerp(wanted, 1.0 - exp(-delta * 5.0)).round()
         _camera.offset = impact.sample_camera(delta) if is_instance_valid(impact) else Vector2.ZERO
         _camera.zoom = Vector2.ONE * (impact.sample_zoom(delta) if is_instance_valid(impact) else 1.0)
     if outcome == "victory":
@@ -226,38 +245,39 @@ func _process(delta: float) -> void:
         _refresh_hud()
     queue_redraw()
 
-## Vertical tolerance of a strike (was 28). Matches the taller swing effects and the longer hero.
-const HERO_HIT_HALF_HEIGHT: int = 40
+func camera_target(at: Vector2, facing: int = 1, speed_lead: float = 0.0) -> Vector2:
+    var half_view: Vector2 = get_viewport_rect().size * 0.5
+    var bounds: Rect2 = Level.WORLD_BOUNDS
+    return Vector2(clampf(at.x + facing * 45.0 + speed_lead, half_view.x, Level.LEVEL_END - half_view.x), clampf(at.y - 90.0, bounds.position.y + half_view.y, bounds.end.y - half_view.y)).round()
+
+func enemy_out_of_bounds(at: Vector2) -> bool:
+    return at.y > Level.FALL_LIMIT or at.x < -80.0 or at.x > Level.LEVEL_END + 80.0
+
 
 func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) -> void:
-    if story_safe or outcome != "":
+    if story_safe or outcome != "" or source.get("attack_phase") != "active":
         return
     var source_id: int = source.get_instance_id()
     var serial: int = int(source.attack_serial)
     if not _attack_hits.has(source_id) or int(_attack_hits[source_id]["serial"]) != serial:
         _attack_hits[source_id] = {"serial": serial, "targets": {}}
     var hits: Dictionary = _attack_hits[source_id]["targets"]
-    var origin: Vector2 = source.global_position + Vector2(0, -18)
-    for enemy: Node in get_tree().get_nodes_in_group("enemies"):
+    # Geometry, arc direction and visible boundary all come from one shared profile.
+    # Root remains the only per-serial damage/impact authority.
+    for enemy: Node2D in MeleeQuery.collect(source,get_tree().get_nodes_in_group("enemies")):
         if not is_instance_valid(enemy) or bool(enemy.dead) or hits.has(enemy.get_instance_id()):
             continue
-        var target: Vector2 = enemy.global_position + Vector2(0, -28 if enemy == boss else -16)
-        var difference: Vector2 = target - origin
-        var radius: float = 19 if enemy == boss else 10
-        if absf(difference.x) <= reach + radius and difference.x * float(source.facing) >= -9 and absf(difference.y) <= (HERO_HIT_HALF_HEIGHT + 14 if enemy == boss else HERO_HIT_HALF_HEIGHT):
-            var before: int = int(enemy.health)
-            enemy.receive_hit(damage, source.global_position)
-            if int(enemy.health) < before:
-                hits[enemy.get_instance_id()] = true
-                if source.has_method("confirm_attack_hit"):
-                    source.confirm_attack_hit()
-                request_impact(source, enemy, combo_index == 3)
-                if enemy != boss and enemy.has_method("react") and not bool(enemy.dead):
-                    # Light cut shoves, second cut stuns, finisher (or any airborne cut) launches.
-                    enemy.react("launch" if combo_index == 3 else ("stun" if combo_index == 2 else "knockback"), source.global_position)
-            elif enemy == boss:
-                # A sealed phase can clang once per swing without repeated contact spam.
-                hits[enemy.get_instance_id()] = true
+        var before: int = int(enemy.health)
+        enemy.receive_hit(damage,source.global_position)
+        if int(enemy.health)<before:
+            hits[enemy.get_instance_id()] = true
+            if source.has_method("confirm_attack_hit"):
+                source.confirm_attack_hit()
+            request_impact(source,enemy,combo_index==3)
+            if enemy != boss and enemy.has_method("react") and not bool(enemy.dead):
+                enemy.react("launch" if combo_index == 3 else ("stun" if combo_index == 2 else "knockback"), source.global_position)
+        elif enemy == boss:
+            hits[enemy.get_instance_id()] = true
 
 func damage_player(amount: int, origin: Vector2) -> void:
     if story_safe or outcome != "" or not is_instance_valid(player):
@@ -265,20 +285,43 @@ func damage_player(amount: int, origin: Vector2) -> void:
     if player.receive_hit(amount, origin):
         request_impact(null, player)
 
-func spawn_projectile(at: Vector2, velocity: Vector2, friendly: bool = false) -> Node2D:
+func spawn_projectile(at: Vector2, velocity: Vector2, friendly: bool = false, style: String = "default") -> Node2D:
+    # Reject new shots at capacity. Never evict an already reflected friendly shot.
+    if story_safe or get_tree().get_nodes_in_group("projectiles").size() >= 180:
+        return null
     var projectile := Projectile.new()
     projectile.process_mode = Node.PROCESS_MODE_PAUSABLE
-    projectile.configure(self, at, velocity, friendly)
+    projectile.configure(self, at, velocity, friendly, style)
     add_child(projectile)
-    if get_tree().get_nodes_in_group("projectiles").size() > 180:
-        var oldest: Node = get_tree().get_first_node_in_group("projectiles")
-        if oldest != projectile:
-            oldest.clear()
     return projectile
+
+func spawn_boss_hazard(hazard: Node2D) -> bool:
+    if not is_instance_valid(hazard):
+        return false
+    if story_safe or _paused or outcome != "" or get_tree().get_nodes_in_group("boss_hazards").size() >= 24:
+        hazard.queue_free()
+        return false
+    hazard.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(hazard)
+    if not hazard.is_in_group("boss_hazards"):
+        hazard.add_to_group("boss_hazards")
+    return true
+
+func clear_boss_hazards() -> void:
+    for hazard: Node in get_tree().get_nodes_in_group("boss_hazards"):
+        if hazard.has_method("clear"):
+            hazard.clear()
+        else:
+            hazard.remove_from_group("boss_hazards")
+            hazard.queue_free()
 
 func set_story_safe(value: bool) -> void:
     story_safe = value
     if value:
+        clear_boss_hazards()
+        var gradient: Node = get_node_or_null("FxLayer")
+        if is_instance_valid(gradient) and gradient.has_method("clear_hostile"):
+            gradient.clear_hostile()
         for projectile: Node in get_tree().get_nodes_in_group("projectiles"):
             projectile.clear()
         if is_instance_valid(effects):
@@ -397,15 +440,28 @@ func request_impact(source: Node, target: Node, heavy: bool = false, parry: bool
 func _refresh_hud() -> void:
     if not is_instance_valid(player):
         return
-    var zone: Dictionary = Level.ZONES[_zone]
-    hud_updated.emit({"hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
+    var zone: Dictionary = Level.ZONES[_zone].duplicate()
+    if player.position.y > 410 and player.position.x < 1820:
+        zone["title"] = "THE FLOODED OSSUARY"
+        zone["hint"] = "Explore the crypt / Find the shrine chain / E opens iron doors"
+    elif player.position.y < 140 and player.position.x > 1080 and player.position.x < 1620:
+        zone["title"] = "THE FORBIDDEN ARCHIVE"
+        zone["hint"] = "A reward loop above the nave / Descend by either chain"
+    var room: Dictionary = level.room_at(player.position)
+    if not room.is_empty():
+        zone["title"] = room["title"]
+        zone["hint"] = room["hint"]
+    var nearby_hint: String = level.interaction_hint(player.position)
+    if nearby_hint != "":
+        zone["hint"] = nearby_hint
+    hud_updated.emit({"speed_effects_level": speed_effects_level, "player_at": player.position, "opened_doors": level.get_opened_ids(), "collected": _collected, "checkpoint_active": checkpoint_active, "elite_defeated": elite_defeated, "overlay": _overlay, "reduced_motion": impact.reduced_motion if is_instance_valid(impact) else false, "muted": AudioServer.is_bus_mute(0), "hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
 
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo:
-        if event.physical_keycode == KEY_ESCAPE:
-            _paused = not _paused
-            get_tree().paused = _paused
-            _refresh_hud()
+        if event.physical_keycode == KEY_ESCAPE and outcome == "":
+            _set_overlay("pause" if _overlay == "" else "")
+        elif event.physical_keycode == KEY_TAB and outcome == "":
+            _set_overlay("" if _overlay == "map" else "map")
         elif event.physical_keycode == KEY_R:
             _reload(false)
         elif event.physical_keycode == KEY_F5:
@@ -413,8 +469,21 @@ func _unhandled_input(event: InputEvent) -> void:
         elif event.physical_keycode == KEY_F2:
             impact.reduced_motion = not impact.reduced_motion
             announce("Camera impact OFF" if impact.reduced_motion else "Camera impact ON", 2.0)
+            _refresh_hud()
+        elif event.physical_keycode == KEY_F3:
+            speed_effects_level = 0 if speed_effects_level > 0 else 1
+            if is_instance_valid(_motion_fx):
+                _motion_fx.enabled_by_user = speed_effects_level > 0
+            _refresh_hud()
         elif event.physical_keycode == KEY_M:
             AudioServer.set_bus_mute(0, not AudioServer.is_bus_mute(0))
+            _refresh_hud()
+
+func _set_overlay(screen: String) -> void:
+    _overlay = screen if screen in ["pause", "map"] else ""
+    _paused = _overlay != ""
+    get_tree().paused = _paused
+    _refresh_hud()
 
 func _reload(full: bool) -> void:
     if _reloading:
@@ -422,7 +491,7 @@ func _reload(full: bool) -> void:
     _reloading = true
     get_tree().paused = false
     if full:
-        for key: String in ["bellkeep_checkpoint", "bellkeep_elite", "bellkeep_shards"]:
+        for key: String in ["bellkeep_checkpoint", "bellkeep_elite", "bellkeep_shards", "bellkeep_doors", "bellkeep_chapter_complete"]:
             if get_tree().has_meta(key):
                 get_tree().remove_meta(key)
     get_tree().call_deferred("reload_current_scene")

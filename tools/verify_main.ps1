@@ -1,0 +1,26 @@
+param([string]$Godot='D:\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe',[string]$From='')
+$ErrorActionPreference='Stop'
+[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)
+$projectRoot=Split-Path $PSScriptRoot -Parent
+foreach($d in @('.local/tmp','.local/appdata','.local/cache','artifacts')){New-Item -ItemType Directory -Path (Join-Path $projectRoot $d) -Force | Out-Null}
+$env:TEMP=Join-Path $projectRoot '.local/tmp'
+$env:TMP=$env:TEMP
+$env:APPDATA=Join-Path $projectRoot '.local/appdata'
+$env:LOCALAPPDATA=$env:APPDATA
+$env:XDG_CACHE_HOME=Join-Path $projectRoot '.local/cache'
+$checks=@('main_dungeon_migration_test','main_player_migration_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','parry_controller_test','boss_parry_test','parry_integration_test','hero_motion_test','main_visual_migration_test','font','startup')
+if($From){$index=[Array]::IndexOf($checks,$From);if($index -lt 0){throw 'Unknown -From'};$checks=$checks[$index..($checks.Count-1)]}
+foreach($name in $checks){
+ $stdout=Join-Path $projectRoot ('artifacts/unified-'+$name+'-console.log')
+ $stderr=Join-Path $projectRoot ('artifacts/unified-'+$name+'-error.log')
+ $log=Join-Path $projectRoot ('artifacts/unified-'+$name+'.log')
+ $args=@('--headless','--path',$projectRoot,'--log-file',$log)
+ if($name -eq 'font'){$args+=@('--script','res://tools/font_glyph_check.gd')}
+ elseif($name -eq 'startup'){$args+=@('--quit-after','60')}
+ else{$args+=@('--script',('res://tests/'+$name+'.gd'))}
+ $proc=Start-Process -FilePath $Godot -ArgumentList $args -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
+ if(-not $proc.WaitForExit(60000)){$proc.Kill();throw ($name+' timed out')}
+ $out=(Get-Content -LiteralPath $stdout -Raw)+(Get-Content -LiteralPath $stderr -Raw)
+ if($proc.ExitCode -ne 0 -or $out -match 'SCRIPT ERROR:|ERROR:|FAIL |leaked|still in use at exit' -or ($name -notin @('font','startup') -and $out -notmatch '0 failed')){Write-Output $out;throw ($name+' FAILED exit '+$proc.ExitCode)}
+ Write-Output ($name+' PASS '+(($out -split "`n" | Where-Object {$_ -match 'passed, 0 failed|Font glyph'}) -join ' '))
+}

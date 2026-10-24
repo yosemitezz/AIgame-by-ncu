@@ -29,12 +29,16 @@ func run() -> void:
     await process_frame
     freeze(game)
     check(game.player.health == 8, "scene starts with full health")
-    check(get_nodes_in_group("enemies").size() == 6, "complete authored enemy roster loaded")
-    check(game.level.get_child_count() == game.level.PLATFORMS.size(), "every authored platform body is built")
+    check(get_nodes_in_group("enemies").size() == game.level.ENEMIES.size(), "complete authored enemy roster loaded")
+    var platform_count: int = 0
+    for child: Node in game.level.get_children():
+        if String(child.name).begins_with("Masonry_"):
+            platform_count += 1
+    check(platform_count == game.level.PLATFORMS.size(), "every authored platform body is built")
     check(InputMap.has_action("parry") and InputMap.has_action("dash"), "input mappings installed")
     var floors: Array[Rect2] = []
     for rectangle: Rect2 in game.level.PLATFORMS:
-        if rectangle.size.y > 16:
+        if rectangle.size.y > 16 and is_equal_approx(rectangle.position.y, 300.0):
             floors.append(rectangle)
     var safe_gap: float = 180.0 * (2.0 * 340.0 / 900.0) * 0.7
     for i: int in range(floors.size() - 1):
@@ -49,7 +53,10 @@ func run() -> void:
     check(game.player.health == 8 and enemy.health == old_health, "rest blocks damage on both sides")
     game.set_story_safe(false)
     game.player.parry_timer = 0.07
-    game.player.parry_success()
+    game.player._start_parry()
+    game.player.parry_timer = 0.07
+    var accepted: bool = game.player.parry_success(enemy, game.player.position + Vector2(12,-16), "melee", 41)
+    check(accepted, "actual front source/token parry succeeds before checking its window")
     check(is_equal_approx(game.player.parry_timer, 0.07), "successful parry does not extend input window")
     game.player.position = Vector2(2800, 280)
     game.player.facing = 1
@@ -88,6 +95,9 @@ func run() -> void:
     check(game.story_safe and get_nodes_in_group("projectiles").is_empty(), "rest safely clears existing projectiles")
     check(game.boss._pending_attack == "" and game.boss._windup_timer == 0 and game.boss._charge_timer == 0, "rest cancels boss windups and charges")
     old_health = game.boss.health
+    game.player.attack_phase = "active"
+    game.player.attack_sweep_from = 0.25
+    game.player.attack_sweep_to = 1.0
     game.hero_attack(game.player, 999, 9999, 1)
     game.boss.receive_hit(999, game.player.position)
     check(game.boss.health == old_health, "rest blocks direct and hero melee damage to boss")
