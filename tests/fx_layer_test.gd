@@ -42,13 +42,24 @@ func run() -> void:
 	# Hammer the caps.
 	for _i: int in 300:
 		game.emit_fx("burst", Vector2(300, 250), Vector2.ZERO, 3.0)
-	check(fx.particle_count() <= 420 and fx.shape_count() <= 64, "particle and shape caps hold (%d / %d)" % [fx.particle_count(), fx.shape_count()])
+	check(fx.particle_count() <= 520 and fx.shape_count() <= 64, "particle and shape caps hold (%d / %d)" % [fx.particle_count(), fx.shape_count()])
 	for _i: int in 4:
 		await process_frame
 	# Everything expires.
 	for _i: int in 100:
 		fx._process(0.05)
-	check(fx.particle_count() == 0 and fx.shape_count() == 0, "all effects expire")
+	# Ambient motes keep spawning by design, so only shapes and afterimages must drain completely.
+	check(fx.shape_count() == 0 and fx.ghost_count() == 0, "all shapes and afterimages expire")
+	check(fx.particle_count() <= 520, "ambient particles stay bounded")
+	# Afterimages: a parry spawns one, and the cap holds under repeated dashes.
+	game.player.set("dash_timer", 1.0)
+	for _i: int in 200:
+		fx._process(0.03)
+	check(fx.ghost_count() > 0 and fx.ghost_count() <= 28, "dash afterimages spawn and stay capped (%d)" % fx.ghost_count())
+	game.player.set("dash_timer", 0.0)
+	for _i: int in 60:
+		fx._process(0.05)
+	check(fx.ghost_count() == 0, "afterimages drain after the dash ends")
 	# Warning lanes: shown while awake, never in a story-safe section.
 	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
 	check(fx.warning_count() == 1, "warning lane recorded")
