@@ -78,14 +78,23 @@ def seed(candidate, pose=None, state="idle", frame=0):
     limb((px+5,py),pose['near_knee'],7,'deep');limb(pose['near_knee'],pose['near_foot'],6,'armor')
     nx,ny=pose['near_knee'];line([(nx+1,ny+2),(pose['near_foot'][0]+1,pose['near_foot'][1]-3)],'armor_light')
     fx,fy=pose['near_foot'];poly([(fx-3,fy-4),(fx+2,fy-3),(fx+6,fy),(fx+6,fy+1),(fx-3,fy+1)],'armor');line([(fx-1,fy-1),(fx+4,fy)],'steel')
-    # Tailored high-neck torso, small overlapping armor plates and 1px fastening hardware.
-    poly([(sx-7,sy-3),(sx+5,sy-3),(sx+9,sy+5),(px+5,py+2),(px-6,py+2),(sx-9,sy+5)],'deep')
-    poly([(sx-4,sy),(sx+3,sy-1),(sx+5,sy+7),(px+1,py-2),(px-4,py-3),(sx-5,sy+7)],'armor')
-    line([(sx-3,sy+1),(sx-2,sy+8),(px-1,py-4)],'armor_light')
-    line([(sx+3,sy+2),(sx+5,sy+7)],'gold');rect((sx+1,sy+3,sx+1,sy+3),'gold_light')
-    rect((px-7,py-3,px+6,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
-    poly([(sx-7,sy-4),(sx-2,sy-5),(sx+1,sy-1),(sx-5,sy+5),(sx-11,sy+4)],'armor')
-    line([(sx-8,sy-2),(sx-4,sy-3)],'gold')
+    # Duel cuts rebuild the shoulder/waist plane into a low narrow side stance.
+    if pose.get('side_profile',0):
+        back=pose['side_profile']==2
+        poly([(sx-6,sy-2),(sx+2,sy-4),(sx+6,sy+4),(px+5,py+2),(px-5,py+2),(sx-7,sy+5)],'deep')
+        poly([(sx-3,sy),(sx+1,sy-2),(sx+3,sy+5),(px+1,py-2),(px-3,py-3)],'armor')
+        line([(sx-2,sy+1),(px-2,py-4)],'gold' if back else 'armor_light')
+        poly([(sx-9 if back else sx+2,sy-3),(sx-4 if back else sx+7,sy-4),(sx+1 if back else sx+10,sy+1),(sx-3 if back else sx+5,sy+5),(sx-9 if back else sx+1,sy+3)],'armor')
+        line([(sx-5 if back else sx+4,sy-2),(sx-1 if back else sx+7,sy)],'gold')
+        rect((px-7,py-3,px+6,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
+    else:
+        poly([(sx-7,sy-3),(sx+5,sy-3),(sx+9,sy+5),(px+5,py+2),(px-6,py+2),(sx-9,sy+5)],'deep')
+        poly([(sx-4,sy),(sx+3,sy-1),(sx+5,sy+7),(px+1,py-2),(px-4,py-3),(sx-5,sy+7)],'armor')
+        line([(sx-3,sy+1),(sx-2,sy+8),(px-1,py-4)],'armor_light')
+        line([(sx+3,sy+2),(sx+5,sy+7)],'gold');rect((sx+1,sy+3,sx+1,sy+3),'gold_light')
+        rect((px-7,py-3,px+6,py-1),'gold_dark');rect((px-2,py-4,px+1,py),'gold');rect((px-1,py-3,px,py-2),'gold_light')
+        poly([(sx-7,sy-4),(sx-2,sy-5),(sx+1,sy-1),(sx-5,sy+5),(sx-11,sy+4)],'armor')
+        line([(sx-8,sy-2),(sx-4,sy-3)],'gold')
     if candidate=='B':
         poly([(sx-8,sy-5),(sx-14,sy-1),(sx-21,sy+12),(sx-20,sy+22),(sx-11,sy+15),(sx-7,sy+4)],'cloth_dark')
         line([(sx-13,sy+2),(sx-18,sy+14)],'gold')
@@ -113,8 +122,17 @@ def seed(candidate, pose=None, state="idle", frame=0):
     line([(support[0]-2,support[1]),(gx,gy)],'ink',4);line([(support[0]-2,support[1]),(gx,gy)],'gold_dark',2)
     for k in range(3):rect((gx-9+k*3,gy-1,gx-9+k*3,gy),'gold_light')
     rect((hand[0]-2,hand[1]-2,hand[0]+1,hand[1]+1),'skin');rect((hand[0]-2,hand[1]-2,hand[0]-1,hand[1]-1),'white')
-    line([(gx,gy-3),(gx,gy+3)],'gold',2);rect((gx-1,gy-2,gx,gy-1),'gold_light')
-    curve=[(gx+1,gy),(gx+dx*.45,gy+dy*.45-2),(tx-5,ty-1),(tx,ty)]
+    if state in ['cut_a','cut_b','retreat','jump','slam','land']:
+        distance=max(1,math.hypot(dx,dy));nx,ny=-dy/distance,dx/distance
+        line([(gx+nx*3,gy+ny*3),(gx-nx*3,gy-ny*3)],'gold',2)
+    else:
+        line([(gx,gy-3),(gx,gy+3)],'gold',2)
+    rect((gx-1,gy-2,gx,gy-1),'gold_light')
+    if state in ['cut_a','cut_b','retreat','jump','slam','land']:
+        length=max(1,math.hypot(dx,dy));ux,uy=dx/length,dy/length;nx,ny=-uy,ux
+        curve=[(gx+ux,gy+uy),(gx+dx*.45-nx*2,gy+dy*.45-ny*2),(tx-ux*5,ty-uy*5),(tx,ty)]
+    else:
+        curve=[(gx+1,gy),(gx+dx*.45,gy+dy*.45-2),(tx-5,ty-1),(tx,ty)]
     line(curve,'ink',3);line(curve,'steel',2);line([(x,y-1) for x,y in curve],'edge',1)
     rect((tx-1,ty-1,tx,ty),'white')
     return im
@@ -143,10 +161,10 @@ def make_seeds():
 
 
 
-STATES=[('idle',4),('approach',6),('shift',4),('draw',4),('cut_a',4),('cut_b',4),('recover',4),('cast',4),('parry_recoil',4),('parry_recover',4),('armored_recoil',4),('guard_break',4),('guard_recover',4),('hurt',4),('dead',4)]
+STATES=[('idle',4),('approach',6),('shift',4),('draw',4),('cut_a',4),('cut_b',4),('recover',4),('cast',4),('parry_recoil',4),('parry_recover',4),('armored_recoil',4),('guard_break',4),('guard_recover',4),('hurt',4),('dead',4),('retreat',4),('jump',4),('slam',4),('land',4)]
 
-def body(head=(48,55),shoulder=(47,69),hip=(47,86),far_knee=(39,100),far_foot=(36,115),near_knee=(56,101),near_foot=(60,115),hand=(64,91),support=(57,89),guard=(68,91),tip=(121,94),near_elbow=(58,80),far_elbow=(48,81),hair=0,hem=0,lift=0):
-    return dict(name='A / INK-SILVER TWIN HEM',head=head,shoulder=shoulder,hip=hip,far_knee=far_knee,far_foot=far_foot,near_knee=near_knee,near_foot=near_foot,hand=hand,support=support,guard=guard,weapon_tip=tip,guard_point=(guard[0]+1,guard[1]-1),near_elbow=near_elbow,far_elbow=far_elbow,hair_swing=hair,hem_swing=hem,hem_lift=lift)
+def body(head=(48,55),shoulder=(47,69),hip=(47,86),far_knee=(39,100),far_foot=(36,115),near_knee=(56,101),near_foot=(60,115),hand=(64,91),support=(57,89),guard=(68,91),tip=(121,94),near_elbow=(58,80),far_elbow=(48,81),hair=0,hem=0,lift=0,side=0):
+    return dict(name='A / INK-SILVER TWIN HEM',head=head,shoulder=shoulder,hip=hip,far_knee=far_knee,far_foot=far_foot,near_knee=near_knee,near_foot=near_foot,hand=hand,support=support,guard=guard,weapon_tip=tip,guard_point=(guard[0]+1,guard[1]-1),near_elbow=near_elbow,far_elbow=far_elbow,hair_swing=hair,hem_swing=hem,hem_lift=lift,side_profile=side)
 
 # Keyed joint drawings. Changes are in anatomy, wrists, knee support and cloth, never image transforms.
 FAMILY={
@@ -216,6 +234,38 @@ FAMILY['parry_recover']=[dict(FAMILY['parry_recoil'][3]),dict(FAMILY['parry_reco
 FAMILY['guard_recover']=[dict(FAMILY['guard_break'][3]),dict(FAMILY['guard_break'][1]),dict(FAMILY['guard_break'][0]),body(hand=(63,92),guard=(67,92),tip=(120,97),hair=1,hem=1)]
 FAMILY['dead']=[dict(FAMILY['guard_break'][2]),body(head=(69,100),shoulder=(63,107),hip=(43,110),far_knee=(31,112),far_foot=(21,115),near_knee=(40,113),near_foot=(28,115),hand=(86,112),support=(77,112),guard=(90,112),tip=(123,114)),body(head=(74,105),shoulder=(64,110),hip=(43,111),far_knee=(30,113),far_foot=(20,115),near_knee=(39,114),near_foot=(27,115),hand=(89,113),support=(79,114),guard=(93,113),tip=(123,115)),body(head=(75,107),shoulder=(64,111),hip=(43,112),far_knee=(29,114),far_foot=(19,115),near_knee=(38,114),near_foot=(26,115),hand=(90,114),support=(79,115),guard=(94,114),tip=(123,115))]
 
+# Stage duel movement: independent anatomy/cloth/weapon key poses, not transformed standing frames.
+FAMILY['cut_a']=[
+ body(head=(45,64),shoulder=(43,78),hip=(47,94),far_knee=(34,104),far_foot=(25,115),near_knee=(61,103),near_foot=(72,115),hand=(54,72),support=(58,77),guard=(51,68),tip=(20,29),near_elbow=(56,76),far_elbow=(47,81),hair=3,hem=5,lift=7,side=2),
+ body(head=(60,65),shoulder=(58,79),hip=(50,94),far_knee=(34,106),far_foot=(22,115),near_knee=(67,104),near_foot=(80,115),hand=(63,91),support=(56,91),guard=(67,91),tip=(123,89),near_elbow=(66,85),far_elbow=(49,87),hair=11,hem=12,lift=9,side=1),
+ body(head=(61,73),shoulder=(59,87),hip=(51,99),far_knee=(35,108),far_foot=(25,115),near_knee=(67,107),near_foot=(80,115),hand=(63,84),support=(58,80),guard=(66,87),tip=(105,121),near_elbow=(67,82),far_elbow=(53,81),hair=10,hem=11,lift=9,side=1),
+ body(head=(52,65),shoulder=(50,79),hip=(49,94),far_knee=(36,104),far_foot=(29,115),near_knee=(61,104),near_foot=(69,115),hand=(56,98),support=(51,95),guard=(59,100),tip=(90,119),near_elbow=(58,89),far_elbow=(46,88),hair=5,hem=6,lift=4,side=1)]
+FAMILY['cut_b']=[
+ body(head=(48,65),shoulder=(46,79),hip=(48,94),far_knee=(34,104),far_foot=(27,115),near_knee=(62,104),near_foot=(72,115),hand=(55,97),support=(50,94),guard=(58,99),tip=(95,122),near_elbow=(52,87),far_elbow=(44,87),hair=1,hem=-4,lift=7,side=2),
+ body(head=(54,64),shoulder=(52,78),hip=(50,93),far_knee=(35,104),far_foot=(27,115),near_knee=(64,103),near_foot=(76,115),hand=(60,96),support=(54,99),guard=(64,94),tip=(119,60),near_elbow=(57,87),far_elbow=(48,89),hair=-4,hem=-7,lift=9,side=2),
+ body(head=(51,57),shoulder=(49,71),hip=(49,87),far_knee=(37,101),far_foot=(30,115),near_knee=(59,100),near_foot=(68,115),hand=(57,84),support=(56,91),guard=(58,80),tip=(66,23),near_elbow=(54,78),far_elbow=(49,83),hair=-4,hem=-5,lift=5,side=2),
+ body(head=(49,55),shoulder=(47,69),hip=(48,86),far_knee=(38,100),far_foot=(33,115),near_knee=(57,100),near_foot=(62,115),hand=(60,88),support=(54,92),guard=(63,86),tip=(111,57),near_elbow=(55,79),far_elbow=(45,82),hair=-1,hem=-2,lift=2,side=2)]
+FAMILY['retreat']=[
+ body(head=(50,59),shoulder=(48,73),hip=(48,90),far_knee=(35,102),far_foot=(29,115),near_knee=(60,102),near_foot=(68,115),hand=(58,94),support=(51,92),guard=(62,94),tip=(114,106),near_elbow=(55,83),hair=-2,hem=-3,lift=3,side=1),
+ body(head=(43,56),shoulder=(41,70),hip=(43,87),far_knee=(30,101),far_foot=(22,115),near_knee=(51,99),near_foot=(60,109),hand=(54,87),support=(48,87),guard=(58,87),tip=(106,66),near_elbow=(48,77),far_elbow=(39,79),hair=-7,hem=-6,lift=8,side=2),
+ body(head=(39,55),shoulder=(38,69),hip=(40,86),far_knee=(29,99),far_foot=(22,112),near_knee=(47,102),near_foot=(55,115),hand=(53,83),support=(46,84),guard=(57,83),tip=(101,53),near_elbow=(47,75),far_elbow=(36,78),hair=-5,hem=-4,lift=6,side=2),
+ body(head=(45,55),shoulder=(44,69),hip=(44,86),far_knee=(33,100),far_foot=(29,115),near_knee=(52,101),near_foot=(58,115),hand=(60,89),support=(53,88),guard=(64,89),tip=(115,86),near_elbow=(53,79),far_elbow=(42,80),hair=-2,hem=-1)]
+FAMILY['jump']=[
+ body(head=(48,66),shoulder=(47,80),hip=(46,96),far_knee=(34,106),far_foot=(31,115),near_knee=(60,105),near_foot=(67,115),hand=(58,90),support=(51,89),guard=(62,90),tip=(110,72),near_elbow=(55,84),far_elbow=(44,87),hair=1,hem=3,lift=5,side=1),
+ body(head=(51,54),shoulder=(50,68),hip=(47,85),far_knee=(38,93),far_foot=(31,99),near_knee=(59,88),near_foot=(61,96),hand=(59,80),support=(52,80),guard=(63,80),tip=(105,41),near_elbow=(57,72),far_elbow=(47,77),hair=6,hem=7,lift=18,side=1),
+ body(head=(54,48),shoulder=(52,62),hip=(48,79),far_knee=(34,84),far_foot=(40,92),near_knee=(59,82),near_foot=(56,91),hand=(60,75),support=(53,76),guard=(64,75),tip=(99,27),near_elbow=(59,66),far_elbow=(47,71),hair=8,hem=9,lift=20,side=1),
+ body(head=(53,52),shoulder=(51,66),hip=(48,82),far_knee=(35,91),far_foot=(29,103),near_knee=(60,91),near_foot=(64,103),hand=(62,79),support=(55,79),guard=(66,79),tip=(113,45),near_elbow=(59,70),far_elbow=(47,75),hair=7,hem=8,lift=15,side=1)]
+FAMILY['slam']=[
+ body(head=(49,54),shoulder=(47,68),hip=(46,85),far_knee=(34,100),far_foot=(30,115),near_knee=(57,99),near_foot=(63,115),hand=(48,60),support=(43,63),guard=(52,60),tip=(39,12),near_elbow=(54,62),far_elbow=(42,63),hair=3,hem=3,lift=4,side=2),
+ body(head=(53,58),shoulder=(51,72),hip=(48,89),far_knee=(34,103),far_foot=(25,115),near_knee=(61,101),near_foot=(70,115),hand=(56,67),support=(49,68),guard=(60,67),tip=(89,24),near_elbow=(59,65),far_elbow=(45,68),hair=6,hem=7,lift=8,side=1),
+ body(head=(60,70),shoulder=(58,84),hip=(50,96),far_knee=(34,106),far_foot=(25,115),near_knee=(66,105),near_foot=(77,115),hand=(61,81),support=(54,81),guard=(65,81),tip=(103,119),near_elbow=(65,78),far_elbow=(51,80),hair=10,hem=11,lift=9,side=1),
+ body(head=(56,67),shoulder=(54,81),hip=(50,94),far_knee=(34,105),far_foot=(26,115),near_knee=(63,105),near_foot=(75,115),hand=(62,95),support=(55,93),guard=(66,95),tip=(120,111),near_elbow=(61,87),far_elbow=(49,88),hair=8,hem=9,lift=6,side=1)]
+FAMILY['land']=[
+ body(head=(57,72),shoulder=(55,86),hip=(49,99),far_knee=(34,108),far_foot=(28,115),near_knee=(64,108),near_foot=(72,115),hand=(61,99),support=(54,97),guard=(65,99),tip=(117,116),near_elbow=(60,92),far_elbow=(48,93),hair=9,hem=10,lift=15,side=1),
+ body(head=(54,65),shoulder=(52,79),hip=(48,93),far_knee=(34,105),far_foot=(29,115),near_knee=(60,105),near_foot=(69,115),hand=(61,96),support=(54,94),guard=(65,96),tip=(116,113),near_elbow=(58,86),far_elbow=(47,87),hair=6,hem=8,lift=8,side=1),
+ body(head=(50,58),shoulder=(49,72),hip=(47,88),far_knee=(35,101),far_foot=(31,115),near_knee=(56,101),near_foot=(61,115),hand=(63,93),support=(56,91),guard=(67,93),tip=(120,103),near_elbow=(57,82),far_elbow=(46,83),hair=4,hem=5,lift=3),
+ body(hand=(65,91),support=(58,89),guard=(69,91),tip=(121,94),near_elbow=(59,80),hair=1,hem=1)]
+
 def prone(pose,frame):
     # Explicit horizontal collapse drawings; no rotation of a standing frame.
     im=Image.new('RGBA',(128,128));d=ImageDraw.Draw(im)
@@ -245,13 +295,16 @@ def prone(pose,frame):
     return im
 
 def make_family():
+    old_report_path=OUT/'family-report.json'
+    baseline=json.loads(old_report_path.read_text(encoding='utf-8')) if old_report_path.exists() else {}
+    protected={entry['name']:entry['sha256'] for entry in baseline.get('frame_checks',[]) if entry['name'].startswith(('parry_','armored_','guard_','hurt_','dead_'))}
     frames=[];mapping={};qa=[]
     for state,count in STATES:
         poses=FAMILY[state];assert len(poses)==count,(state,len(poses),count)
         records=[];start=len(frames)
         for index,pose in enumerate(poses):
             im=prone(pose,index) if state=='dead' and index>0 else seed('A',pose,state,index)
-            record={'name':f'{state}_{index:02d}','state':state,'frame':index,'progress':index/max(1,count-1),'hand':local(pose['hand']),'support_hand':local(pose['support']),'guard':local(pose['guard']),'weapon_tip':local(pose['weapon_tip']),'guard_point':local(pose['guard_point']),'hit_window':state in ['cut_a','cut_b'],'joints':{key:local(value) for key,value in pose.items() if isinstance(value,tuple)}}
+            record={'name':f'{state}_{index:02d}','state':state,'frame':index,'progress':index/max(1,count-1),'hand':local(pose['hand']),'support_hand':local(pose['support']),'guard':local(pose['guard']),'weapon_tip':local(pose['weapon_tip']),'guard_point':local(pose['guard_point']),'hit_window':(state in ['cut_a','cut_b'] and index in [1,2]) or (state=='slam' and index>=2),'joints':{key:local(value) for key,value in pose.items() if isinstance(value,tuple)}}
             frames.append((state,index,im,record));records.append(record)
             alpha=im.getchannel('A');qa.append({'name':record['name'],'bbox':alpha.getbbox(),'colors':len({rgb[:3] for rgb in im.get_flattened_data() if rgb[3]}),'alpha_values':sorted(set(alpha.get_flattened_data())),'landmarks_in_bounds':all(0<=x<128 and 0<=y<128 for x,y in [pose['hand'],pose['guard'],pose['weapon_tip'],pose['guard_point']]),'no_cell_edge_clipping':alpha.getbbox()[0]>0 and alpha.getbbox()[1]>0 and alpha.getbbox()[2]<128 and alpha.getbbox()[3]<128,'sha256':hashlib.sha256(im.tobytes()).hexdigest()})
         mapping[state]={'start':start,'count':count,'frames':records}
@@ -260,17 +313,24 @@ def make_family():
     atlas.save(OUT/'boss_atlas.png')
     for filename,color in [('boss_flash.png','#e8fff0'),('boss_silhouette.png','#73d7df')]:
         flash=Image.new('RGBA',atlas.size,color);flash.putalpha(atlas.getchannel('A'));flash.save(OUT/filename)
-    manifest={'version':2,'status':'APPROVED_A_COMPLETE_KEYFRAME_FAMILY','license':'MIT','selected_candidate':'A','source':'Original integer-pixel joint/clothing/blade drawing in tools/generate_katana_boss.py; no imported image or 3D input.','canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'atlas':'boss_atlas.png','flash':'boss_flash.png','total_frames':len(frames),'states':mapping,'boss':{'canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'states':mapping,'total_frames':len(frames)},'pose_contract':{'method':'get_presentation_pose','fields':['state','progress','strike','armored','contact_serial'],'clock':'Actual controller stage; local freeze holds progress. No fixed animation seconds.','cut_contact':'cut_a/b frame 0 already spans local x=14..73 at y=-26..-18; draw owns anticipation.'},'constraints':{'antialias':False,'whole_frame_rotation':False,'native_scale':1,'max_colors':32,'alpha_values':[0,255]}}
+    manifest={'version':2,'status':'APPROVED_A_COMPLETE_KEYFRAME_FAMILY','license':'MIT','selected_candidate':'A','source':'Original integer-pixel joint/clothing/blade drawing in tools/generate_katana_boss.py; no imported image or 3D input.','canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'atlas':'boss_atlas.png','flash':'boss_flash.png','total_frames':len(frames),'states':mapping,'boss':{'canvas':[128,128],'anchor':list(ANCHOR),'columns':columns,'states':mapping,'total_frames':len(frames)},'pose_contract':{'method':'get_presentation_pose','fields':['state','progress','strike','armored','contact_serial'],'clock':'Actual controller stage; local freeze holds progress. No fixed animation seconds.','aliases':{'leap':'jump','landing':'land'},'advisory_contact_frames':{'cut_a':[1,2],'cut_b':[1,2],'slam':[2,3],'jump':[],'retreat':[],'land':[]},'cut_contact':'cut_a/b frames 0 and 3 anticipate/recover, frames 1 and 2 carry contact hints. All blade poses are read from this same manifest.'},'constraints':{'antialias':False,'whole_frame_rotation':False,'native_scale':1,'max_colors':32,'alpha_values':[0,255]}}
     (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
-    cut0={}
-    for state in ['cut_a','cut_b']:
-        pose=FAMILY[state][0];g=local(pose['guard']);tip=local(pose['weapon_tip']);image=seed('A',pose,state,0)
-        blade_colors={tuple(bytes.fromhex(P[key][1:])) for key in ['steel','edge','white','gold','gold_light']}
-        covered=[x for x in range(14,61) if any(image.getpixel((ANCHOR[0]+x,ANCHOR[1]+y))[:3] in blade_colors and image.getpixel((ANCHOR[0]+x,ANCHOR[1]+y))[3]==255 for y in range(-26,-17))]
-        cut0[state]={'guard':g,'tip':tip,'covers_contact_x14_60':g[0]<=14 and tip[0]>=60,'blade_y_band':-26<=g[1]<=-18 and -26<=tip[1]<=-18,'actual_raster_contact_columns':len(covered),'expected_contact_columns':47}
-    report={'frames':len(frames),'unique_frames':len({im.tobytes() for _,_,im,_ in frames}),'all_alpha_binary':all(q['alpha_values']==[0,255] for q in qa),'all_landmarks_in_bounds':all(q['landmarks_in_bounds'] for q in qa),'all_frames_no_clipping':all(q['no_cell_edge_clipping'] for q in qa),'max_frame_colors':max(q['colors'] for q in qa),'cut_first_frame':cut0,'states':{name:count for name,count in STATES},'frame_checks':qa}
+    contacts={}
+    blade_colors={tuple(bytes.fromhex(P[key][1:])) for key in ['steel','edge','white','gold','gold_light']}
+    for state in ['cut_a','cut_b','slam']:
+        contacts[state]=[]
+        for index,pose in enumerate(FAMILY[state]):
+            image=seed('A',pose,state,index);gx,gy=pose['guard'];tx,ty=pose['weapon_tip'];covered=0
+            for sample in range(25):
+                t=sample/24;x=round(gx+(tx-gx)*t);y=round(gy+(ty-gy)*t)
+                found=any(0<=x+ox<128 and 0<=y+oy<128 and image.getpixel((x+ox,y+oy))[:3] in blade_colors and image.getpixel((x+ox,y+oy))[3]==255 for ox in range(-3,4) for oy in range(-3,4))
+                covered+=int(found)
+            contacts[state].append({'frame':index,'guard':local((gx,gy)),'tip':local((tx,ty)),'angle_degrees':round(math.degrees(math.atan2(ty-gy,tx-gx)),2),'actual_blade_samples':covered,'expected_samples':25,'hit_window':(state in ['cut_a','cut_b'] and index in [1,2]) or (state=='slam' and index>=2)})
+    report={'frames':len(frames),'unique_frames':len({im.tobytes() for _,_,im,_ in frames}),'all_alpha_binary':all(q['alpha_values']==[0,255] for q in qa),'all_landmarks_in_bounds':all(q['landmarks_in_bounds'] for q in qa),'all_frames_no_clipping':all(q['no_cell_edge_clipping'] for q in qa),'max_frame_colors':max(q['colors'] for q in qa),'cut_contact_frames':contacts,'states':{name:count for name,count in STATES},'frame_checks':qa}
     assert report['all_alpha_binary'] and report['all_landmarks_in_bounds'] and report['all_frames_no_clipping'] and report['max_frame_colors']<=32
-    assert all(c['covers_contact_x14_60'] and c['blade_y_band'] and c['actual_raster_contact_columns']==47 for c in cut0.values())
+    assert all(frame['actual_blade_samples']==25 for frames in contacts.values() for frame in frames)
+    report['preserved_reaction_and_dead']=all(protected.get(entry['name'],entry['sha256'])==entry['sha256'] for entry in qa if entry['name'] in protected)
+    assert report['preserved_reaction_and_dead']
     (OUT/'family-report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     # Contact sheets have all authored frames, with native-pixel source and nearest-only previews.
     for filename,names in [('katana-motion-contact.png',['idle','approach','shift','draw','cut_a','cut_b','recover','cast']),('katana-reaction-contact.png',['parry_recoil','parry_recover','armored_recoil','guard_break','guard_recover','hurt','dead'])]:
@@ -288,7 +348,22 @@ def make_family():
         im=im.resize((256,256),Image.Resampling.NEAREST);x=(slot%4)*256;y=(slot//4)*256+24
         sheet.paste(im,(x,y),im);d.text((x+6,y),f'{state} / {index}',fill=P['gold_light'])
     sheet.save(OUT/'katana-keyposes-2x.png')
+
+    # Local D-drive evidence with the exact raster blade root and tip labeled in each cell.
+    evidence=ROOT/'artifacts';evidence.mkdir(parents=True,exist_ok=True)
+    names=['cut_a','cut_b','retreat','jump','slam','land'];sheet=Image.new('RGB',(128*4+132,128*len(names)+30),'#101321');sd=ImageDraw.Draw(sheet)
+    for row,state in enumerate(names):
+        sd.text((4,40+row*128),state,fill=P['gold_light'])
+        for index,pose in enumerate(FAMILY[state]):
+            im=seed('A',pose,state,index);x=132+index*128;y=28+row*128;sheet.paste(im,(x,y),im)
+            gx,gy=pose['guard'];tx,ty=pose['weapon_tip']
+            sd.line([(x+gx,y+gy),(x+tx,y+ty)],fill='#58e2bf',width=1)
+            sd.rectangle((x+gx-1,y+gy-1,x+gx+1,y+gy+1),fill='#eec561');sd.rectangle((x+tx-1,y+ty-1,x+tx+1,y+ty+1),fill='#a5d6ed')
+            sd.text((x+4,y+4),f'{index}: G({gx-48},{gy-116}) T({tx-48},{ty-116})',fill='#8d9dab')
+    sheet.save(evidence/'boss-duel-contact.png')
+    sheet.resize((sheet.width*2,sheet.height*2),Image.Resampling.NEAREST).save(evidence/'boss-duel-contact-2x.png')
     print(json.dumps({key:value for key,value in report.items() if key!='frame_checks'}))
+
 
 def main():
     make_seeds()

@@ -72,3 +72,16 @@ Root on_parry_contact(defender,source,contact,kind) dispatches exactly one VFX/s
 ## Unified main migration
 
 User selected this integrate/vfx-primary checkout as the main project. Baseline d6133d9586a5a175410f25fceb2384f264defb22 includes newer layered sounds and the longer hero; preserve those commits and source assets. Lead owns main/project/HUD/projectile/enemy integration and delivery. Player agent owns player/attack profile/query; Level owns bellkeep; Motion owns actor renderer/katana and FX; Boss owns boss/friend_rhythm/authored config/hazards; independent reviewer is read only. Source milestone e895 is selectively ported, not merged wholesale. No edits to other checkouts, main branch or original boss_attack subproject/audio/chart. Runtime music remains the distributable placeholder.
+
+## Current Boss duel milestone (after 06b06ad)
+
+The selected main worktree is integrate/vfx-primary. Preserve all concurrent player, ghost-shadow, smear and general VFX work. No main-branch merge, reset, clean or force push. The owner's later explicit approval for the already tracked selected recording supersedes the historical private-recording restriction for that one file only; this milestone does not edit or copy audio.
+
+- Boss runtime: combat/boss.gd, data/boss_duel_profile.json, tests/boss_duel_runtime_test.gd.
+- Shared blade geometry: combat/boss_blade_geometry.gd and its geometry test; maintain the existing full-song emission coverage without reducing expectations.
+- Boss presentation: presentation/katana_visual.gd, presentation/katana_frames, the original katana generator and a focused visual test. No hero/general VFX files.
+- Terrain validation: read-only level audit and tests/boss_navigation_test.gd; no level edits.
+- Lead: this contract, verification runner, milestone documentation, selected-source validation and Git.
+- Independent review: read-only implementation review.
+
+The friend source plans remain authoritative for event times and projectile counts. New close-combat actions have separate identity/telemetry and fit available recovery gaps. The visible pixel blade and its contact sweep use the same guard/tip frame landmarks. Ordinary contact cancellation must not invalidate independent fixed/laser/barrage plans; narrative rest, death and transport generation changes remain global cleanup boundaries. All checks are bounded automation or static keyframes; the user performs playtesting.

@@ -29,9 +29,10 @@ static func describe(actor: Object, state: String = "idle", frame: int = 0) -> D
             var reaction_progress: Variant = actor.get("reaction_progress")
             pose = {"state": str(reaction), "progress": float(reaction_progress) if reaction_progress != null else 0.0, "strike": 0, "armored": false, "contact_serial": -1}
     if pose.is_empty():
-        var aliases: Dictionary = {"run":"approach","dash":"shift","windup":"draw","attack":"cut_a","parry":"draw","parry_recover":"parry_recover","retreat":"recover"}
+        var aliases: Dictionary = {"run":"approach","dash":"shift","windup":"draw","attack":"cut_a","parry":"draw","parry_recover":"parry_recover","leap":"jump","landing":"land"}
         pose = {"state": aliases.get(state,state), "progress": float(posmod(frame,4))/3.0, "strike":0, "armored":false, "contact_serial":-1}
     var clip: String = str(pose.get("state", "idle"))
+    clip = str({"leap":"jump", "landing":"land"}.get(clip, clip))
     if not states().has(clip):
         clip = "idle"
     var progress: float = clampf(float(pose.get("progress",0.0)),0.0,1.0)
@@ -57,6 +58,26 @@ static func landmark(clip: String, frame: int, key: String) -> Vector2:
     var point: Array = item.get(key,[0,0])
     return Vector2(float(point[0]),float(point[1]))
 
+static func blade_segment(actor: Object) -> Dictionary:
+    # Boss owns the clock/active decision. Endpoints already include facing and
+    # are feet-local. This fine edge has no cached tail, timer, damage or camera.
+    # Cancellation/rest removes it immediately; the authored steel remains visible.
+    if not actor.has_method("get_blade_state"):
+        return {}
+    var requested: Variant = actor.call("get_blade_state")
+    if not requested is Dictionary or requested.get("active", false) != true:
+        return {}
+    var start: Variant = requested.get("from")
+    var tip: Variant = requested.get("to")
+    if not start is Vector2 or not tip is Vector2:
+        return {}
+    if not start.is_finite() or not tip.is_finite() or start.distance_squared_to(tip) < 1.0:
+        return {}
+    var result: Dictionary = requested.duplicate(true)
+    result["from"] = start.round()
+    result["to"] = tip.round()
+    return result
+
 static func _texture(name: String) -> Texture2D:
     if not _textures.has(name):
         _textures[name] = load(ROOT+name)
@@ -75,3 +96,10 @@ static func paint(canvas: Node2D, state: String, frame: int, facing: int) -> voi
     canvas.draw_set_transform(Vector2.ZERO,0,Vector2(float(facing),1))
     canvas.draw_texture_rect_region(texture,Rect2(-anchor,region(str(pose["state"]),int(pose["frame"])).size),region(str(pose["state"]),int(pose["frame"])))
     canvas.draw_set_transform(Vector2.ZERO)
+    # Transform is reset: get_blade_state already mirrors the physical blade.
+    # A one-native-pixel steel trace only; no broad decorative damage silhouette.
+    var blade: Dictionary = blade_segment(canvas)
+    if not blade.is_empty():
+        var edge: Color = Color("e3c286") if bool(blade.get("armored", false)) else Color("dcebf0")
+        edge.a = 0.82
+        canvas.draw_line(blade["from"], blade["to"], edge, 1.0, false)

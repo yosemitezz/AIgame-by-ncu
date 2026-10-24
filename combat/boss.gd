@@ -6,6 +6,7 @@ const FriendSlots = preload("res://combat/friend_rhythm/boss_move_slots.gd")
 const FriendPlanner = preload("res://combat/friend_rhythm/boss_attack_planner.gd")
 const FriendLasers = preload("res://combat/friend_rhythm/laser_formation_planner.gd")
 const FriendPatterns = preload("res://combat/friend_rhythm/projectile_patterns.gd")
+const BladeGeometry = preload("res://combat/boss_blade_geometry.gd")
 const BossHazard = preload("res://combat/boss_hazard.gd")
 const PLAN_ARENA: Rect2 = Rect2(2660.0, 40.0, 670.0, 290.0)
 const LASER_ARENA: Rect2 = Rect2(2660.0, 40.0, 670.0, 260.0)
@@ -41,6 +42,29 @@ var _authored_cycle: int = 0
 var _authored_loop_beats: int = 16
 var _authored_actions: Array[Dictionary] = []
 var _authored_dash: Dictionary = {}
+var _authored_shift: Dictionary = {}
+var duel_profile: Dictionary = {}
+var _navigation_reason: String = "idle"
+var _duel_enabled: bool = true
+var _duel_state: String = ""
+var _duel_elapsed: float = 0.0
+var _duel_duration: float = 0.0
+var _duel_cooldown: float = 0.0
+var _duel_armored: bool = false
+var _duel_target: Vector2 = Vector2.ZERO
+var _duel_damaging: bool = false
+var _duel_flight: float = 0.0
+var _drop_platform: PhysicsBody2D
+var _extra_serial: int = 0
+var extra_attacks: int = 0
+var extra_hits: int = 0
+var _blade_clip: String = ""
+var _blade_elapsed: float = 0.0
+var _blade_duration: float = 0.0
+var _blade_token: int = -1
+var _blade_parryable: bool = true
+var _blade_armored: bool = false
+var _blade_previous: Dictionary = {}
 var _prepared_plans: Dictionary = {}
 var _source_strikes: Dictionary = {}
 var _warning_geometry: Dictionary = {}
@@ -104,6 +128,11 @@ var _resolved_contacts: Dictionary = {}
 
 func configure(p_game: Node, at: Vector2) -> void:
     game = p_game
+    var duel_file: FileAccess = FileAccess.open("res://data/boss_duel_profile.json", FileAccess.READ)
+    if duel_file:
+        var duel_data: Variant = JSON.parse_string(duel_file.get_as_text())
+        if duel_data is Dictionary:
+            duel_profile = duel_data
     global_position = at
     collision_layer = 0
     collision_mask = 1
@@ -187,10 +216,12 @@ func _on_beat(index: int) -> void:
         return
     if _uses_full_song():
         _dispatch_full_chart()
+        _try_duel_on_beat()
         return
     # This value is the exact event timestamp, not a replacement frame clock.
     # Sub-beat actions/hazards read MusicDirector.get_score_time() exclusively.
     _dispatch_authored_clock(float(index - _section_origin_beat) * game.music.seconds_per_beat(), true)
+    _try_duel_on_beat()
 
 func _begin_attack(attack: String) -> void:
     if dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
@@ -228,6 +259,7 @@ func set_impact_freeze(seconds: float) -> void:
 
 func _physics_process(delta: float) -> void:
     if get_tree().paused or game.get("_paused") == true:
+        _blade_previous.clear()
         return
     if game.get("outcome") != null and str(game.get("outcome")) != "":
         _cancel_all_attacks()
@@ -255,9 +287,12 @@ func _physics_process(delta: float) -> void:
         hurt_flash = 0.0
         combat_freeze = 0.0
     elif combat_freeze > 0.0 and not dead:
+        _blade_previous.clear()
         combat_freeze = maxf(0.0, combat_freeze - delta)
         queue_redraw()
         return
+    _duel_cooldown = maxf(0.0, _duel_cooldown - delta)
+    _blade_elapsed += delta
     _animation_clock += delta
     _authored_pose_elapsed += delta
     _warning_elapsed += delta
@@ -293,6 +328,12 @@ func _physics_process(delta: float) -> void:
     elif _stagger_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
         animation_state = "hurt"
+    elif not _duel_state.is_empty():
+        _advance_duel(delta)
+    elif not _authored_shift.is_empty():
+        _advance_authored_shift(float(game.music.get_score_time()))
+        velocity.x = 0.0
+        animation_state = "dash"
     elif not _authored_dash.is_empty():
         _advance_authored_dash(float(game.music.get_score_time()))
         if not _authored_dash.is_empty():
@@ -318,15 +359,12 @@ func _physics_process(delta: float) -> void:
         velocity.x = move_toward(velocity.x, 0.0, delta * 800.0)
         animation_state = "attack"
     else:
-        var distance: float = game.player.global_position.x - global_position.x
-        facing = 1 if distance >= 0.0 else -1
-        velocity.x = facing * (85.0 if phase == "final" else 62.0) if absf(distance) > 54.0 else 0.0
-        if is_on_wall() and is_on_floor():
-            velocity.y = -290.0
+        _pursue_player()
         animation_state = "run" if absf(velocity.x) > 1.0 else "idle"
     if not is_on_floor():
         velocity.y = minf(velocity.y + 950.0 * delta, 650.0)
     move_and_slide()
+    _sample_blade(delta)
     global_position.x = clampf(global_position.x, ARENA_LEFT, ARENA_RIGHT)
     if reaction_state != "none" and not dead:
         animation_state = reaction_state
@@ -421,14 +459,17 @@ func _try_melee_contact(reach: float, parryable: bool = true, armored: bool = fa
     var difference: Vector2 = game.player.global_position + Vector2(0, -14) - (global_position + Vector2(0, -24))
     if absf(difference.x) > reach or absf(difference.y) > 43.0 or difference.x * facing < -22.0:
         return
-    _contact_resolved = true
-    _resolved_contacts[actual_token] = true
-    # The weapon reaches the player's front edge. The defender independently
-    # verifies its facing and current input window before awarding any success.
     var contact_side: float = signf(global_position.x - game.player.global_position.x)
     if is_zero_approx(contact_side):
         contact_side = float(-facing)
     var contact: Vector2 = game.player.global_position + Vector2(contact_side * minf(18.0, absf(difference.x) * 0.5), -18)
+    _resolve_melee_contact(contact, parryable, armored, actual_token)
+
+func _resolve_melee_contact(contact: Vector2, parryable: bool, armored: bool, actual_token: int) -> void:
+    if _contact_resolved or game.story_safe or dead or _reaction_blocks_attacks or _posture_lockout > 0.0 or actual_token != contact_token or _resolved_contacts.has(actual_token):
+        return
+    _contact_resolved = true
+    _resolved_contacts[actual_token] = true
     var would_break: bool = guard_posture + 1 >= guard_max
     var accepted: bool = false
     if parryable and game.player.parry_timer > 0.0:
@@ -448,9 +489,14 @@ func _try_melee_contact(reach: float, parryable: bool = true, armored: bool = fa
             velocity.x = -facing * 70.0
             _start_reaction("parry_recoil", NORMAL_RECOIL_TIME, true)
     else:
+        var before: int = int(game.player.health)
         game.damage_player(1, global_position)
+        if actual_token >= 2000000 and int(game.player.health) < before:
+            extra_hits += 1
 
 func _cancel_contact_sequence() -> void:
+    _clear_duel("contact_cancel")
+    _clear_blade()
     if not _uses_full_song():
         _cancel_all_attacks()
         return
@@ -463,6 +509,7 @@ func _cancel_contact_sequence() -> void:
             retained.append(action)
     _authored_actions = retained
     _authored_dash.clear()
+    _authored_shift.clear()
     _pending_attack = ""
     _windup_timer = 0.0
     _charge_timer = 0.0
@@ -480,6 +527,8 @@ func _stale_window() -> float:
     return clampf(float(configured.get("stale_action_seconds", 0.20)), 0.02, 0.50) if configured is Dictionary else 0.20
 
 func _cancel_all_attacks() -> void:
+    _clear_duel("safe_or_source_reset")
+    _clear_blade()
     _invalidate_authored()
     _release_elapsed = -1.0
     _present_strike = 0
@@ -684,15 +733,19 @@ func _prepare_upcoming(score: float) -> void:
         _prepared_plans[key] = plan
         _warning_elapsed = 0.0
         _warning_duration = maxf(0.001, start - score)
-        _warning_geometry = {"kind": "authored_path", "pattern": str(pattern.get("pattern_id", "")), "from": global_position, "to": target, "locked_target": target, "start_time": score, "damage_time": start}
+        _warning_geometry = {"kind": "authored_path", "preview_only": true, "pattern": str(pattern.get("pattern_id", "")), "from": global_position, "to": target, "locked_target": target, "start_time": score, "damage_time": start}
 
 func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locked_target: Vector2 = Vector2.INF, prepared: Dictionary = {}) -> bool:
     if dead or game.story_safe or (not _uses_full_song() and (_reaction_blocks_attacks or _posture_lockout > 0.0)) or pattern.is_empty() or (pattern.has("enabled") and not bool(pattern["enabled"])):
         return false
     var target: Vector2 = game.player.global_position if not locked_target.is_finite() else locked_target
-    var plan: Dictionary = prepared.duplicate(true) if not prepared.is_empty() else FriendPlanner.build_plan(pattern, start_score_time, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
+    # Preparation previews a pose; the immutable source target locks only now,
+    # at the phrase start, never at the earlier visual anticipation.
+    var plan: Dictionary = FriendPlanner.build_plan(pattern, start_score_time, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
     if (plan["actions"] as Array).is_empty():
         return false
+    _clear_duel("source_preempt")
+    _clear_blade()
     attack_serial += 1
     _authored_dash.clear()
     for resolved: int in _resolved_contacts.keys():
@@ -778,18 +831,30 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
         authored_trace.pop_front()
     match kind:
         "aim":
+            if pattern == "fast_3" and int(action["source_index"]) >= 2:
+                target = game.player.global_position
+                target.x = clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0)
+                action["source_locked_target"] = target
+                for future: Dictionary in _authored_actions:
+                    if int(future["source_serial"]) == serial and str(future["type"]) == "dash" and float(future["time"]) >= float(action["time"]):
+                        future["resolved_target"] = target
+                        future["source_locked_target"] = target
+                        break
             _warning_elapsed = 0.0
             _warning_duration = float(action.get("telegraph_duration", game.music.seconds_per_beat() * 2.0))
             _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + _warning_duration}
             _set_authored_pose("draw", _warning_duration)
         "teleport", "center":
-            var old: Vector2 = global_position
+            _clear_blade()
             var x: float = PLAN_ARENA.get_center().x if kind == "center" else target.x
-            global_position.x = clampf(x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0)
-            velocity = Vector2.ZERO
-            game.emit_fx("enemy_dash", old + Vector2(0, -24), Vector2(signf(global_position.x - old.x), 0), 0.9)
-            _set_authored_pose("shift", 0.20)
+            var distance: float = absf(x - global_position.x)
+            var duration: float = clampf(distance / float(duel_profile.get("shift_speed", 1000.0)), 0.10, float(duel_profile.get("shift_max_seconds", 0.65)))
+            _authored_shift = {"target": Vector2(clampf(x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y), "start_time": score, "end_time": score + duration}
+            _navigation_reason = "source_shift"
+            velocity.x = 0.0
+            _set_authored_pose("shift", duration)
         "dash":
+            _authored_shift.clear()
             var duration: float = maxf(0.08, float(action.get("duration_beats", 1.0)) * game.music.seconds_per_beat())
             var to: Vector2 = Vector2(clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y)
             facing = 1 if to.x >= global_position.x else -1
@@ -800,6 +865,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
             _source_strikes[serial] = int(_source_strikes.get(serial, 0)) + 1
             _present_strike = mini(2, int(_source_strikes[serial]))
             _release_elapsed = 0.0
+            _start_blade("cut_b" if _present_strike >= 2 else "cut_a", duration, contact_token, attack_parryable, attack_armored)
             _authored_dash = {"from": global_position, "to": to, "start_time": float(action["time"]), "end_time": float(action["time"]) + duration, "parryable": attack_parryable, "armored": attack_armored, "token": contact_token}
             _warning_geometry.clear()
             game.emit_fx("enemy_dash", global_position + Vector2(0, -26), Vector2(facing, 0), 1.0)
@@ -821,11 +887,33 @@ func _advance_authored_dash(score: float) -> void:
     var dash: Dictionary = _authored_dash.duplicate()
     var duration: float = maxf(0.001, float(dash["end_time"]) - float(dash["start_time"]))
     var progress: float = clampf((score - float(dash["start_time"])) / duration, 0.0, 1.0)
-    global_position = (dash["from"] as Vector2).lerp(dash["to"], progress)
-    _try_melee_contact(78.0 if bool(dash["parryable"]) else 50.0, bool(dash["parryable"]), bool(dash["armored"]), int(dash["token"]))
+    var motion_progress: float = 1.0 - pow(1.0 - progress, 2.0)
+    var desired: Vector2 = (dash["from"] as Vector2).lerp(dash["to"], motion_progress)
+    var collision: KinematicCollision2D = move_and_collide(Vector2(desired.x - global_position.x, 0.0))
+    if collision != null and absf(collision.get_normal().x) > 0.5:
+        _navigation_reason = "source_dash_wall"
+        _blade_previous.clear()
+        _authored_dash.clear()
+        _set_authored_pose("recover", 0.18)
+        return
     if not _authored_dash.is_empty() and progress >= 1.0:
         _authored_dash.clear()
         _set_authored_pose("recover", 0.18)
+
+func _advance_authored_shift(score: float) -> void:
+    if _authored_shift.is_empty():
+        return
+    var target: Vector2 = _authored_shift["target"]
+    var remaining: float = maxf(0.001, float(_authored_shift["end_time"]) - score)
+    var step_seconds: float = minf(get_physics_process_delta_time(), remaining)
+    var difference: float = target.x - global_position.x
+    var motion: float = signf(difference) * minf(absf(difference), float(duel_profile.get("shift_speed", 1000.0)) * step_seconds)
+    var collision: KinematicCollision2D = move_and_collide(Vector2(motion, 0.0))
+    if collision != null and absf(collision.get_normal().x) > 0.5:
+        _navigation_reason = "source_shift_wall"
+        _authored_shift.clear()
+    elif absf(target.x - global_position.x) <= 1.0 or score >= float(_authored_shift["end_time"]):
+        _authored_shift.clear()
 
 func _spawn_authored_cube(event: Dictionary) -> void:
     if not game.has_method("spawn_boss_hazard"):
@@ -882,6 +970,7 @@ func _invalidate_authored() -> void:
     friend_director.invalidate()
     _authored_actions.clear()
     _authored_dash.clear()
+    _authored_shift.clear()
     _prepared_plans.clear()
     _source_strikes.clear()
     _warning_geometry.clear()
@@ -902,6 +991,244 @@ func get_warning_geometry(kind: String = "") -> Dictionary:
         return {}
     return _warning_geometry.duplicate(true)
 
+func _start_blade(clip: String, duration: float, token: int, parryable: bool, armored: bool) -> void:
+    _blade_clip = clip
+    _blade_elapsed = 0.0
+    _blade_duration = maxf(0.001, duration)
+    _blade_token = token
+    _blade_parryable = parryable
+    _blade_armored = armored
+    _blade_previous.clear()
+
+func _clear_blade() -> void:
+    _blade_clip = ""
+    _blade_previous.clear()
+
+func get_blade_state() -> Dictionary:
+    var pose: Dictionary = get_presentation_pose()
+    var clip: String = str(pose["state"])
+    var progress: float = float(pose["progress"])
+    var geometry: Dictionary = BladeGeometry.blade_pose(clip, progress, facing)
+    var active: bool = not _blade_clip.is_empty() and clip == _blade_clip and _blade_elapsed <= _blade_duration and bool(geometry.get("valid", false)) and bool(geometry.get("hit_window", false)) and not game.story_safe and not dead and not _reaction_blocks_attacks and combat_freeze <= 0.0
+    return {"clip": clip, "progress": progress, "from": geometry.get("root", Vector2.ZERO), "to": geometry.get("tip", Vector2.ZERO), "active": active, "parryable": _blade_parryable, "armored": _blade_armored, "token": _blade_token, "frame": geometry.get("frame", 0)}
+
+func _player_hurt_rect() -> Rect2:
+    for child: Node in game.player.get_children():
+        if child is CollisionShape2D and child.shape is RectangleShape2D and not child.disabled:
+            var size: Vector2 = child.shape.size * child.global_scale.abs()
+            return Rect2(child.global_position - size * 0.5, size)
+    return Rect2(game.player.global_position + Vector2(-7, -26), Vector2(14, 26))
+
+func _sample_blade(delta: float) -> void:
+    var state: Dictionary = get_blade_state()
+    if not bool(state["active"]) or _contact_resolved:
+        _blade_previous.clear()
+        return
+    var root_now: Vector2 = global_position + (state["from"] as Vector2)
+    var tip_now: Vector2 = global_position + (state["to"] as Vector2)
+    var root_before: Vector2 = root_now
+    var tip_before: Vector2 = tip_now
+    var origin_before: Vector2 = global_position
+    if not _blade_previous.is_empty() and int(_blade_previous["token"]) == int(state["token"]) and delta <= float(duel_profile.get("max_blade_sample_step", 0.08)) and global_position.distance_to(_blade_previous["origin"]) <= float(duel_profile.get("max_blade_sample_distance", 96.0)):
+        root_before = _blade_previous["root"]
+        tip_before = _blade_previous["tip"]
+        origin_before = _blade_previous["origin"]
+    _blade_previous = {"root": root_now, "tip": tip_now, "origin": global_position, "token": state["token"]}
+    var rect: Rect2 = _player_hurt_rect()
+    if not BladeGeometry.swept_touch(root_before, tip_before, root_now, tip_now, rect, float(duel_profile.get("blade_thickness", 3.0))):
+        return
+    var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(root_now, rect.get_center(), 1, [get_rid()])
+    query.hit_from_inside = true
+    var wall: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+    if not wall.is_empty() and not _is_one_way(wall.get("collider")):
+        return
+    var side: float = signf(origin_before.x - rect.get_center().x)
+    if is_zero_approx(side): side = -float(facing)
+    var contact: Vector2 = Vector2(rect.get_center().x + side * rect.size.x * 0.5, clampf(root_now.y, rect.position.y + 2.0, rect.end.y - 2.0))
+    contact_token = int(state["token"])
+    _resolve_melee_contact(contact, bool(state["parryable"]), bool(state["armored"]), int(state["token"]))
+
+func _is_one_way(body: Object) -> bool:
+    if body is Node:
+        for child: Node in body.get_children():
+            if child is CollisionShape2D and child.one_way_collision: return true
+    return false
+
+func set_duel_enabled(value: bool) -> void:
+    _duel_enabled = value
+    if not value:
+        if not _duel_state.is_empty(): _clear_blade()
+        _clear_duel("disabled")
+
+func get_navigation_status() -> Dictionary:
+    return {"pending": not _duel_state.is_empty() or not _authored_shift.is_empty() or not _authored_dash.is_empty(), "blade_pending": not _blade_clip.is_empty(), "mode": "dead" if dead else ("safe" if game.story_safe else ("idle" if not _active else (_duel_state if not _duel_state.is_empty() else ("shift" if not _authored_shift.is_empty() else ("dash" if not _authored_dash.is_empty() else "approach"))))), "reason": _navigation_reason, "target": _duel_target, "landing": _duel_target, "velocity": velocity, "extra_attacks": extra_attacks, "extra_hits": extra_hits, "duel_enabled": _duel_enabled}
+
+func _source_gap() -> float:
+    var score: float = float(game.music.get_score_time())
+    var next: float = score + 30.0
+    for action: Dictionary in _authored_actions:
+        if float(action["time"]) >= score - 0.001: next = minf(next, float(action["time"]))
+    for phrase: Dictionary in friend_director.chart.action_phrases:
+        var at: float = _loop_origin_score + float(phrase["start_time"])
+        if at > score + 0.001: next = minf(next, at)
+    for cue: Dictionary in friend_director.chart.fixed_attack_events:
+        var at: float = _loop_origin_score + float(cue["time"])
+        if at > score + 0.001: next = minf(next, at)
+    for cue: Dictionary in friend_director.chart.laser_formations:
+        var at: float = _loop_origin_score + float(cue["start_time"])
+        if at > score + 0.001: next = minf(next, at)
+    return maxf(0.0, next - score)
+
+func _floor_at(x: float, around_y: float) -> Dictionary:
+    var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(Vector2(clampf(x, ARENA_LEFT + 18.0, ARENA_RIGHT - 18.0), around_y - float(duel_profile.get("max_jump_rise", 104.0)) - 8.0), Vector2(x, around_y + 160.0), 1, [get_rid()])
+    var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+    if hit.is_empty() or (hit["normal"] as Vector2).y > -0.65: return {}
+    return hit
+
+func try_navigation_jump(target: Vector2, damaging: bool = false) -> bool:
+    if dead or game.story_safe or not _active or _reaction_blocks_attacks or not _duel_state.is_empty() or not _authored_dash.is_empty() or not _authored_shift.is_empty(): return false
+    var feet_query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(global_position + Vector2(0, -2), global_position + Vector2(0, 6), 1, [get_rid()])
+    var under: Dictionary = get_world_2d().direct_space_state.intersect_ray(feet_query)
+    if under.is_empty() or absf(float((under["position"] as Vector2).y) - global_position.y) > 6.0: return false
+    var strike_facing: int = facing if is_zero_approx(target.x - global_position.x) else (1 if target.x > global_position.x else -1)
+    var landing_x: float = target.x - float(strike_facing) * float(duel_profile.get("slam_landing_offset", 36.0)) if damaging else target.x
+    landing_x = clampf(landing_x, ARENA_LEFT + 18.0, ARENA_RIGHT - 18.0)
+    # Select the target's layer, independently from the near-feet support probe.
+    var target_query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(Vector2(landing_x, target.y - 4.0), Vector2(landing_x, target.y + 160.0), 1, [get_rid()])
+    var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(target_query)
+    if hit.is_empty() or (hit["normal"] as Vector2).y > -0.65: _navigation_reason = "no_landing"; return false
+    var landing: Vector2 = hit["position"]
+    var dx: float = landing.x - global_position.x
+    var dy: float = landing.y - global_position.y
+    var jump: float = float(duel_profile.get("jump_speed", 460.0))
+    var gravity: float = float(duel_profile.get("gravity", 950.0))
+    if -dy > float(duel_profile.get("max_jump_rise", 104.0)) or absf(dx) > float(duel_profile.get("max_jump_dx", 180.0)): _navigation_reason = "landing_out_of_range"; return false
+    var flight: float = (jump + sqrt(maxf(0.0, jump * jump + 2.0 * gravity * dy))) / gravity
+    if flight <= 0.0 or absf(dx / flight) > float(duel_profile.get("jump_horizontal_max", 310.0)) or _source_gap() < flight + 0.35: _navigation_reason = "source_gap_or_arc"; return false
+    # Reject solid ceilings/walls along the planned head arc. One-way platforms
+    # are passable while ascending and actual CharacterBody handles their tops.
+    var previous: Vector2 = global_position + Vector2(0, -42)
+    for i: int in range(1, 9):
+        var t: float = flight * float(i) / 8.0
+        var point: Vector2 = global_position + Vector2(dx / flight * t, -jump * t + 0.5 * gravity * t * t - 42)
+        var ray: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(previous, point, 1, [get_rid()])
+        var block: Dictionary = get_world_2d().direct_space_state.intersect_ray(ray)
+        if not block.is_empty() and not _is_one_way(block.get("collider")): _navigation_reason = "blocked_arc"; return false
+        previous = point
+    _clear_drop_exception()
+    var support: Object = under.get("collider")
+    if dy > 6.0 and support is PhysicsBody2D and _is_one_way(support):
+        _drop_platform = support
+        add_collision_exception_with(_drop_platform)
+    _duel_target = landing
+    _duel_flight = flight
+    _duel_damaging = damaging
+    _duel_armored = true
+    if damaging:
+        extra_attacks += 1
+        _extra_serial += 1
+    _set_duel_state("jump", flight)
+    _navigation_reason = "locked_floor_arc"
+    facing = strike_facing if damaging else (1 if dx >= 0.0 else -1)
+    velocity = Vector2(dx / flight, -jump)
+    _clear_blade()
+    if game.has_signal("warning_issued"):
+        game.emit_signal("warning_issued", "boss_landing", landing, flight)
+    return true
+
+func _pursue_player() -> void:
+    var target: Vector2 = game.player.global_position
+    _duel_target = target
+    var dx: float = target.x - global_position.x
+    facing = 1 if dx >= 0.0 else -1
+    velocity.x = float(facing) * float(duel_profile.get("pursuit_speed", 188.0)) if absf(dx) > float(duel_profile.get("stop_distance", 58.0)) else 0.0
+    if absf(target.y - global_position.y) > 30.0 and absf(dx) <= float(duel_profile.get("max_jump_dx", 180.0)):
+        try_navigation_jump(target, false)
+    var foot: Dictionary = _floor_at(global_position.x + float(facing) * 22.0, global_position.y)
+    if foot.is_empty() and is_on_floor(): velocity.x = 0.0
+
+func _try_duel_on_beat() -> void:
+    if not _duel_enabled or not bool(duel_profile.get("extra_enabled", true)) or dead or game.story_safe or not _active or not _duel_state.is_empty() or not _authored_dash.is_empty() or not _authored_shift.is_empty() or _reaction_blocks_attacks or _posture_lockout > 0.0 or combat_freeze > 0.0 or _duel_cooldown > 0.0 or _source_gap() < float(duel_profile.get("duel_min_gap", 1.65)): return
+    var delta: Vector2 = game.player.global_position - global_position
+    if absf(delta.y) <= float(duel_profile.get("same_height_tolerance", 30.0)) and absf(delta.x) <= float(duel_profile.get("melee_distance", 105.0)):
+        extra_attacks += 1
+        _extra_serial += 1
+        _duel_armored = extra_attacks % 2 == 0
+        _duel_damaging = true
+        facing = 1 if delta.x >= 0 else -1
+        _set_duel_state("draw", float(duel_profile.get("draw_seconds", 0.32)))
+        _navigation_reason = "gap_double_slash"
+    elif absf(delta.x) <= float(duel_profile.get("max_jump_dx", 180.0)):
+        try_navigation_jump(game.player.global_position, true)
+
+func _set_duel_state(state: String, duration: float) -> void:
+    _duel_state = state
+    _duel_elapsed = 0.0
+    _duel_duration = maxf(0.001, duration)
+    if state in ["draw", "draw_b"]:
+        attack_parryable = true
+        attack_armored = _duel_armored
+        if game.has_signal("warning_issued"):
+            game.emit_signal("warning_issued", "armored_slash" if _duel_armored else "slash", global_position + Vector2(facing * 35, -24), _duel_duration)
+
+func _clear_drop_exception() -> void:
+    if is_instance_valid(_drop_platform):
+        remove_collision_exception_with(_drop_platform)
+    _drop_platform = null
+
+func _clear_duel(reason: String) -> void:
+    _clear_drop_exception()
+    if not _duel_state.is_empty():
+        _navigation_reason = reason
+        _duel_cooldown = float(duel_profile.get("duel_cooldown", 1.8))
+    _duel_state = ""
+    _duel_damaging = false
+
+func _advance_duel(delta: float) -> void:
+    _duel_elapsed += delta
+    match _duel_state:
+        "draw", "draw_b":
+            velocity.x = 0.0
+            if _duel_elapsed >= _duel_duration:
+                var second: bool = _duel_state == "draw_b"
+                var clip: String = "cut_b" if second else "cut_a"
+                var token: int = 2000000 + _extra_serial * 8 + (1 if second else 0)
+                contact_token = token
+                _contact_resolved = false
+                _set_duel_state(clip, float(duel_profile.get("cut_seconds", 0.22)))
+                _start_blade(clip, _duel_duration, token, true, _duel_armored)
+        "cut_a", "cut_b":
+            velocity.x = float(facing) * 35.0
+            if _duel_elapsed >= _duel_duration:
+                var first: bool = _duel_state == "cut_a"
+                _clear_blade()
+                _set_duel_state("retreat" if first else "recover", float(duel_profile.get("retreat_seconds", 0.16)) if first else float(duel_profile.get("recover_seconds", 0.28)))
+        "retreat":
+            velocity.x = -float(facing) * float(duel_profile.get("retreat_speed", 120.0))
+            if _duel_elapsed >= _duel_duration: _set_duel_state("draw_b", float(duel_profile.get("second_draw_seconds", 0.18)))
+        "recover":
+            velocity.x = move_toward(velocity.x, 0.0, delta * 600.0)
+            if _duel_elapsed >= _duel_duration: _clear_duel("reenter")
+        "jump", "slam":
+            if _duel_damaging and _duel_state == "jump" and _duel_elapsed >= maxf(0.10, _duel_flight - 0.22):
+                _duel_state = "slam"
+                _duel_duration = _duel_flight
+                contact_token = 2000000 + _extra_serial * 8
+                _contact_resolved = false
+                _start_blade("slam", 0.22, contact_token, true, true)
+            if is_on_floor() and _duel_elapsed > 0.12:
+                _clear_drop_exception()
+                _clear_blade()
+                velocity.x = 0.0
+                _set_duel_state("land", float(duel_profile.get("land_seconds", 0.18)))
+                _navigation_reason = "landed_locked_floor"
+            elif _duel_elapsed > _duel_flight + 0.45:
+                _clear_blade()
+                _clear_duel("arc_obstructed")
+        "land":
+            velocity.x = 0.0
+            if _duel_elapsed >= _duel_duration: _clear_duel("land_recover")
+
 func get_presentation_pose() -> Dictionary:
     var state: String = "idle"
     var progress: float = 0.0
@@ -911,6 +1238,15 @@ func get_presentation_pose() -> Dictionary:
     elif reaction_state != "none":
         state = "armored_recoil" if reaction_state == "parry_recoil" and not _reaction_blocks_attacks else reaction_state
         progress = reaction_progress
+    elif not _duel_state.is_empty():
+        state = _duel_state if _duel_state != "draw_b" else "draw"
+        progress = clampf((_blade_elapsed / maxf(0.001, _blade_duration)) if _duel_state == "slam" else (_duel_elapsed / maxf(0.001, _duel_duration)), 0.0, 1.0)
+    elif not _authored_shift.is_empty():
+        state = "shift"
+        progress = clampf(_authored_pose_elapsed / maxf(0.001, _authored_pose_duration), 0.0, 1.0)
+    elif not _blade_clip.is_empty() and _blade_elapsed <= _blade_duration:
+        state = _blade_clip
+        progress = clampf(_blade_elapsed / maxf(0.001, _blade_duration), 0.0, 1.0)
     elif not _authored_dash.is_empty():
         state = "cut_b" if _present_strike >= 2 else "cut_a"
         progress = clampf(_release_elapsed / 0.18, 0.0, 1.0)
@@ -938,10 +1274,13 @@ func get_presentation_pose() -> Dictionary:
     elif absf(velocity.x) > 1.0:
         state = "approach"
         progress = fmod(_animation_clock * 3.0, 1.0)
-    return {"state": state, "progress": progress, "strike": _present_strike, "armored": attack_armored, "contact_serial": contact_token}
+    return {"state": state, "progress": progress, "strike": _present_strike, "armored": _duel_armored if not _duel_state.is_empty() else attack_armored, "contact_serial": contact_token}
 
 func _draw() -> void:
     Pixels.paint(self, "boss", animation_state, frame, facing)
+    if _duel_armored and _duel_state in ["draw", "draw_b", "cut_a", "cut_b"]:
+        draw_colored_polygon(PackedVector2Array([Vector2(-4,-73),Vector2(4,-73),Vector2(4,-68),Vector2(0,-64),Vector2(-4,-68)]), Color("b8afff"))
+        draw_rect(Rect2(-1,-71,2,4), Color("3a3157"))
     if not _warning_geometry.is_empty() and str(_warning_geometry.get("kind", "")) == "authored_path":
         var from: Vector2 = (_warning_geometry["from"] as Vector2) - global_position + Vector2(0, -18)
         var to: Vector2 = (_warning_geometry["to"] as Vector2) - global_position + Vector2(0, -18)

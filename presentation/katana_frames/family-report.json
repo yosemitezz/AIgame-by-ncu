@@ -1,39 +1,197 @@
 {
-  "frames": 62,
-  "unique_frames": 55,
+  "frames": 78,
+  "unique_frames": 71,
   "all_alpha_binary": true,
   "all_landmarks_in_bounds": true,
   "all_frames_no_clipping": true,
   "max_frame_colors": 19,
-  "cut_first_frame": {
-    "cut_a": {
-      "guard": [
-        14,
-        -25
-      ],
-      "tip": [
-        73,
-        -21
-      ],
-      "covers_contact_x14_60": true,
-      "blade_y_band": true,
-      "actual_raster_contact_columns": 47,
-      "expected_contact_columns": 47
-    },
-    "cut_b": {
-      "guard": [
-        14,
-        -19
-      ],
-      "tip": [
-        73,
-        -25
-      ],
-      "covers_contact_x14_60": true,
-      "blade_y_band": true,
-      "actual_raster_contact_columns": 47,
-      "expected_contact_columns": 47
-    }
+  "cut_contact_frames": {
+    "cut_a": [
+      {
+        "frame": 0,
+        "guard": [
+          3,
+          -48
+        ],
+        "tip": [
+          -28,
+          -87
+        ],
+        "angle_degrees": -128.48,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": false
+      },
+      {
+        "frame": 1,
+        "guard": [
+          19,
+          -25
+        ],
+        "tip": [
+          75,
+          -27
+        ],
+        "angle_degrees": -2.05,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": true
+      },
+      {
+        "frame": 2,
+        "guard": [
+          18,
+          -29
+        ],
+        "tip": [
+          57,
+          5
+        ],
+        "angle_degrees": 41.08,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": true
+      },
+      {
+        "frame": 3,
+        "guard": [
+          11,
+          -16
+        ],
+        "tip": [
+          42,
+          3
+        ],
+        "angle_degrees": 31.5,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": false
+      }
+    ],
+    "cut_b": [
+      {
+        "frame": 0,
+        "guard": [
+          10,
+          -17
+        ],
+        "tip": [
+          47,
+          6
+        ],
+        "angle_degrees": 31.87,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": false
+      },
+      {
+        "frame": 1,
+        "guard": [
+          16,
+          -22
+        ],
+        "tip": [
+          71,
+          -56
+        ],
+        "angle_degrees": -31.72,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": true
+      },
+      {
+        "frame": 2,
+        "guard": [
+          10,
+          -36
+        ],
+        "tip": [
+          18,
+          -93
+        ],
+        "angle_degrees": -82.01,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": true
+      },
+      {
+        "frame": 3,
+        "guard": [
+          15,
+          -30
+        ],
+        "tip": [
+          63,
+          -59
+        ],
+        "angle_degrees": -31.14,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": false
+      }
+    ],
+    "slam": [
+      {
+        "frame": 0,
+        "guard": [
+          4,
+          -56
+        ],
+        "tip": [
+          -9,
+          -104
+        ],
+        "angle_degrees": -105.15,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": false
+      },
+      {
+        "frame": 1,
+        "guard": [
+          12,
+          -49
+        ],
+        "tip": [
+          41,
+          -92
+        ],
+        "angle_degrees": -56.0,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": false
+      },
+      {
+        "frame": 2,
+        "guard": [
+          17,
+          -35
+        ],
+        "tip": [
+          55,
+          3
+        ],
+        "angle_degrees": 45.0,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": true
+      },
+      {
+        "frame": 3,
+        "guard": [
+          18,
+          -21
+        ],
+        "tip": [
+          72,
+          -5
+        ],
+        "angle_degrees": 16.5,
+        "actual_blade_samples": 25,
+        "expected_samples": 25,
+        "hit_window": true
+      }
+    ]
   },
   "states": {
     "idle": 4,
@@ -50,7 +208,11 @@
     "guard_break": 4,
     "guard_recover": 4,
     "hurt": 4,
-    "dead": 4
+    "dead": 4,
+    "retreat": 4,
+    "jump": 4,
+    "slam": 4,
+    "land": 4
   },
   "frame_checks": [
     {
@@ -362,10 +524,10 @@
     {
       "name": "cut_a_00",
       "bbox": [
-        19,
-        48,
-        122,
-        117
+        17,
+        28,
+        79,
+        118
       ],
       "colors": 18,
       "alpha_values": [
@@ -374,15 +536,15 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "28de2196c24d751dc1116c431be45def8c26ccdfaca852f52a63a2275054fa09"
+      "sha256": "bbfea2bd1ecbd5aaa2da1494718a1111ad5e2acaef724504e1128e6b52aac573"
     },
     {
       "name": "cut_a_01",
       "bbox": [
-        18,
-        49,
-        122,
-        117
+        16,
+        57,
+        124,
+        118
       ],
       "colors": 19,
       "alpha_values": [
@@ -391,15 +553,15 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "f1ab89668e276d428c725c2c93e07c2e0796924d3ac634c17f7ea19817c70f59"
+      "sha256": "203b07adff236a205a4c6caf196fa64bbb30abc3b96b8d9d78414442a32332ab"
     },
     {
       "name": "cut_a_02",
       "bbox": [
-        19,
-        49,
-        121,
-        117
+        18,
+        65,
+        107,
+        123
       ],
       "colors": 18,
       "alpha_values": [
@@ -408,15 +570,15 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "06dbf6296d27b196db08edb274c54e73805ecba03937d38e9ce9a7173ad1959f"
+      "sha256": "d6f891fb99c0f5daf90f329b56c3494ab3976e33a7b9019b2450696aed1135f1"
     },
     {
       "name": "cut_a_03",
       "bbox": [
         19,
-        48,
-        120,
-        117
+        57,
+        92,
+        121
       ],
       "colors": 19,
       "alpha_values": [
@@ -425,15 +587,15 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "7bd83fd1fed824bd3e7fbe3a9bdcccbcd0949d7c6da19e5bb0d894e5d8477dc9"
+      "sha256": "a443a369147a7097301fabfe889cc125527ded52091d9f7b149c7a42bf69bd4e"
     },
     {
       "name": "cut_b_00",
       "bbox": [
-        19,
-        48,
-        122,
-        117
+        18,
+        57,
+        97,
+        124
       ],
       "colors": 19,
       "alpha_values": [
@@ -442,15 +604,15 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "05639b294e87b243d42c4fc4efb62c63d14b9453b5f09a99010b16079c28410e"
+      "sha256": "88bf70a5388f83e367dd3218e50269da09d6739909cb73ca6f7f17fdfeef4f23"
     },
     {
       "name": "cut_b_01",
       "bbox": [
         20,
-        47,
+        56,
         121,
-        117
+        118
       ],
       "colors": 19,
       "alpha_values": [
@@ -459,15 +621,15 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "c52ba3bfafbb7054bc940786b14189150dbce4fc9a596f5d56a1672ca70c02f4"
+      "sha256": "36c39835158be0df90cb09e3a69b6ee000197dc7b20180f5890bb29da85bee49"
     },
     {
       "name": "cut_b_02",
       "bbox": [
-        20,
-        46,
-        120,
-        117
+        19,
+        22,
+        75,
+        118
       ],
       "colors": 19,
       "alpha_values": [
@@ -476,14 +638,14 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "44f0883cbe97bc7f86026d0a258c2a6c0ce6bf19a30ff89e2fe35e4b30f8f759"
+      "sha256": "cfdfc74c8419852ba1282ae2a198b1a220f9374d0f7aa10084e17e083d48f444"
     },
     {
       "name": "cut_b_03",
       "bbox": [
-        19,
-        46,
-        119,
+        18,
+        47,
+        113,
         117
       ],
       "colors": 19,
@@ -493,7 +655,7 @@
       ],
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
-      "sha256": "1522effe44ec180cbfc55f236934284f3b035e73c0c2e9733c843cbe001875e4"
+      "sha256": "e7d0913ec6c9c6a4430c771a815f7fd4a9aeffca63d71ff326240c7a08d6dc09"
     },
     {
       "name": "recover_00",
@@ -1106,6 +1268,279 @@
       "landmarks_in_bounds": true,
       "no_cell_edge_clipping": true,
       "sha256": "12ecd3a9d195c7654af78da86ad2fc4f67ad0e19d57985b6fa26174e412f973f"
+    },
+    {
+      "name": "retreat_00",
+      "bbox": [
+        18,
+        51,
+        115,
+        118
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "693ec939d7192809f3b836b9138306f9873bb7d4d16a959ae60a04f2fe5836e8"
+    },
+    {
+      "name": "retreat_01",
+      "bbox": [
+        13,
+        48,
+        107,
+        117
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "53983b5fafea7ae99ee39f9f5fd7437cceaa18b90832dc5206cd1a1ea44f92a7"
+    },
+    {
+      "name": "retreat_02",
+      "bbox": [
+        10,
+        47,
+        103,
+        118
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "695419b36fe588256697f61716c51116e10d8a29bf004f2846a32be2304eacde"
+    },
+    {
+      "name": "retreat_03",
+      "bbox": [
+        14,
+        47,
+        116,
+        117
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "814cfe117aace12e3de59183062c72dd20b956969593e3d3d331ff86e86042c9"
+    },
+    {
+      "name": "jump_00",
+      "bbox": [
+        16,
+        58,
+        111,
+        118
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "510389f543595f179d18cd8211c426f491139157dcc9ad83cf27407ba25fdb8f"
+    },
+    {
+      "name": "jump_01",
+      "bbox": [
+        17,
+        40,
+        107,
+        112
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "623e9b5b7debec57b77cea109b7355a513531f5c2ea06206814472000eab782d"
+    },
+    {
+      "name": "jump_02",
+      "bbox": [
+        17,
+        26,
+        101,
+        106
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "adf74feae493b1a5c256d602465a3b6c91a3b5595535c5f929152750b5a70e7f"
+    },
+    {
+      "name": "jump_03",
+      "bbox": [
+        18,
+        44,
+        115,
+        109
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "99cc5655bc902fe9070572f7da1c45152aa73a72ae47ba72daef27324ba050fc"
+    },
+    {
+      "name": "slam_00",
+      "bbox": [
+        16,
+        11,
+        70,
+        117
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "20cf1d7263b485e6ed7ba64f5f3bd850eebcb3e6841786553cc9fa91354a4766"
+    },
+    {
+      "name": "slam_01",
+      "bbox": [
+        18,
+        23,
+        91,
+        118
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "335ec9dd076c8e16b3e495566b9f54fe1f6a497b71d4f76f5c3f1d77037cbf99"
+    },
+    {
+      "name": "slam_02",
+      "bbox": [
+        17,
+        62,
+        105,
+        121
+      ],
+      "colors": 18,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "7f1c7c251a7761b64aea9174822e7777ee683edae0b232cbcb80f101d6db7724"
+    },
+    {
+      "name": "slam_03",
+      "bbox": [
+        19,
+        59,
+        121,
+        118
+      ],
+      "colors": 18,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "66ac7a3be9f71523301d6a0d871ac90ca130285e629c4a97855b08c74b1dc565"
+    },
+    {
+      "name": "land_00",
+      "bbox": [
+        17,
+        64,
+        118,
+        118
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "76993283a86a601fe7a31192bf8f22bcee014b4a152b4d55e65d0f893f1a4459"
+    },
+    {
+      "name": "land_01",
+      "bbox": [
+        18,
+        57,
+        117,
+        118
+      ],
+      "colors": 18,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "7cf9bc46b4263c3e623c4db1559a5348435cf60d688d8b946875ab75508a46a9"
+    },
+    {
+      "name": "land_02",
+      "bbox": [
+        17,
+        50,
+        121,
+        117
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "fc55828cf38d702e1cf625caa6f5cd9f03035769c105fc46ab3195e6935fe7bf"
+    },
+    {
+      "name": "land_03",
+      "bbox": [
+        17,
+        47,
+        122,
+        117
+      ],
+      "colors": 19,
+      "alpha_values": [
+        0,
+        255
+      ],
+      "landmarks_in_bounds": true,
+      "no_cell_edge_clipping": true,
+      "sha256": "70fbaeb9c2fee81f0b1bc199d02c97fc8f84c8b99511878a4220d5b4af626dd3"
     }
-  ]
+  ],
+  "preserved_reaction_and_dead": true
 }

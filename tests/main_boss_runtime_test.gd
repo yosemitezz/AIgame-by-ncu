@@ -137,6 +137,40 @@ func contact_fixture() -> void:
     game.player.facing = 1
     game.impact.clear()
 
+func drive_source_blade_contact(pattern: Dictionary, dash_offset_beats: float, label: String) -> void:
+    # Lock the authored destination, then stay clear while its real blade winds up.
+    var locked_target: Vector2 = game.player.global_position
+    game.player.global_position = Vector2(3270.0, 300.0)
+    var start: float = game.music.get_score_time() - dash_offset_beats * game.music.seconds_per_beat()
+    check(game.boss._begin_authored_pattern(pattern, start, locked_target), label + " queues the real source plan")
+    game.boss._physics_process(0.0)
+    check(not game.boss.get_blade_state()["active"], label + " raised first frame cannot use the obsolete reach rectangle")
+    var blade: Dictionary = game.boss.get_blade_state()
+    var frames: int = 0
+    while not blade["active"] and frames < 90:
+        await physics_frame
+        game.music._process(1.0 / 60.0)
+        game.player._physics_process(1.0 / 60.0)
+        game.boss._physics_process(1.0 / 60.0)
+        for shot: Node in get_nodes_in_group("projectiles"):
+            shot.set_physics_process(false)
+        for hazard: Node in get_nodes_in_group("boss_hazards"):
+            hazard.set_physics_process(false)
+        blade = game.boss.get_blade_state()
+        frames += 1
+    check(blade["active"] and int(blade["frame"]) in [1, 2], label + " reaches its actual middle pixel-blade frame")
+    if not blade["active"]:
+        return
+    var steel: Vector2 = game.boss.global_position + (blade["from"] as Vector2).lerp(blade["to"], 0.45)
+    game.player.global_position = steel + Vector2(0.0, 13.0)
+    game.player.velocity = Vector2.ZERO
+    game.player.facing = 1 if game.boss.global_position.x >= game.player.global_position.x else -1
+    check(game.player._start_parry(), label + " opens a fresh left Shift contact window at real steel")
+    await physics_frame
+    game.music._process(1.0 / 60.0)
+    game.player._physics_process(1.0 / 60.0)
+    game.boss._physics_process(1.0 / 60.0)
+
 func run() -> void:
     root.size = Vector2i(800, 450)
     await boot()
@@ -236,18 +270,14 @@ func run() -> void:
     freeze_scene()
     # Unblockable, ordinary and armored strikes all traverse the real action executor and contact endpoint.
     contact_fixture()
-    check(game.player._start_parry(), "real K parry window opens for unblockable contrast")
     var base_feedback: int = game.parry_feedback_count
     var base_hp: int = game.player.health
-    game.boss._begin_authored_pattern(game.boss.friend_slots.get_normal_pattern(0), game.music.get_score_time() - 2.0 * spb)
-    game.boss._physics_process(0.0)
+    await drive_source_blade_contact(game.boss.friend_slots.get_normal_pattern(0), 2.0, "unblockable source charge")
     check(game.player.health == base_hp - 1 and game.parry_feedback_count == base_feedback and game.boss.guard_posture == 0, "source charge stays unblockable and never grants false parry")
     await physics_frame
     contact_fixture()
-    check(game.player._start_parry(), "real K window opens for ordinary source dash")
     base_feedback = game.parry_feedback_count
-    game.boss._begin_authored_pattern(game.boss.friend_slots.get_normal_pattern(2), game.music.get_score_time() - 2.0 * spb)
-    game.boss._physics_process(0.0)
+    await drive_source_blade_contact(game.boss.friend_slots.get_normal_pattern(2), 2.0, "ordinary source dash")
     var ordinary: Dictionary = game.boss.get_authored_status()
     check(game.parry_feedback_count == base_feedback + 1 and game.boss.guard_posture == 1 and game.boss.reaction_state == "parry_recoil", "ordinary authored contact dispatches one real parry and recoil")
     check(ordinary["queued_actions"] == 0 and not ordinary["dash_active"], "ordinary parry cancels the real source queue and movement")
@@ -255,11 +285,9 @@ func run() -> void:
     for strike: int in range(3):
         await physics_frame
         contact_fixture()
-        check(game.player._start_parry(), "fresh real K window for armored contact %d" % strike)
         base_feedback = game.parry_feedback_count
         var pattern: Dictionary = game.boss.friend_slots.get_normal_pattern(3)
-        game.boss._begin_authored_pattern(pattern, game.music.get_score_time())
-        game.boss._physics_process(0.0)
+        await drive_source_blade_contact(pattern, 0.0, "armored source contact %d" % strike)
         var status: Dictionary = game.boss.get_authored_status()
         check(game.parry_feedback_count == base_feedback + 1, "armored contact %d dispatches one shared feedback" % strike)
         if strike == 0:

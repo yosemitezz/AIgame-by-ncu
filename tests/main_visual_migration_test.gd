@@ -18,13 +18,13 @@ func run() -> void:
 	check(FileAccess.get_sha256("res://presentation/feel_frames/hero_atlas.png") == HERO_SHA, "primary long-limb hero atlas stays byte-identical")
 	check(FileAccess.get_sha256("res://combat/impact_feedback.gd") == IMPACT_SHA, "primary heavy-impact and zoom service stays byte-identical")
 	check(Renderer.HERO_SIZE == Vector2(144,128) and Renderer.HERO_ANCHOR == Vector2(66,108), "primary hero native cell and feet anchor stay unchanged")
-	check(Katana.data().get("total_frames",0) == 62 and Katana.states().size() == 15, "only original katana Boss family migrates: sixty-two cells / fifteen states")
+	check(Katana.data().get("total_frames",0) == 78 and Katana.states().size() == 19, "original katana family retains old clips and adds four duel states: 78 cells / 19 states")
 	for state: String in Katana.states():
 		var descriptor: Dictionary = Katana.states()[state]
 		for index: int in int(descriptor["count"]):
 			var region: Rect2 = Katana.region(state,index)
-			check(region.size == Vector2(128,128) and Rect2(0,0,1024,1024).encloses(region), state+" native atlas cell remains in bounds")
-	check(Katana.landmark("cut_a",0,"guard").x <= 14 and Katana.landmark("cut_a",0,"weapon_tip").x >= 60, "katana first cut already extends through the real contact interval")
+			check(region.size == Vector2(128,128) and Rect2(0,0,1024,1280).encloses(region), state+" native atlas cell remains in bounds")
+	check(not bool(Katana.states()["cut_a"]["frames"][0]["hit_window"]) and bool(Katana.states()["cut_a"]["frames"][1]["hit_window"]) and bool(Katana.states()["cut_a"]["frames"][2]["hit_window"]) and not bool(Katana.states()["cut_a"]["frames"][3]["hit_window"]), "katana anticipation and recovery are distinct from the two active sweep frames")
 	var game: Node = load("res://main.tscn").instantiate()
 	root.add_child(game)
 	current_scene = game
