@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "run_speed": 232.0,
+  "ground_acceleration": 2800.0,
+  "ground_braking": 3400.0,
+  "ground_turning": 4000.0,
+  "air_acceleration": 1700.0,
+  "air_braking": 1550.0,
+  "air_turning": 2600.0,
+  "jump_speed": -370.0,
+  "gravity": 1040.0,
+  "coyote_seconds": 0.12,
+  "jump_buffer_seconds": 0.14,
+  "jump_cut_multiplier": 0.45,
+  "dash_speed": 520.0,
+  "dash_buffer_seconds": 0.22,
+  "dodge_immunity_gap_seconds": 0.1,
+  "landing_seconds": 0.1,
+  "moving_land_seconds": 0.035,
+  "recover_cancel_seconds": 0.04,
+  "notes": {
+    "preserved_features": "Existing infinite air jumps, light wings, black silhouette, contact parry, hit recoil and attack profiles remain authoritative.",
+    "dodge_immunity": "Movement can link after the active dodge ends, but a .23s immunity grant needs an additional .10s interval before another grant.",
+    "climb": "Entering a grip consumes the grab tap; an intentional pair after grabbing can still dodge off the chain."
+  }
+}

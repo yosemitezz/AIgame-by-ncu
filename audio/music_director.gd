@@ -1,4 +1,5 @@
 extends Node
+const TimingTrace = preload("res://audio/combat_timing_trace.gd")
 const FullTransport = preload("res://audio/full_song_transport.gd")
 const SourceParser = preload("res://combat/friend_rhythm/chart_parser.gd")
 ## Original in-memory score and the sole boss beat/section clock.
@@ -11,6 +12,8 @@ signal transport_changed(generation: int, chart_time: float)
 signal song_completed
 signal score_error(message: String)
 
+var audio_calibration: Dictionary = {}
+var timing_trace: RefCounted = TimingTrace.new()
 var _full: bool = false
 var _full_requested: bool = false
 var _full_error: String = ""
@@ -46,6 +49,10 @@ var _device_dummy: bool = false
 
 func configure(p_game: Node, timeline_path: String = "res://data/music_timeline.json") -> void:
     game = p_game
+    audio_calibration = _read_json("res://data/audio_calibration.json")
+    audio_calibration["device_latency_adjust_ms"] = clampf(float(audio_calibration.get("device_latency_adjust_ms", 0.0)), -200.0, 200.0)
+    timing_trace.enabled = bool(audio_calibration.get("trace_enabled", true))
+    timing_trace.limit = clampi(int(audio_calibration.get("max_trace_events", 8192)), 128, 32768)
     var document: Dictionary = _read_json(timeline_path)
     _full_requested = str(document.get("mode", "")) in ["full_song", "local_full_song"] or timeline_path.get_file() in ["full_song_timeline.json", "local_score.json"] or (document.is_empty() and timeline_path != "res://data/music_timeline.json")
     var local_audio: String = ""
@@ -157,6 +164,18 @@ func get_heavy_groups() -> Array[Dictionary]:
         result.append(value)
     return result
 
+static func compensated_audio_position(playback: float, since_mix: float, reported_latency: float, adjustment_ms: float = 0.0) -> float:
+    return playback + since_mix - reported_latency - clampf(adjustment_ms, -200.0, 200.0) / 1000.0
+
+func record_combat_timing(kind: String, scheduled: float, actual: float, context: Dictionary = {}) -> void:
+    context["transport_generation"] = get_transport_generation()
+    timing_trace.record(kind, scheduled, actual, context)
+
+func get_combat_timing_report(include_events: bool = false) -> Dictionary:
+    var report: Dictionary = {"backend": AudioServer.get_driver_name(), "dummy": _dummy, "reported_output_latency_ms": AudioServer.get_output_latency() * 1000.0, "device_latency_adjust_ms": float(audio_calibration.get("device_latency_adjust_ms", 0.0)), "source_offset_ms": float(timeline.get("offset_ms", 0.0)), "summary": timing_trace.summary(), "limits": "Virtual/Dummy errors measure scheduling only; physical output and perception require device calibration."}
+    if include_events: report["events"] = timing_trace.events.duplicate(true)
+    return report
+
 func get_full_song_status() -> Dictionary:
     return {"chart_stats": _full_chart.get_stats() if _full else {}, "requested": _full_requested, "ready": _full, "error": _full_error, "chart_path": _full_chart_path, "bpm": bpm, "offset_ms": float(timeline.get("offset_ms", 0.0)), "duration": float(_transport.duration) if _full else 0.0, "generation": get_transport_generation(), "chart_time": get_chart_time(), "score_time": get_score_time(), "paused": _full_paused, "ended": bool(_transport.ended) if _full else false}
 
@@ -218,7 +237,7 @@ func _consume_full_audio_sample(playback: float, since_mix: float, latency: floa
     # simulating a seven-minute playback or advancing a second gameplay clock.
     if not _full or not running or _full_paused:
         return
-    var raw: float = playback + since_mix - latency
+    var raw: float = compensated_audio_position(playback, since_mix, latency, float(audio_calibration.get("device_latency_adjust_ms", 0.0)))
     if _seek_pending:
         _seek_wait += frame_delta
         # Wall time only validates a seek handshake, never drives score time.
@@ -283,6 +302,7 @@ func start_score() -> void:
         score_error.emit(_full_error)
         return
     if _full:
+        timing_trace.clear()
         total_beats = 0
         _full_last_emitted = -1
         _last_clock = 0.0
@@ -346,7 +366,7 @@ func _process(delta: float) -> void:
         _fallback_clock += delta
         clock = _fallback_clock
     else:
-        var raw: float = _audio.get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()
+        var raw: float = compensated_audio_position(_audio.get_playback_position(), AudioServer.get_time_since_last_mix(), AudioServer.get_output_latency(), float(audio_calibration.get("device_latency_adjust_ms", 0.0)))
         # The WAV loops. Unwrap its local playback position to a monotonically increasing clock.
         if raw + 0.15 < _last_audio_position:
             _audio_loops += 1

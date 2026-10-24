@@ -65,6 +65,10 @@ var _blade_token: int = -1
 var _blade_parryable: bool = true
 var _blade_armored: bool = false
 var _blade_previous: Dictionary = {}
+var _blade_scheduled_score: float = 0.0
+var _blade_from_source: bool = false
+var _blade_timing_pending: bool = false
+var _source_anticipation: Dictionary = {}
 var _prepared_plans: Dictionary = {}
 var _source_strikes: Dictionary = {}
 var _warning_geometry: Dictionary = {}
@@ -470,6 +474,8 @@ func _resolve_melee_contact(contact: Vector2, parryable: bool, armored: bool, ac
         return
     _contact_resolved = true
     _resolved_contacts[actual_token] = true
+    if _blade_from_source and actual_token == _blade_token:
+        _record_combat_timing("blade_contact", _blade_scheduled_score, float(game.music.get_score_time()), {"token": actual_token, "note": "Includes actual movement distance and target intersection; not equivalent to first active time."})
     var would_break: bool = guard_posture + 1 >= guard_max
     var accepted: bool = false
     if parryable and game.player.parry_timer > 0.0:
@@ -719,7 +725,21 @@ func _pattern_for_phrase(phrase: Dictionary) -> Dictionary:
         return pattern
     return friend_slots.get_normal_pattern(sequence)
 
+func _update_source_anticipation(score: float) -> void:
+    _source_anticipation.clear()
+    for action: Dictionary in _authored_actions:
+        if str(action["type"]) != "dash": continue
+        var release: float = float(action["time"])
+        var clip: String = "cut_b" if int(_source_strikes.get(int(action["source_serial"]), 0)) > 0 else "cut_a"
+        var duration: float = maxf(0.08, float(action.get("duration_beats", 1.0)) * game.music.seconds_per_beat())
+        var window: Vector2 = BladeGeometry.active_window(clip)
+        var lead: float = duration * maxf(0.0, window.x)
+        if score < release and release - score <= lead and lead > 0.0:
+            _source_anticipation = {"clip": clip, "progress": minf(maxf(0.0, window.x - 0.000001), maxf(0.0, window.x) * (1.0 - (release - score) / lead))}
+            return
+
 func _prepare_upcoming(score: float) -> void:
+    _update_source_anticipation(score)
     if (not _uses_full_song() and phase not in ["random", "final"]) or phase == "rest" or _reaction_blocks_attacks or _posture_lockout > 0.0:
         return
     for phrase: Dictionary in friend_director.chart.action_phrases:
@@ -826,6 +846,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
     var serial: int = int(action["source_serial"])
     var target: Vector2 = action.get("resolved_target", global_position)
     authored_action_count += 1
+    _record_combat_timing("source_action", float(action["time"]), score, {"action": kind, "pattern": pattern, "serial": serial})
     authored_trace.append({"pattern": pattern, "type": kind, "serial": serial, "time": score})
     if authored_trace.size() > 96:
         authored_trace.pop_front()
@@ -865,7 +886,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
             _source_strikes[serial] = int(_source_strikes.get(serial, 0)) + 1
             _present_strike = mini(2, int(_source_strikes[serial]))
             _release_elapsed = 0.0
-            _start_blade("cut_b" if _present_strike >= 2 else "cut_a", duration, contact_token, attack_parryable, attack_armored)
+            _start_source_blade("cut_b" if _present_strike >= 2 else "cut_a", duration, contact_token, attack_parryable, attack_armored, float(action["time"]), score)
             _authored_dash = {"from": global_position, "to": to, "start_time": float(action["time"]), "end_time": float(action["time"]) + duration, "parryable": attack_parryable, "armored": attack_armored, "token": contact_token}
             _warning_geometry.clear()
             game.emit_fx("enemy_dash", global_position + Vector2(0, -26), Vector2(facing, 0), 1.0)
@@ -875,6 +896,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
                 var style: String = "elite_rune" if kind == "ring" else ("wisp_seed" if kind == "side_spray" else "sentry_shard")
                 var projectile: Node2D = game.spawn_projectile(shot["position"], shot["velocity"], false, style)
                 if is_instance_valid(projectile):
+                    _record_combat_timing("projectile_birth", float(action["time"]), score, {"pattern": pattern, "serial": serial, "action": kind})
                     projectile.set("lifetime", float(shot["ttl_seconds"]))
                     projectile.set_meta("boss_source", get_instance_id())
                 else:
@@ -991,7 +1013,24 @@ func get_warning_geometry(kind: String = "") -> Dictionary:
         return {}
     return _warning_geometry.duplicate(true)
 
+func _record_combat_timing(kind: String, scheduled: float, actual: float, context: Dictionary = {}) -> void:
+    if is_instance_valid(game) and is_instance_valid(game.music) and game.music.has_method("record_combat_timing"):
+        game.music.record_combat_timing(kind, scheduled, actual, context)
+
+func _start_source_blade(clip: String, duration: float, token: int, parryable: bool, armored: bool, scheduled: float, actual: float) -> void:
+    _start_blade(clip, duration, token, parryable, armored)
+    var window: Vector2 = BladeGeometry.active_window(clip)
+    # The source dash timestamp is the release, not another windup start.
+    # Frame0 anticipation is rendered before it; enter real steel at the beat.
+    _blade_elapsed = maxf(0.0, window.x) * _blade_duration + maxf(0.0, actual - scheduled)
+    _blade_scheduled_score = scheduled
+    _blade_from_source = true
+    _blade_timing_pending = true
+    _source_anticipation.clear()
+
 func _start_blade(clip: String, duration: float, token: int, parryable: bool, armored: bool) -> void:
+    _blade_from_source = false
+    _blade_timing_pending = false
     _blade_clip = clip
     _blade_elapsed = 0.0
     _blade_duration = maxf(0.001, duration)
@@ -1002,6 +1041,8 @@ func _start_blade(clip: String, duration: float, token: int, parryable: bool, ar
 
 func _clear_blade() -> void:
     _blade_clip = ""
+    _blade_timing_pending = false
+    _source_anticipation.clear()
     _blade_previous.clear()
 
 func get_blade_state() -> Dictionary:
@@ -1021,6 +1062,9 @@ func _player_hurt_rect() -> Rect2:
 
 func _sample_blade(delta: float) -> void:
     var state: Dictionary = get_blade_state()
+    if _blade_from_source and _blade_timing_pending and bool(state["active"]):
+        _record_combat_timing("blade_active", _blade_scheduled_score, float(game.music.get_score_time()), {"clip": _blade_clip, "token": _blade_token})
+        _blade_timing_pending = false
     if not bool(state["active"]) or _contact_resolved:
         _blade_previous.clear()
         return
@@ -1247,6 +1291,9 @@ func get_presentation_pose() -> Dictionary:
     elif not _blade_clip.is_empty() and _blade_elapsed <= _blade_duration:
         state = _blade_clip
         progress = clampf(_blade_elapsed / maxf(0.001, _blade_duration), 0.0, 1.0)
+    elif not _source_anticipation.is_empty():
+        state = str(_source_anticipation["clip"])
+        progress = float(_source_anticipation["progress"])
     elif not _authored_dash.is_empty():
         state = "cut_b" if _present_strike >= 2 else "cut_a"
         progress = clampf(_release_elapsed / 0.18, 0.0, 1.0)

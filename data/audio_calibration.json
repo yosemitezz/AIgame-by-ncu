@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "device_latency_adjust_ms": 0.0,
+  "trace_enabled": true,
+  "max_trace_events": 8192,
+  "convention": "Audio clock = playback + time_since_mix - reported_output_latency - device_latency_adjust_ms. Positive adjustment accounts for extra device delay. This never changes the source BPM203 or source offset+245ms. Dummy tests do not measure speaker/Bluetooth latency."
+}

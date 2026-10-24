@@ -14,10 +14,22 @@ const LightWings = preload("res://vfx/light_wings.gd")
 const INFINITE_AIR_JUMPS: bool = true
 const WING_OPEN_RATE: float = 9.0
 const WING_FOLD_TIME: float = 0.9
-const RUN_SPEED: float = 180.0
-const JUMP_SPEED: float = -340.0
-const GRAVITY: float = 900.0
-const DASH_SPEED: float = 420.0
+const MOBILITY_PATH: String = "res://data/player_mobility.json"
+static var _mobility_data: Dictionary = {}
+static var RUN_SPEED: float = mobility_value("run_speed", 232.0)
+static var GROUND_ACCELERATION: float = mobility_value("ground_acceleration", 2800.0)
+static var GROUND_BRAKING: float = mobility_value("ground_braking", 3400.0)
+static var GROUND_TURNING: float = mobility_value("ground_turning", 4000.0)
+static var AIR_ACCELERATION: float = mobility_value("air_acceleration", 1700.0)
+static var AIR_BRAKING: float = mobility_value("air_braking", 1550.0)
+static var AIR_TURNING: float = mobility_value("air_turning", 2600.0)
+static var JUMP_CUT_MULTIPLIER: float = mobility_value("jump_cut_multiplier", 0.45)
+static var DASH_BUFFER: float = mobility_value("dash_buffer_seconds", 0.22)
+static var DODGE_IMMUNITY_GAP: float = mobility_value("dodge_immunity_gap_seconds", 0.10)
+static var MOVING_LAND_TIME: float = mobility_value("moving_land_seconds", 0.035)
+static var JUMP_SPEED: float = mobility_value("jump_speed", -370.0)
+static var GRAVITY: float = mobility_value("gravity", 1040.0)
+static var DASH_SPEED: float = mobility_value("dash_speed", 520.0)
 const DASH_DURATION: float = 0.17
 const DASH_COOLDOWN: float = 0.42
 const DASH_INVULNERABILITY: float = 0.23
@@ -25,13 +37,13 @@ const DIRECTION_TAPS: Dictionary = {"move_left": Vector2.LEFT, "move_right": Vec
 ## Crouch walk speed factor, crouch blend time, landing squat, air-jump flip and apex window.
 const CROUCH_SPEED: float = 0.45
 const CROUCH_BLEND: float = 0.12
-const LAND_TIME: float = 0.16
+static var LAND_TIME: float = mobility_value("landing_seconds", 0.10)
 const LAND_MIN_SPEED: float = 230.0
 const AIR_FLIP_TIME: float = 0.34
 const AIR_APEX_SPEED: float = 60.0
 const RUN_FRAME_RATE: float = 14.0
-const COYOTE_TIME: float = 0.10
-const JUMP_BUFFER: float = 0.12
+static var COYOTE_TIME: float = mobility_value("coyote_seconds", 0.12)
+static var JUMP_BUFFER: float = mobility_value("jump_buffer_seconds", 0.14)
 const CLIMB_SPEED: float = 90.0
 const CLIMB_ALIGN_SPEED: float = 80.0
 const SHALLOW_WATER_SPEED: float = 0.72
@@ -53,7 +65,7 @@ static var COMBO_RECOVER: Array[float] = [AttackProfile.duration(1, "recover"), 
 static var COMBO_LENGTHS: Array[float] = [AttackProfile.total_duration(1), AttackProfile.total_duration(2), AttackProfile.total_duration(3)]
 static var LUNGE_TIME: float = float(AttackProfile.profile(1).get("lunge_seconds", 0.085))
 static var LUNGE_SPEED: Array[float] = [float(AttackProfile.profile(1).get("lunge_speed", 130.0)), float(AttackProfile.profile(2).get("lunge_speed", 170.0)), float(AttackProfile.profile(3).get("lunge_speed", 210.0))]
-const RECOVER_CANCEL_DELAY: float = 0.055
+static var RECOVER_CANCEL_DELAY: float = mobility_value("recover_cancel_seconds", 0.04)
 const CONFIRM_CANCEL_DELAY: float = 0.050
 
 var game: Node
@@ -65,6 +77,7 @@ var parry_timer: float = 0.0
 var parry_phase: String = "none"
 var dash_timer: float = 0.0
 var dash_direction: Vector2 = Vector2.RIGHT
+var dodge_immunity_rearm: float = 0.0
 var _dash_intent: Vector2 = Vector2.ZERO
 var _direction_taps: RefCounted = DirectionTaps.new(0.25)
 var _tap_clock: float = 0.0
@@ -141,6 +154,14 @@ var _last_frame: int = -1
 var _last_state: String = ""
 var _last_facing: int = 0
 
+static func mobility_value(key: String, fallback: float) -> float:
+	if _mobility_data.is_empty():
+		var file: FileAccess = FileAccess.open(MOBILITY_PATH, FileAccess.READ)
+		if file != null:
+			var parsed: Variant = JSON.parse_string(file.get_as_text())
+			if parsed is Dictionary: _mobility_data = parsed
+	return float(_mobility_data.get(key, fallback))
+
 func configure(owner_game: Node) -> void:
 	game = owner_game
 
@@ -173,11 +194,12 @@ func _capture_input() -> void:
 		queued_attack = true
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer = JUMP_BUFFER
-	if Input.is_action_just_released("jump"):
+		_jump_cut_requested = false
+	if Input.is_action_just_released("jump") and not Input.is_action_pressed("jump"):
 		_jump_cut_requested = true
 	if Input.is_action_just_pressed("dash"):
 		# Empty in the main physical key map; retain the original logical input/test API.
-		_dash_buffer = 0.16
+		_dash_buffer = DASH_BUFFER
 		_dash_intent = Vector2(_move_axis if not is_zero_approx(_move_axis) else float(facing), 0.0)
 	if Input.is_action_just_pressed("parry"):
 		_parry_buffer = 0.12
@@ -217,7 +239,7 @@ func _direction_key(event: InputEvent) -> int:
 func _register_direction_press(action: String) -> void:
 	if _direction_taps.register_press(StringName(action), _tap_clock):
 		_dash_intent = DIRECTION_TAPS[action]
-		_dash_buffer = 0.16
+		_dash_buffer = DASH_BUFFER
 
 func _capture_direction_taps() -> void:
 	# Logical Input.action_press does not emit an event; retain that old API.
@@ -262,6 +284,7 @@ func _physics_process(delta: float) -> void:
 	impact_flash = maxf(0.0, impact_flash - delta)
 	# Defensive windows and cooldowns use real physics delta, even in local freeze.
 	invuln = maxf(0.0, invuln - delta)
+	dodge_immunity_rearm = maxf(0.0, dodge_immunity_rearm - delta)
 	parry_timer = maxf(0.0, parry_timer - delta)
 	if parry_timer <= 0.0:
 		_parry_seen.clear()
@@ -274,6 +297,7 @@ func _physics_process(delta: float) -> void:
 	_parry_cooldown = maxf(0.0, _parry_cooldown - delta)
 	var safe: bool = is_instance_valid(game) and bool(game.story_safe)
 	if safe:
+		dodge_immunity_rearm = 0.0
 		reset_direction_taps()
 		reset_traversal(true)
 		_clear_parry()
@@ -285,6 +309,7 @@ func _physics_process(delta: float) -> void:
 		_parry_buffer = 0.0
 		_hurt_lock = 0.0
 	if dead:
+		dodge_immunity_rearm = 0.0
 		reset_direction_taps()
 		reset_traversal(true)
 		_clear_parry()
@@ -302,6 +327,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_hurt_lock = maxf(0.0, _hurt_lock - delta)
 	_land_timer = maxf(0.0, _land_timer - delta)
+	if not is_zero_approx(_move_axis):
+		_land_timer = minf(_land_timer, MOVING_LAND_TIME)
 	_air_flip = maxf(0.0, _air_flip - delta)
 	_crouch_out = maxf(0.0, _crouch_out - delta)
 	_update_crouch(delta)
@@ -348,19 +375,20 @@ func _physics_process(delta: float) -> void:
 					desired = facing * LUNGE_SPEED[clampi(combo - 1, 0, 2)]
 					# Hold the speed through the whole lunge instead of easing in, so the step reads as a lunge.
 					velocity.x = desired
-			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, (1800.0 if is_on_floor() else 1250.0) * delta)
+			velocity.x = -facing * PARRY_RECOIL_SPEED if parry_phase == "recoil" else move_toward(velocity.x, desired, _horizontal_acceleration(desired) * delta)
 			if _recoil_time > 0.0:
 				velocity.x = -facing * _recoil_speed * (_recoil_time / HIT_RECOIL_TIME)
 				_recoil_time = maxf(0.0, _recoil_time - delta)
 		if _jump_buffer > 0.0 and _hurt_lock <= 0.0:
 			if _coyote > 0.0:
 				_jump(false)
-			elif INFINITE_AIR_JUMPS or _air_jumps > 0:
+			elif (INFINITE_AIR_JUMPS or _air_jumps > 0) and not _landing_near(delta):
 				_air_jumps = maxi(0, _air_jumps - 1)
 				_jump(true)
 		if _jump_cut_requested and velocity.y < -120.0:
-			velocity.y *= 0.48
-		_jump_cut_requested = false
+			velocity.y *= JUMP_CUT_MULTIPLIER
+		if _jump_buffer <= 0.0:
+			_jump_cut_requested = false
 	_lunge_timer = maxf(0.0, _lunge_timer - delta)
 	var was_grounded: bool = is_on_floor()
 	var fall_speed: float = velocity.y
@@ -368,7 +396,9 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 	if not was_grounded and is_on_floor():
 		_fx("land", global_position, Vector2.ZERO, 0.4)
-		if fall_speed > LAND_MIN_SPEED and attack_phase == "none" and dash_timer <= 0.0:
+		if _jump_buffer > 0.0 and _hurt_lock <= 0.0 and dash_timer <= 0.0 and not safe:
+			_jump(false)
+		elif fall_speed > LAND_MIN_SPEED and attack_phase == "none" and dash_timer <= 0.0:
 			_land_timer = LAND_TIME
 			_air_flip = 0.0
 	_update_wings(delta)
@@ -376,6 +406,19 @@ func _physics_process(delta: float) -> void:
 	if attack_phase != "none":
 		_advance_attack(delta)
 	_refresh_animation(delta)
+
+func _horizontal_acceleration(desired: float) -> float:
+	if is_on_floor():
+		if is_zero_approx(desired): return GROUND_BRAKING
+		return GROUND_TURNING if desired * velocity.x < 0.0 else GROUND_ACCELERATION
+	if is_zero_approx(desired): return AIR_BRAKING
+	return AIR_TURNING if desired * velocity.x < 0.0 else AIR_ACCELERATION
+
+func _landing_near(delta: float) -> bool:
+	if not is_inside_tree() or velocity.y < 0.0: return false
+	var depth: float = clampf(velocity.y * delta + 3.0, 8.0, 18.0)
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(global_position + Vector2(0.0, -1.0), global_position + Vector2(0.0, depth), 1, [get_rid()])
+	return not get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 func _traversal_level() -> Node:
 	if not is_instance_valid(game):
@@ -432,6 +475,8 @@ func _update_climb_intent(delta: float, safe: bool) -> void:
 	if (_climb_axis < 0.0 and global_position.y <= area.position.y + 0.5) or (_climb_axis > 0.0 and global_position.y >= area.end.y - 0.5):
 		return
 	climbing = true
+	# A grab is not the first half of an accidental dodge when adjusting a grip.
+	reset_direction_taps()
 	crouching = false
 	_crouch_out = 0.0
 	_land_timer = 0.0
@@ -553,7 +598,10 @@ func _start_dash(move_axis: float, requested_direction: Vector2 = Vector2.ZERO) 
 	_dash_intent = Vector2.ZERO
 	dash_timer = DASH_DURATION
 	_dash_cooldowns[cardinal] = DASH_COOLDOWN
-	invuln = maxf(invuln, DASH_INVULNERABILITY)
+	# Link movement freely across directions, but do not chain immunity forever.
+	if dodge_immunity_rearm <= 0.0:
+		invuln = maxf(invuln, DASH_INVULNERABILITY)
+		dodge_immunity_rearm = DASH_INVULNERABILITY + DODGE_IMMUNITY_GAP
 	parry_timer = 0.0
 	_trail_clock = 0.0
 	_fx("dash_start", global_position + Vector2(0.0, -13.0), dash_direction, 0.5)
@@ -832,6 +880,7 @@ func _clear_parry() -> void:
 	_parry_seen.clear()
 
 func revive(at: Vector2) -> void:
+	dodge_immunity_rearm = 0.0
 	reset_direction_taps()
 	dash_direction = Vector2.RIGHT
 	reset_traversal()
@@ -884,7 +933,7 @@ func _refresh_animation(delta: float) -> void:
 		_set_animation("attack" if attack_phase == "active" else attack_phase, delta)
 	elif climbing:
 		_set_animation("climb" if _climb_moving else "climb_idle", delta)
-	elif not is_on_floor():
+	elif not is_on_floor() or velocity.y < -AIR_APEX_SPEED:
 		_set_animation(_air_state(), delta)
 	elif _land_timer > 0.0:
 		_set_animation("land", delta)

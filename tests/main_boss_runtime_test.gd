@@ -138,27 +138,29 @@ func contact_fixture() -> void:
     game.impact.clear()
 
 func drive_source_blade_contact(pattern: Dictionary, dash_offset_beats: float, label: String) -> void:
-    # Lock the authored destination, then stay clear while its real blade winds up.
+    # Prepare before the absolute source release. The new protocol previews the
+    # raised pose before the beat and enters real steel contact on the beat.
     var locked_target: Vector2 = game.player.global_position
     game.player.global_position = Vector2(3270.0, 300.0)
-    var start: float = game.music.get_score_time() - dash_offset_beats * game.music.seconds_per_beat()
+    var release: float = game.music.get_score_time() + 0.05
+    var start: float = release - dash_offset_beats * game.music.seconds_per_beat()
     check(game.boss._begin_authored_pattern(pattern, start, locked_target), label + " queues the real source plan")
     game.boss._physics_process(0.0)
-    check(not game.boss.get_blade_state()["active"], label + " raised first frame cannot use the obsolete reach rectangle")
-    var blade: Dictionary = game.boss.get_blade_state()
+    check(game.music.get_score_time() < release and not game.boss.get_blade_state()["active"], label + " pre-release preparation remains harmless")
     var frames: int = 0
-    while not blade["active"] and frames < 90:
+    while game.music.get_score_time() < release - 0.000001 and frames < 10:
         await physics_frame
-        game.music._process(1.0 / 60.0)
-        game.player._physics_process(1.0 / 60.0)
-        game.boss._physics_process(1.0 / 60.0)
+        var delta: float = minf(1.0 / 60.0, release - game.music.get_score_time())
+        game.music._process(delta)
+        game.player._physics_process(delta)
+        game.boss._physics_process(delta)
         for shot: Node in get_nodes_in_group("projectiles"):
             shot.set_physics_process(false)
         for hazard: Node in get_nodes_in_group("boss_hazards"):
             hazard.set_physics_process(false)
-        blade = game.boss.get_blade_state()
         frames += 1
-    check(blade["active"] and int(blade["frame"]) in [1, 2], label + " reaches its actual middle pixel-blade frame")
+    var blade: Dictionary = game.boss.get_blade_state()
+    check(absf(game.music.get_score_time() - release) < 0.00001 and blade["active"] and int(blade["frame"]) in [1, 2], label + " absolute release enters its actual effective pixel blade without a second delay")
     if not blade["active"]:
         return
     var steel: Vector2 = game.boss.global_position + (blade["from"] as Vector2).lerp(blade["to"], 0.45)

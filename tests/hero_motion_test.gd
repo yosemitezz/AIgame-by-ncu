@@ -129,7 +129,7 @@ func run() -> void:
 	Input.action_press("move_right")
 	await ticks(25)
 	check(player.animation_state == "crouch_walk", "moving while crouched plays the crouch walk")
-	check(absf(player.velocity.x) > 40.0 and absf(player.velocity.x) < 100.0, "crouch walk is slow (%.0f px/s)" % player.velocity.x)
+	check(absf(player.velocity.x - Player.RUN_SPEED * Player.CROUCH_SPEED) < 0.1, "crouch walk is slow (%.0f px/s)" % player.velocity.x)
 	Input.action_release("move_right")
 	Input.action_release("crouch")
 	await ticks(1)
