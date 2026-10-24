@@ -106,6 +106,37 @@ func run() -> void:
 		ran_ghost = ran_ghost or fx.ghost_count() > 0
 	check(ran_ghost, "running spawns afterimages and trail particles")
 	game.player.set("velocity", Vector2.ZERO)
+	# Impact blur and heavier camera shake: strong, bounded, decays fully, respects reduced motion.
+	var blur: Node = game.get_node_or_null("MotionBlur")
+	check(blur != null, "MotionBlur layer is attached")
+	for _i: int in 120:
+		blur._process(0.05)   # earlier checks fired hundreds of events; let the blur settle first
+	check(not blur.is_active(), "blur is hidden while idle")
+	game.emit_fx("guard_break", Vector2(300, 250), Vector2.RIGHT, 1.7)
+	blur._process(0.016)
+	check(blur.is_active() and blur.blur_vec.length() > 0.05 and blur.radial > 0.2, "guard break produces a strong blur (%.3f / %.2f)" % [blur.blur_vec.length(), blur.radial])
+	check(blur.blur_vec.length() <= blur.MAX_BLUR + 0.0001 and blur.radial <= blur.MAX_RADIAL + 0.0001 and blur.chroma <= blur.MAX_CHROMA + 0.0001, "blur stays inside its caps")
+	for _i: int in 40:
+		blur._process(0.016)
+	check(not blur.is_active(), "blur decays to nothing and hides itself")
+	game.impact.reduced_motion = true
+	game.emit_fx("hit", Vector2(300, 250), Vector2.RIGHT, 2.0)
+	blur._process(0.016)
+	check(not blur.is_active(), "reduced motion (F2) disables the blur")
+	game.impact.reduced_motion = false
+	game.set_story_safe(true)
+	game.emit_fx("hit", Vector2(300, 250), Vector2.RIGHT, 2.0)
+	blur._process(0.016)
+	check(not blur.is_active(), "no blur in story-safe sections")
+	game.set_story_safe(false)
+	game.impact.request(game.player, null, false, true, "break")
+	var peak: float = 0.0
+	for _i: int in 6:
+		peak = maxf(peak, game.impact.sample_camera(1.0 / 60.0).length())
+	check(peak >= 5.0 and peak <= game.impact.MAX_OFFSET + 0.001, "guard break shakes the camera hard but within the cap (peak %.1f px)" % peak)
+	for _i: int in 240:
+		game.impact.sample_camera(1.0 / 60.0)
+	check(game.impact.sample_camera(1.0 / 60.0).length() < 0.05, "camera shake settles completely")
 	# Warning lanes: in the merged game combat_vfx owns telegraphs, so this layer draws none by default.
 	game.emit_signal("warning_issued", "melee", Vector2(400, 280), 0.5)
 	check(fx.warning_count() == 0, "gradient layer leaves telegraph drawing to the pixel layer by default")

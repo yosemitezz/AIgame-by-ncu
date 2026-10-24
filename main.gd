@@ -16,6 +16,7 @@ const Level = preload("res://levels/bellkeep.gd")
 const HUD = preload("res://ui/hud.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const FxLayer = preload("res://vfx/fx_layer.gd")
+const MotionBlur = preload("res://vfx/motion_blur.gd")
 const Impact = preload("res://combat/impact_feedback.gd")
 const CombatVFX = preload("res://presentation/combat_vfx.gd")
 ## Effects owned by the gradient layer (vfx/fx_layer.gd) AND mirrored to the pixel-frame layer
@@ -106,6 +107,12 @@ func _ready() -> void:
     effects.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(effects)
     effects.configure(self)
+    # Screen-space impact blur (presentation only, layer 20, below the HUD).
+    var blur := MotionBlur.new()
+    blur.name = "MotionBlur"
+    blur.process_mode = Node.PROCESS_MODE_PAUSABLE
+    add_child(blur)
+    blur.setup(self)
     for entry: Dictionary in Level.ENEMIES:
         if entry["kind"] == "elite" and elite_defeated:
             continue

@@ -72,7 +72,7 @@ func run() -> void:
     var offset := Vector2.ZERO
     for _i: int in 120:
         offset = game.impact.sample_camera(1.0 / 60.0)
-        bounded = bounded and offset.length() <= 4.001
+        bounded = bounded and offset.length() <= game.impact.MAX_OFFSET + 0.001
     check(bounded and offset.length() < 0.001, "camera impulse is bounded and settles completely")
     game.impact.add_kick(Vector2.RIGHT, 2)
     game.impact.reduced_motion = true
