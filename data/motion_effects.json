@@ -1,0 +1,29 @@
+{
+  "strength": 1.0,
+  "max_snapshots": 8,
+  "teleport_distance": 96.0,
+  "stop_decay_multiplier": 4.0,
+  "run": {
+    "min_speed": 95.0,
+    "interval": 0.045,
+    "min_distance": 7.0,
+    "life": 0.1,
+    "alpha": 0.14
+  },
+  "air": {
+    "min_speed": 70.0,
+    "interval": 0.032,
+    "min_distance": 7.0,
+    "life": 0.14,
+    "alpha": 0.18
+  },
+  "dash": {
+    "min_speed": 0.0,
+    "interval": 0.022,
+    "min_distance": 9.0,
+    "life": 0.19,
+    "alpha": 0.27
+  },
+  "rear_blur_passes": 2,
+  "rear_blur_step": 2.0
+}

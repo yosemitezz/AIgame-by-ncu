@@ -32,7 +32,7 @@ func run() -> void:
 	check(AttackProfile.set_weapon("heavy"), "heavy can be selected")
 	check(AttackProfile.total_duration(1) > light_total * 1.3, "heavy swings are clearly slower (%.2f vs %.2f)" % [AttackProfile.total_duration(1), light_total])
 	check(AttackProfile.damage(1) > light_damage and AttackProfile.damage(3) >= 3, "heavy hits harder")
-	check(AttackProfile.radii(1).x < light_reach, "heavy is short and wide, not long")
+	check(AttackProfile.radii(1).x < light_reach, "heavy effective cleave keeps its committed shorter forward range")
 	check(float(AttackProfile.profile(1)["blade_span_degrees"]) > 36.0, "heavy swings a broad arc")
 	check(AttackProfile.set_weapon("great"), "great can be selected")
 	check(AttackProfile.radii(1).x > light_reach * 1.25 and AttackProfile.radii(3).x > 270.0, "greatsword reaches much further (%d)" % int(AttackProfile.radii(1).x))

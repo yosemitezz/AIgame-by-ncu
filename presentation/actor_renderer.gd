@@ -60,6 +60,15 @@ static func dash_direction_of(actor: Object) -> Vector2:
     var value: Variant = actor.get("dash_direction") if actor != null else null
     return value if value is Vector2 and value.is_finite() else Vector2.ZERO
 
+static func flight_progress(actor: Object) -> float:
+    # The same physics-owned duration already used by the controller. Reading it
+    # here cannot extend a dodge, change invulnerability, or move the character.
+    var timer: Variant = actor.get("dash_timer") if actor != null else null
+    if timer != null and float(timer) > 0.0:
+        return clampf(1.0-float(timer)/0.17,0.0,1.0)
+    var value: Variant = actor.get("frame") if actor != null else null
+    return clampf(float(value)/3.0,0.0,1.0) if value != null else 0.0
+
 static func hero_region_for(actor: Object, state: String, frame: int) -> Rect2:
     return hero_region(state,frame,_combo(actor),is_airborne(actor),dash_direction_of(actor))
 

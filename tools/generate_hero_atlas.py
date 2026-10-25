@@ -51,6 +51,7 @@ def build_weapon(wid):
                 record = {key:[round(skeleton[key][0]*R.SC,2),round(skeleton[key][1]*R.SC,2)] for key in ('hip','shoulder','head','hand','foot_f','foot_b')}
                 record['wing_root']=[round((skeleton['shoulder'][0]-4)*R.SC,2),round((skeleton['shoulder'][1]+3)*R.SC,2)]
                 record['rotation_degrees']=pose['rot']
+                record['weapon_tip']=[round(tip[0]*R.SC,2),round(tip[1]*R.SC,2)]
                 flight_joints.append(record)
             atlas.alpha_composite(im, ((index % COLS) * R.W, (index // COLS) * R.H))
             pts.append([round(tip[0] * R.SC), round(tip[1] * R.SC)])
@@ -79,7 +80,7 @@ def main():
         atlas.save(FEEL / f'hero_atlas{s}.png')
         tint(atlas, '#63c5d2').save(FEEL / f'hero_silhouette{s}.png')
         tint(atlas, '#e8fff0').save(FEEL / f'hero_flash{s}.png')
-        feel_weapons[wid] = {'motion': {'light':'point thrust / drill advance', 'heavy':'descending / rising / overhead cleaves', 'great':'two-handed pivot / reverse / full orbit'}[wid], 'active_frames':8, 'atlas': f'hero_atlas{s}.png', 'flash': f'hero_flash{s}.png',
+        feel_weapons[wid] = {'weapon_design': R.WEAPONS[wid].get('design',wid), 'blade_length_source_px':R.WEAPONS[wid]['blade'], 'grip_length_source_px':R.WEAPONS[wid]['grip'], 'max_blade_width_source_px':max(R.WEAPONS[wid]['wfun'](i/20) for i in range(21)), 'motion': {'light':'point thrust / drill advance', 'heavy':'descending / rising / overhead cleaves', 'great':'two-handed pivot / reverse / full orbit'}[wid], 'active_frames':8, 'atlas': f'hero_atlas{s}.png', 'flash': f'hero_flash{s}.png',
                              'silhouette': f'hero_silhouette{s}.png', 'weapon_tips': tips, 'pose_joints':poses, 'flight_pose_joints':flight}
         sheet.save(PARRY / f'hero_parry{s}.png')
         tint(sheet, '#e8fff0').save(PARRY / f'hero_flash{s}.png')

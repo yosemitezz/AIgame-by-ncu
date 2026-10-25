@@ -131,6 +131,9 @@ func _contact_sparks(at: Vector2, direction: Vector2, amount: int, heavy: bool) 
 func _snapshot_ghost() -> void:
     if not is_instance_valid(game) or not is_instance_valid(game.player):
         return
+    var movement_owner: Node = game.get_node_or_null("MotionBlur")
+    if is_instance_valid(movement_owner) and movement_owner.has_method("is_movement_trail_owner") and bool(movement_owner.call("is_movement_trail_owner")):
+        return
     var actor: Node2D = game.player
     var position_now: Vector2 = actor.global_position.round()
     if _clock - _last_ghost_clock < 0.035 or position_now.distance_squared_to(_last_ghost_at) < 36.0:

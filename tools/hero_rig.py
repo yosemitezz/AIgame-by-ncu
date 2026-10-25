@@ -34,17 +34,17 @@ GRIP, BLADE = 6.0, 32.0           # light sword defaults, kept for reference; dr
 STAND_HIP = -(THIGH + SHIN) + 0.8
 
 WEAPONS = {
-    'light': dict(blade=32.0, grip=6.0, gw=2.6, guard=6.0, gthick=1.0, gbend=0.9, gat=1.6, pom=1.5, two=False, hb_dist=4.0,
-                  steps=9, wfun=lambda t: 1.9 * (1 - t ** 3) + 0.35, bow=lambda t: 0.5 * math.sin(math.pi * t),
+    'light': dict(blade=43.0, grip=6.5, gw=2.0, guard=9.0, gthick=1.1, gbend=0.5, gat=2.5, pom=1.35, two=False, hb_dist=4.0, hilt='cup', design='rapier',
+                  steps=12, wfun=lambda t: 1.05 * (1 - t ** 2) + 0.22, bow=lambda t: 0.0,
                   cut=False, fuller='hi', smear_w=12.0,
                   colors=dict(bl='#c3cfdc', bl_dark='#8c9db0', bl_hi='#ffffff', cyan='#8fe3ff',
                               sm1='#8fb9d6', sm2='#cfeaf7', smw='#ffffff')),
-    'heavy': dict(blade=28.0, grip=6.0, gw=3.2, guard=9.0, gthick=1.8, gbend=0.8, gat=1.4, pom=2.5, two=False, hb_dist=4.0,
-                  steps=9, wfun=lambda t: 4.6 * (1 - 0.30 * t * t), bow=lambda t: 0.9 * math.sin(math.pi * t),
+    'heavy': dict(blade=44.0, grip=9.0, gw=3.4, guard=10.0, gthick=2.0, gbend=0.0, gat=1.4, pom=2.1, two=True, hb_dist=5.3, hilt='iron', design='iron_slab',
+                  steps=12, wfun=lambda t: 10.2 * (1 - .12 * t), bow=lambda t: 0.0,
                   cut=True, fuller='dark', smear_w=15.0,
                   colors=dict(bl='#8d9bab', bl_dark='#3d4859', bl_hi='#c3cfdc', cyan='#ff9a4a',
                               sm1='#9a2f2f', sm2='#ff9a4a', smw='#ffd9a0')),
-    'great': dict(blade=46.0, grip=11.0, gw=2.8, guard=10.0, gthick=1.5, gbend=1.0, gat=1.6, pom=2.0, two=True, hb_dist=6.0,
+    'great': dict(blade=49.0, grip=12.0, gw=2.8, guard=12.0, gthick=1.4, gbend=1.3, gat=1.7, pom=2.0, two=True, hb_dist=7.0, hilt='cross', design='long_crossblade',
                   steps=14, wfun=lambda t: 0.35 + 2.85 * (1 - t) ** 0.85, bow=lambda t: 0.0,
                   cut=False, fuller='hi', smear_w=14.0, ricasso=3.4,
                   colors=dict(bl='#b9c6d4', bl_dark='#6f7f93', bl_hi='#f0f6fb', cyan='#ffe9a0',
@@ -167,6 +167,16 @@ def skeleton(p):
     knee_b, ank_b = ik(add(hip, (-2.0, 0)), ank(p['fb'], p['fba']), THIGH, SHIN, lambda j: j[0] - 0.35 * j[1])
     reach = lerp(9.0, UPPER + FORE - 0.3, p['ext'])
     hand = add(sh_n, mul(adir(p['arm']), reach))
+    if p.get('contact_line_y') is not None:
+        # An airborne narrow thrust must stay on its existing damage line.
+        # Lower only the articulated hand/forearm; no sprite translation or
+        # attack-profile expansion is used to hide the old floating steel.
+        dy = p['contact_line_y'] - sh_n[1]
+        dx = hand[0] - sh_n[0]
+        limit = UPPER + FORE - .3
+        dy = max(-limit+.05, min(limit-.05, dy))
+        extent = math.sqrt(max(.01, limit*limit-dy*dy))
+        hand = (sh_n[0] + max(-extent,min(extent,dx)), sh_n[1] + dy)
     prefer_e = (lambda j: -j[1]) if p['elbow_up'] else (lambda j: j[1] - 0.2 * j[0])
     elbow, hand = ik(sh_n, hand, UPPER, FORE, prefer_e)
     if SPEC['two']:
@@ -280,7 +290,23 @@ def draw_sword(pen, hand, ang, glow):
         a = sp['gat'] + sp['gbend'] * s * s
         g_front.append(add(add(hand, mul(u, a)), mul(n, s * hw)))
         g_back.append(add(add(hand, mul(u, a + sp['gthick'])), mul(n, s * hw)))
-    pen.poly(g_front + g_back[::-1], 'gold', 0.7)
+    hilt = sp.get('hilt', 'cross')
+    if hilt == 'cup':
+        # A shallow steel cup and curved knuckle bow distinguish the rapier at
+        # native size; a heavy crossbar would read as another arming sword.
+        cup = [add(add(hand,mul(u,a)),mul(n,b)) for a,b in
+               [(sp['gat']-2,-2.8),(sp['gat']-.8,-4.3),(sp['gat']+1.1,-4.7),
+                (sp['gat']+1.1,4.7),(sp['gat']-.8,4.3),(sp['gat']-2,2.8)]]
+        pen.poly(cup,'bl_dark',.7)
+        pen.line(add(add(hand,mul(u,sp['gat']+1.0)),mul(n,-4.0)),
+                 add(add(hand,mul(u,sp['gat']+1.0)),mul(n,4.0)),'bl_hi',.7)
+        bow=[add(add(hand,mul(u,a)),mul(n,b)) for a,b in [(2.0,3.4),(-.8,5.3),(-4.2,4.5),(-5.7,1.0)]]
+        for a,b in zip(bow,bow[1:]):pen.line(a,b,'gold',.8)
+    elif hilt == 'iron':
+        pen.poly(g_front+g_back[::-1],'bl_dark',.8)
+        pen.line(g_front[0],g_front[-1],'bl_hi',.7)
+    else:
+        pen.poly(g_front + g_back[::-1], 'gold', 0.7)
     # Blade.
     b0 = sp['gat'] + sp['gthick'] - 0.2
     steps = sp['steps']
@@ -308,8 +334,19 @@ def draw_sword(pen, hand, ang, glow):
     else:
         pen.line(mid[j0], mid[int(steps * 0.8)], 'bl_dark', 1.2)
         pen.line(add(front[j0], mul(n, 0.3)), front[int(steps * 0.75)], 'bl_hi', 0.6)
+    if sp.get('hilt') == 'iron':
+        # Unequal bevel bands, a blunt heel and two inset pins read as mass,
+        # rather than a recoloured curved sword or a copied commercial blade.
+        heel=add(hand,mul(u,b0+3.0))
+        pen.line(add(heel,mul(n,-3.0)),add(heel,mul(n,3.0)),'bl_dark',1.0)
+        for along in (5.5,10.0):
+            pen.circle(add(add(hand,mul(u,b0+along)),mul(n,1.0)),.6,'gold',0)
     if glow:
         pen.line(back[2], back[len(back) - 3 if sp['cut'] else -3], 'cyan', 0.6)
+    # The point remains actual steel on the native pixel grid. Without this
+    # narrow core, a subpixel rapier nose can quantize to outline-only ink.
+    pen.line(add(tip,mul(u,-3.2)),tip,'bl_hi',1.0)
+    pen.circle(tip,.95,'bl_hi',0)
     return tip
 
 
@@ -525,27 +562,49 @@ def crouch_walk(f, n=6):
     return p
 
 
+def trailing_air_carry(p, f=0):
+    """Carry behind the body during free flight; feet/body never rotate.
+
+    The point lags the shoulder, while each weight class uses a distinct arm
+    support. Attacking uses its own windup and returns the hilt to the front.
+    """
+    wob=math.sin(f*0.8)
+    if WEAPON_ID=='light':
+        p.update(arm=142+6*wob,ext=.66,blade=163+4*wob,hb=(5,9),two_hand=False,
+                 back_sword=True)
+    elif WEAPON_ID=='heavy':
+        p.update(arm=130+5*wob,ext=.72,blade=145+5*wob,hb=(-6,9),two_hand=True,
+                 back_sword=True,twist=p.get('twist',0)*.6)
+    else:
+        p.update(arm=127+3*wob,ext=.65,blade=149+3*wob,hb=(-6,7),two_hand=True,
+                 back_sword=True,twist=p.get('twist',0)*.7)
+    return p
+
+
 def jump_rise(f):
     # Upright lift: the shoulder leads, trailing boot extends rather than tucking into a roll.
     k = [1.0, .55, .15][f]
-    return airborne(front_up=lerp(-17,-13,1-k), back_up=lerp(-5,-2,1-k),
+    p = airborne(front_up=lerp(-17,-13,1-k), back_up=lerp(-5,-2,1-k),
                     hip=(lerp(0,2,1-k),lerp(-33,-35,1-k)), lean=lerp(8,15,1-k), curve=2,
                     arm=lerp(-62,-30,1-k), ext=.62, blade=lerp(-66,-22,1-k), hb=(-7,8),
                     wind=(-.6,1.0), scarf=1.3, phase=f*1.4, twist=.18, head=-6)
+    return trailing_air_carry(p,f)
 
 
 def apex(f):
-    return airborne(front_up=-13+f, back_up=-4-f, hip=(1,-36), lean=12-f*2, curve=2,
+    p = airborne(front_up=-13+f, back_up=-4-f, hip=(1,-36), lean=12-f*2, curve=2,
                     arm=-16+f*3, ext=.65, blade=5+f*3, hb=(-6,11),
                     wind=(-1,.12), phase=f*1.1, scarf=1.2, twist=.12, head=-4)
+    return trailing_air_carry(p,f)
 
 
 def fall(f):
     k = [.2,.6,1.0][f]
-    return airborne(front_up=lerp(-12,-4,k), back_up=lerp(-8,-2,k),
+    p = airborne(front_up=lerp(-12,-4,k), back_up=lerp(-8,-2,k),
                     hip=(0,lerp(-36,-31,k)), lean=lerp(14,5,k), curve=2,
                     arm=lerp(12,36,k), ext=.65, blade=lerp(22,45,k), hb=(-7,9),
                     wind=(-.6,-1), scarf=1.3, phase=f*1.3, twist=.15, head=-4, droop=-.8)
+    return trailing_air_carry(p,f)
 
 
 def land(f):
@@ -558,34 +617,53 @@ def air_jump(f, n=6):
     # Wing-powered launch, drive, then balance. No whole-body spin or upside-down frame.
     u = f / (n-1)
     drive = math.sin(math.pi*u)
-    return airborne(front_up=-14-7*drive, back_up=-4-5*drive,
+    p = airborne(front_up=-14-7*drive, back_up=-4-5*drive,
                     hip=(2*drive,-34-3*drive), lean=12+18*drive, curve=3+3*drive,
                     arm=lerp(-38,10,u), ext=.65+.18*drive, blade=lerp(-28,18,u),
                     hb=(-8,8), rot=0, wind=(-.8,.9-.7*u), phase=f*1.2,
                     scarf=1.25+.2*drive, head=-6-10*drive, twist=.18+.2*drive)
+    return trailing_air_carry(p,f)
 
 
 def air_dash(mode, f):
-    # Re-articulated poses keep the head above the hip in every cardinal flight.
-    # The feet anchor/collider is unchanged; only the air-only atlas cells are new.
-    drive = [0.55,1.0,.9,.45][f]
+    """Four articulated phases: brace/spread, drive, compressed flight, then glide.
+
+    Native pixels are rebuilt at fixed feet origin. The sword tracks the flight
+    axis, while a cocked knee releases into a trailing boot instead of a roll.
+    """
     if mode == 'up':
-        return base_pose(hip=(0,-35), lean=-7+8*drive, curve=2,
-                         ff=(5,-16-3*drive), fb=(-8,-4), ffa=24, fba=18,
-                         arm=-65-5*drive, ext=.72, blade=-84, hb=(-5,3),
-                         wind=(-.3,1), scarf=1.5, phase=f*1.25, head=3,
-                         twist=.18, glow=True, rot=0)
+        rise = [0.0, .75, 1.0, .2][f]
+        return base_pose(hip=([-2, 0, 1, 0][f], [-31, -34, -38, -35][f]),
+                         lean=[-16, -5, 1, 8][f], curve=[-3, 1, 3, 2][f],
+                         ff=([8, 4, 1, 7][f], [-21, -18, -11, -17][f]),
+                         fb=([-10, -8, -7, -11][f], [-10, -4, -2, -6][f]),
+                         ffa=[42, 28, 18, 32][f], fba=[30, 18, 10, 23][f],
+                         arm=[-50, -67, -73, -55][f], ext=[.55, .78, .92, .63][f],
+                         blade=[-72, -86, -89, -76][f], hb=(-7, [6, 3, 1, 7][f]),
+                         wind=([-.4, -.25, -.1, -.5][f], [.6, 1, 1.2, .5][f]),
+                         scarf=[1.2, 1.5, 1.7, 1.2][f], phase=f*1.3,
+                         head=[1, 3, 5, -2][f], twist=[-.12,.12,.25,.05][f], glow=True, rot=0)
     if mode == 'down':
-        return base_pose(hip=(0,-40), lean=18+13*drive, curve=3,
-                         ff=(9,-10-4*drive), fb=(-13,-8), ffa=34, fba=20,
-                         arm=15, ext=.3, blade=68, hb=(-5,7),
-                         wind=(-.2,-1), scarf=1.45, phase=f*1.25,
-                         head=-14, twist=.25, glow=True, rot=0)
-    return base_pose(hip=(2,-34), lean=30+20*drive, curve=3,
-                     ff=(9-7*drive,-13-4*drive), fb=(-17-3*drive,-6-3*drive),
-                     ffa=34, fba=22, arm=-7, ext=.85+.08*drive, blade=-3,
-                     hb=(-8,7), wind=(-1,.03), scarf=1.65,
-                     phase=f*1.25, head=-24, twist=.45, glow=True, rot=0)
+        return base_pose(hip=([0, 2, 4, 1][f], [-34, -39, -42, -35][f]),
+                         lean=[9, 28, 40, 16][f], curve=[2, 6, 8, 3][f],
+                         ff=([10, 7, 4, 12][f], [-18, -16, -10, -15][f]),
+                         fb=([-11, -15, -20, -12][f], [-11, -8, -5, -10][f]),
+                         ffa=[44, 35, 22, 40][f], fba=[28, 20, 10, 24][f],
+                         arm=[-5, 16, 23, 6][f], ext=[.25,.38,.52,.30][f],
+                         blade=[55, 74, 84, 60][f], hb=(-7, [8,5,3,8][f]),
+                         wind=([-.4,-.15,-.05,-.45][f],[-.5,-1,-1.3,-.55][f]),
+                         scarf=[1.15,1.55,1.75,1.2][f], phase=f*1.4,
+                         head=[-5,-15,-21,-7][f], twist=[.05,.28,.42,.12][f], glow=True, rot=0)
+    return base_pose(hip=([-3, 2, 5, 0][f], [-31, -34, -34, -35][f]),
+                     lean=[14, 40, 59, 27][f], curve=[1, 5, 9, 3][f],
+                     ff=([13, 6, 0, 10][f], [-22, -19, -14, -17][f]),
+                     fb=([-8, -18, -24, -14][f], [-12, -8, -3, -8][f]),
+                     ffa=[42, 32, 16, 35][f], fba=[32, 18, 2, 24][f],
+                     arm=[-24,-7,-1,-15][f], ext=[.53,.85,.98,.68][f],
+                     blade=[-21,-4,0,-12][f], hb=(-9, [10,6,3,9][f]),
+                     wind=([-1,-1.1,-1.35,-.8][f],[.1,.02,-.05,.16][f]),
+                     scarf=[1.2,1.6,1.85,1.25][f], phase=f*1.35,
+                     head=[-8,-22,-34,-17][f], twist=[-.2,.32,.58,.14][f], glow=True, rot=0)
 
 
 def dash(f):
@@ -725,6 +803,8 @@ def light_cut(combo, phase, f, air=False):
             p['twist'] = roll
             p['roll'] = roll
             p['curve'] = 8+5*roll
+        if air:
+            p['contact_line_y'] = float(ATTACK_DATA.get('origin',[0,-24])[1]) / SC
         return p
     q = smooth(t)
     kw = dict(lean=lerp(43 if drill else 30, 9, q), curve=lerp(10, 4, q), twist=lerp(.8,.1,q),

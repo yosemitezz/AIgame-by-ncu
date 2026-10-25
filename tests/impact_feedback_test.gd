@@ -94,13 +94,26 @@ func run() -> void:
     check(Renderer.hero_region("windup", 2, 1) != Renderer.hero_region("attack", 2, 1), "windup and active map to different authored poses")
     check(Renderer.hero_region("attack", 2, 1) != Renderer.hero_region("attack", 2, 3), "finisher has a distinct authored active pose")
     var gradient: Node = game.get_node("FxLayer")
+    var motion: Node = game.get_node("MotionBlur")
+    var trail: Node = motion.get_node("MovementTrail")
+    motion.set_process(false); trail.set_process(false); trail.clear()
+    game.speed_effects_level = 1
+    motion.enabled_by_user = true
+    game.impact.reduced_motion = false
+    game.player._cancel_attack()
+    game.player._hurt_lock = 0.0
+    game.player._clear_parry()
+    game.player.animation_state = "dash"
     game.player.dash_timer = 0.12
+    game.player.velocity = Vector2.RIGHT*520.0
+    trail._process(0.0)
     for i: int in 12:
         game.player.position.x += 8
-        game.emit_fx("dash", game.player.position - Vector2(0, 13), Vector2.LEFT, 0.5)
+        game.emit_fx("dash", game.player.position - Vector2(0, 13), Vector2.RIGHT, 0.5)
         gradient._process(0.04)
+        trail._process(0.04)
     var counts: Dictionary = gradient.counts()
-    check(int(counts.get("ghosts", 0)) > 0 and int(counts.get("ghosts", 0)) <= gradient.MAX_OWNER_GHOSTS, "moving dash produces bounded real owner ghosts")
+    check(int(trail.counts()["snapshots"]) > 0 and int(trail.counts()["snapshots"]) <= int(trail.counts()["max_snapshots"]) and int(counts.get("ghosts",0)) == 0, "moving dash has bounded past-pose trail with no duplicate gradient owner")
     game.warning_issued.emit("fan", Vector2(2240, 240), 0.5)
     game.emit_fx("enemy_slash", Vector2(2220, 280), Vector2.LEFT, 1)
     check(not gradient.draw_warnings and int(gradient.counts().get("warnings",0)) == 0 and int(game.effects.counts().get("warnings",0)) > 0, "one warning authority holds the issued warning without a duplicate gradient overlay")

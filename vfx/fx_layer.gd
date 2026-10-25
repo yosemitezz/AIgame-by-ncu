@@ -22,7 +22,7 @@ const MAX_WARNINGS: int = 24
 const MAX_GHOSTS: int = 28
 const MAX_TRAIL_POINTS: int = 14
 const TRAIL_LIFE: float = 0.14
-const SLASH_TAIL_LIFE: float = 0.10
+const SLASH_TAIL_LIFE: float = 0.075
 const MAX_OWNER_GHOSTS: int = 8
 const GHOST_INTERVAL: float = 0.032
 const GHOST_MIN_DISTANCE: float = 5.0
@@ -117,6 +117,7 @@ var _last_hit_kind: int = -1
 var style_kind: int = 0
 var _last_deflect_clock: float = -10.0
 var _last_deflect_at: Vector2 = Vector2.INF
+var _weapon_contacts: Array[Dictionary] = []
 var _run_clock: float = 0.0
 var _run_ghost_clock: float = 0.0
 var _mote_clock: float = 0.0
@@ -229,6 +230,7 @@ func clear_hostile() -> void:
 		if String(_shapes[i].get("event", "")) not in SAFE_DECOR:
 			_shapes.remove_at(i)
 	_warns.clear()
+	_weapon_contacts.clear()
 	_body_trail.clear()
 	_proj_trails.clear()
 	for ghost: Ghost in _ghosts:
@@ -333,9 +335,20 @@ func _hostile_near(at: Vector2) -> bool:
 	var b: Variant = game.get("boss") if is_instance_valid(game) else null
 	return b != null and is_instance_valid(b) and at.distance_to((b as Node2D).global_position) < 90.0
 
+func _movement_trail_owned() -> bool:
+	if not is_instance_valid(game): return false
+	var owner: Node = game.get_node_or_null("MotionBlur")
+	return is_instance_valid(owner) and owner.has_method("is_movement_trail_owner") and bool(owner.call("is_movement_trail_owner"))
+
+func _movement_only(source: Node2D) -> bool:
+	var phase: Variant = source.get("attack_phase")
+	var state: Variant = source.get("animation_state")
+	return (phase == null or str(phase)=="none") and str(state) in ["run","dash","jump","apex","fall","air_jump"]
+
 func _ghost(source: Node2D, kind: String, tint: Color, alpha: float, life: float) -> void:
 	if not is_instance_valid(source) or _safe():
 		return
+	if kind=="hero" and source==_player() and _movement_trail_owned() and _movement_only(source): return
 	var id: int = source.get_instance_id()
 	var previous: Dictionary = _ghost_samples.get(id, {})
 	if not previous.is_empty() and (_clock - float(previous["time"]) < GHOST_INTERVAL or source.global_position.distance_to(Vector2(previous["at"])) < GHOST_MIN_DISTANCE):
@@ -411,6 +424,9 @@ func spawn(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 	_spawn_event = ""
 
 func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
+	if kind.begins_with("weapon_hit_"):
+		_weapon_contact(kind.trim_prefix("weapon_hit_"), at, dir, power)
+		return
 	var d: float = 1.0 if dir.x >= 0.0 else -1.0
 	# Event names from the combat-feel branch map onto this layer.
 	match kind:
@@ -425,24 +441,24 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 		"dash_ghost":
 			kind = "dash"
 		"dash_start":
-			_shape("ring", at, 0.22, "flow", {"r0": 2.0, "r1": 14.0, "w": 2.0, "ry": 0.6})
-			_sparks(at, Vector2(-d, 0.0), 6, "flow", 120.0, 0.35, "streak", 0.6)
+			# Flight's articulated wing fan owns airborne launch. A second bright
+			# ring would hide the new spread/drive silhouette, so only ground dust.
+			var dasher: Node2D = _player()
+			if dasher is CharacterBody2D and dasher.is_on_floor():
+				_sparks(dasher.global_position+Vector2(-d*5.0,-1.0),Vector2(-d,-.2),3,"dust",65.0,.16,"dot",.45)
 			return
 		"enemy_dash":
 			_shape("bars", at, 0.34, "warm", {"d": d, "len": 30.0})
 			_sparks(at, Vector2(-d, 0.0), 4, "warm", 90.0, 0.35, "streak", 0.6)
 			return
 		"lunge":
-			# The forward step of a ground strike: dust kicked up at the heels, speed lines trailing
-			# behind, and a tinted afterimage left where the hero started, in this swing's hue.
-			var lc: float = clampf(power, 1.0, 3.0)
-			_shape("bars", at + Vector2(0.0, -12.0), 0.26 + 0.04 * lc, "flow", {"d": d, "len": 22.0 + 8.0 * lc})
-			_shape("ring", at, 0.22, "dust", {"r0": 2.0, "r1": 12.0 + 3.0 * lc, "w": 2.0, "ry": 0.3})
-			_sparks(at + Vector2(-d * 4.0, 0.0), Vector2(-d, -0.35), 8 + 3 * int(lc), "dust", 150.0, 0.4, "dot", 0.5)
-			_sparks(at + Vector2(-d * 6.0, -12.0), Vector2(-d, 0.0), 6 + 2 * int(lc), "flow", 200.0, 0.4, "streak", 0.45)
-			var lp: Node2D = _player()
-			if lp != null:
-				_ghost(lp, "hero", Color.WHITE, 0.6, 0.3)
+			# The body pose carries the step. Sparse heel chips add weight without
+			# throwing a bright ring and long bars over the hero's shoulders.
+			var mover: Node2D = _player()
+			if mover is CharacterBody2D and mover.is_on_floor():
+				_sparks(at+Vector2(-d*5.0,-1.0),Vector2(-d,-.25),3+clampi(roundi(power),1,3),"dust",65.0,.18,"dot",.4)
+			if mover != null:
+				_ghost(mover,"hero",Color.WHITE,.30,.13)
 			return
 		"unblockable_charge", "charge":
 			kind = "telegraph"
@@ -794,51 +810,142 @@ func _profile_geometry(shape: Dictionary, actor: Node2D) -> void:
 				_parts.back()["fade_scale"] = 0.25
 	shape["sample_step"] = maxi(previous, sample)
 
+func profile_ink_state(shape: Dictionary) -> Dictionary:
+	# Rendering specification, independent of game-clock and actor movement. Only
+	# the original collision polygon is authoritative; no expanded damage halo.
+	var active: bool = bool(shape.get("phase_bound", false))
+	var tail: float = clampf(float(shape.get("tail_age", 0.0)) / SLASH_TAIL_LIFE, 0.0, 1.0)
+	return {"active":active,"opacity":1.0 if active else 0.16 * pow(1.0-tail,2.0),
+		"mode":str(shape.get("mode","arc")),"closed_outline":false,
+		"recovery_seconds":SLASH_TAIL_LIFE,"wide_fill":false}
+
+func profile_outer_edge(polygon: PackedVector2Array, origin: Vector2) -> PackedVector2Array:
+	var edge := PackedVector2Array()
+	if polygon.is_empty(): return edge
+	var has_origin: bool = polygon[0].distance_squared_to(origin)<1.0
+	for index: int in range(1 if has_origin else 0,polygon.size()): edge.append(polygon[index])
+	# Full revolution polygons omit the origin; close only their existing outer
+	# boundary. Partial sectors keep their open contour and cannot invent a ring.
+	if not has_origin and edge.size()>2: edge.append(edge[0])
+	return edge
+
 func _draw_profile(c: CanvasItem, shape: Dictionary, glow: bool) -> void:
 	var polygon: PackedVector2Array = shape.get("polygon", PackedVector2Array())
 	if polygon.size() < 3: return
-	var active: bool = bool(shape.get("phase_bound", false))
-	var fade: float = 1.0 if active else 0.18 * (1.0 - clampf(float(shape.get("tail_age", 0.0)) / SLASH_TAIL_LIFE, 0.0, 1.0))
-	var alpha: float = fade * (0.11 if glow else 1.0)
-	var mode: String = str(shape.get("mode", "arc"))
+	var ink: Dictionary = profile_ink_state(shape)
+	var fade: float = float(ink["opacity"])
+	if fade <= 0.0001: return
+	var mode: String = str(ink["mode"])
 	var ramp: String = str(shape.get("ramp", "blade"))
 	var origin: Vector2 = Vector2(shape.get("origin", polygon[0])).round()
 	var leading: Vector2 = Vector2(shape.get("leading", polygon[polygon.size()-1])).round()
 	if mode == "thrust":
-		var travel_from: Vector2 = Vector2(shape.get("travel_from", origin)).round()
-		if travel_from.distance_squared_to(origin) > 1.0:
-			c.draw_line(travel_from, origin, _col(ramp, 0.7, alpha*0.24), 6.0 if glow else 3.0, false)
-		# The pointed hull is the real narrow hurt boundary. The helix stays inside it.
-		if not glow: c.draw_colored_polygon(polygon, _col(ramp, 0.5, fade * 0.045))
-		var outline: PackedVector2Array = polygon.duplicate()
-		outline.append(polygon[0])
-		c.draw_polyline(outline, _col(ramp, 0.55, alpha * 0.65), 4.0 if glow else 1.0, false)
-		c.draw_line(origin, leading, _col(ramp, 0.25, alpha), 5.0 if glow else 2.0, false)
-		if int(shape.get("combo", 1)) == 3:
-			var direction: Vector2 = (leading-origin).normalized()
-			var normal: Vector2 = direction.orthogonal()
-			var distance: float = origin.distance_to(leading)
-			var phase: float = float(shape.get("progress", 0.0)) * TAU * 2.0
-			for side: float in [-1.0, 1.0]:
-				var points := PackedVector2Array()
-				for i: int in range(25):
-					var t: float = float(i) / 24.0
-					var width: float = 3.0 + 9.0 * sin(t * PI)
-					var point: Vector2 = (origin + direction * distance * t + normal * sin(t * TAU * 2.5 - phase) * width * side).round()
-					if Geometry2D.is_point_in_polygon(point, polygon): points.append(point)
-				if points.size() > 1: c.draw_polyline(points, _col(ramp, 0.4 if side < 0 else 0.72, alpha * 0.7), 4.0 if glow else 1.0, false)
-		if not glow: c.draw_line(leading-Vector2(float(shape.get("facing", 1))*8.0,0), leading, Color(1,1,1,fade), 2.0, false)
+		_draw_thrust_ink(c,shape,polygon,origin,leading,ramp,fade,glow)
 		return
-	# Arc / spin contours show only this actual swept interval. No complete ring on frame one.
-	var edge := PackedVector2Array()
+	# A tapered strip hugs the actual swept boundary. Never connect the body to
+	# the outer point with the old full-bright radial rod or fill a whole ring.
+	var edge: PackedVector2Array = profile_outer_edge(polygon,origin)
+	if edge.size() < 2: return
+	var radius: float = maxf(1.0,origin.distance_to(leading))
+	var inner_factor: float = 0.925 if mode == "arc" else 0.952
+	var edge_colors := PackedColorArray()
+	var rim := PackedVector2Array()
+	for point: Vector2 in edge:
+		var proximity: float = clampf(1.0-point.distance_to(leading)/(radius*1.2),0.0,1.0)
+		var alpha: float = fade*(0.17+0.76*pow(proximity,1.5))
+		var outside: Vector2 = origin.lerp(point,0.993).round()
+		rim.append(outside)
+		edge_colors.append(_col(ramp,0.10+0.58*(1.0-proximity),alpha*(0.11 if glow else 1.0)))
+	if not glow:
+		for index: int in range(edge.size()-1):
+			var a: Vector2 = origin.lerp(edge[index],0.993).round()
+			var b: Vector2 = origin.lerp(edge[index+1],0.993).round()
+			var ai: Vector2 = origin.lerp(edge[index],inner_factor).round()
+			var bi: Vector2 = origin.lerp(edge[index+1],inner_factor).round()
+			if a==b or ai==bi or absf((b-a).cross(ai-a))<0.5: continue
+			var ca: Color = edge_colors[index]
+			var cb: Color = edge_colors[index+1]
+			var ia: Color = _col(ramp,.68,ca.a*.025)
+			var ib: Color = _col(ramp,.68,cb.a*.025)
+			c.draw_polygon(PackedVector2Array([a,b,bi,ai]),PackedColorArray([ca,cb,ib,ia]))
+	if rim.size()>1:
+		c.draw_polyline_colors(rim,edge_colors,4.0 if glow else 1.0,false)
+	# The fine white steel highlight occupies only the travelling head of the arc.
+	if not glow:
+		for index: int in range(rim.size()-1):
+			if rim[index].distance_to(leading) < radius*.19 and rim[index+1].distance_to(leading) < radius*.19:
+				c.draw_line(rim[index],rim[index+1],Color(1.0,.97,.85,fade*.88),1.0,false)
+
+func _draw_thrust_ink(c: CanvasItem, shape: Dictionary, polygon: PackedVector2Array, origin: Vector2, leading: Vector2, ramp: String, fade: float, glow: bool) -> void:
+	var delta: Vector2 = leading-origin
+	if delta.length() < 3.0: return
+	var direction: Vector2 = delta.normalized()
+	var normal: Vector2 = direction.orthogonal()
+	var begin: Vector2 = origin+direction*minf(26.0,delta.length()*.23)
+	var needle := PackedVector2Array()
 	var colors := PackedColorArray()
-	for index: int in range(1, polygon.size()):
-		edge.append(polygon[index].round())
-		colors.append(_col(ramp, float(index) / polygon.size(), alpha, float(shape.get("style",0)) * 0.06))
-	if not glow: c.draw_colored_polygon(polygon, _col(ramp, 0.5, fade * (0.025 if mode == "spin" else 0.045)))
-	if edge.size()>1: c.draw_polyline_colors(edge, colors, 6.0 if glow else (3.0 if mode == "spin" else 4.0), false)
-	c.draw_line(origin, leading, _col(ramp, 0.35, alpha * 0.65), 6.0 if glow else 3.0, false)
-	if not glow: c.draw_line(origin.lerp(leading, 0.5), leading, Color(1,1,0.94,fade*0.8), 1.0, false)
+	for index: int in 9:
+		var t: float = float(index)/8.0
+		needle.append(begin.lerp(leading,t).round())
+		colors.append(_col(ramp,.7-.62*t,fade*(.22+.65*t)*(0.12 if glow else 1.0)))
+	c.draw_polyline_colors(needle,colors,4.0 if glow else 1.0,false)
+	if not glow:
+		# Sharp one-pixel core and a short wedge at the real tip, no box outline.
+		c.draw_line((leading-direction*minf(19.0,delta.length()*.22)).round(),leading.round(),Color(.96,1,1,fade),1.0,false)
+		c.draw_line((leading-direction*7+normal*2).round(),leading.round(),_col(ramp,.25,fade*.7),1.0,false)
+		c.draw_line((leading-direction*7-normal*2).round(),leading.round(),_col(ramp,.25,fade*.7),1.0,false)
+	if int(shape.get("combo",1)) == 3:
+		# Short, fading wake behind the needle. The bright tip leads; the helix
+		# never becomes a full-length wire cage around the player's body.
+		var phase: float = float(shape.get("progress",0.0))*TAU*1.75
+		for side: float in [-1.0,1.0]:
+			var points := PackedVector2Array()
+			var helix_colors := PackedColorArray()
+			for index: int in 17:
+				var t: float = float(index)/16.0
+				var along: float = .14+.61*t
+				var width: float = sin(t*PI)*7.0
+				var point: Vector2 = origin+delta*along+normal*sin(t*TAU*1.65-phase)*width*side
+				if Geometry2D.is_point_in_polygon(point,polygon):
+					points.append(point.round())
+					helix_colors.append(_col(ramp,.45+.22*t,fade*sin(t*PI)*(.10 if glow else .42)))
+			if points.size()>1: c.draw_polyline_colors(points,helix_colors,3.0 if glow else 1.0,false)
+	var travel_from: Vector2 = Vector2(shape.get("travel_from",origin))
+	if travel_from.distance_squared_to(origin)>1.0:
+		c.draw_line(travel_from.round(),origin.round(),_col(ramp,.7,fade*(.035 if glow else .12)),2.0 if glow else 1.0,false)
+
+func _weapon_contact(weapon: String, at: Vector2, direction: Vector2, power: float) -> void:
+	if weapon not in ["light","heavy","great","wave"]: return
+	if not at.is_finite() or not direction.is_finite(): return
+	for recent: Dictionary in _weapon_contacts:
+		if recent["weapon"]==weapon and _clock-float(recent["clock"])<.02 and Vector2(recent["at"]).distance_squared_to(at)<16.0: return
+	_weapon_contacts.append({"weapon":weapon,"at":at,"clock":_clock})
+	while _weapon_contacts.size()>16: _weapon_contacts.pop_front()
+	var ramp: String = "blade" if weapon=="light" else ("gold" if weapon=="great" else "ember")
+	var life: float = .13 if weapon=="light" else (.18 if weapon=="heavy" else .16)
+	_shape("weapon_contact",at.round(),life,ramp,{"weapon":weapon,"bearing":direction.angle() if direction.length_squared()>.001 else 0.0,"force":clampf(power,.5,2.0)})
+	var count: int = 4 if weapon=="light" else (7 if weapon=="heavy" else 6)
+	_sparks(at,direction,count,ramp,90.0 if weapon=="light" else 110.0,.15 if weapon=="light" else .20,"streak",.55 if weapon=="light" else 1.15)
+
+func _draw_weapon_contact(c: CanvasItem, shape: Dictionary, t: float, glow: bool) -> void:
+	var weapon: String = str(shape["weapon"])
+	var at: Vector2 = Vector2(shape["at"]).round()
+	var ramp: String = str(shape["ramp"])
+	var direction: Vector2 = Vector2.from_angle(float(shape["bearing"]))
+	var normal: Vector2 = direction.orthogonal()
+	var fade: float = pow(1.0-clampf(t,0.0,1.0),2.0)*(0.12 if glow else 1.0)
+	var reach: float = (12.0 if weapon=="light" else (18.0 if weapon=="heavy" else 16.0))*(.55+minf(t*3.0,1.0)*.45)
+	var count: int = 4 if weapon=="light" else 6
+	for index: int in count:
+		var angle: float = float(index)*TAU/count+float(shape["bearing"])
+		if weapon=="heavy": angle=lerpf(-1.2,1.2,float(index)/float(count-1))+float(shape["bearing"])
+		var ray: Vector2 = Vector2.from_angle(angle)
+		var length: float = reach*(1.0 if index%2==0 else .60)
+		c.draw_line((at+ray*3.0).round(),(at+ray*length).round(),_col(ramp,.22+.1*(index%3),fade),3.0 if glow else 1.0,false)
+	if weapon=="wave":
+		c.draw_line((at-normal*reach*.65).round(),(at+normal*reach*.65).round(),_col(ramp,.2,fade*.8),3.0 if glow else 1.0,false)
+	if not glow and t<.25:
+		c.draw_rect(Rect2(at-Vector2(1,1),Vector2(3,3)),Color(1.0,.98,.9,fade))
 
 func _sync_slash(s: Dictionary) -> bool:
 	var actor_ref: WeakRef = s["actor_ref"]
@@ -905,7 +1012,9 @@ func _follow_actors(delta: float) -> void:
 	var safe: bool = is_instance_valid(game) and bool(game.get("story_safe"))
 	# Body ribbon and afterimages follow the hero, so every action leaves a continuous light path.
 	if pl != null:
-		_smear.follow(pl, delta, _speed_level())
+		var dedicated_movement: bool = _movement_trail_owned()
+		if dedicated_movement and _movement_only(pl): _smear.clear()
+		else: _smear.follow(pl, delta, _speed_level())
 		var dash_t: float = float(pl.get("dash_timer"))
 		var atk_t: float = float(pl.get("attack_timer"))
 		var vel: Vector2 = pl.get("velocity")
@@ -916,6 +1025,7 @@ func _follow_actors(delta: float) -> void:
 			strength = 0.75
 		elif absf(vel.x) > 60.0:
 			strength = 0.55 if is_on_floor_safe(pl) else 0.4
+		if dedicated_movement and _movement_only(pl): strength=0.0
 		var trail_at: Vector2 = pl.global_position + Vector2(0.0, -14.0)
 		if strength > 0.0 and (_body_trail.is_empty() or (trail_at.distance_to(Vector2(_body_trail.back()["p"])) >= 4.0 and _clock - float(_body_trail.back().get("time", 0.0)) >= 0.025)):
 			_body_trail.append({"p": trail_at.round(), "age": 0.0, "k": strength, "time": _clock})
@@ -1008,6 +1118,7 @@ func _paint(c: CanvasItem, glow: bool) -> void:
 		_draw_hue = float(s.get("sh", 0.0))
 		match String(s["type"]):
 			"profile": _draw_profile(c, s, glow)
+			"weapon_contact": _draw_weapon_contact(c,s,t,glow)
 			"arc": _arc(c, s, t, glow)
 			"ring": _ring(c, s, t, glow)
 			"rays": _rays(c, s, t, glow)

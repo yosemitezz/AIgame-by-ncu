@@ -1,7 +1,9 @@
 ## Legacy node name retained for main/F3; no SCREEN_UV or screen texture is sampled.
 extends CanvasLayer
 ## Background-only native-pixel motion accents; camera lead is returned, never applied here.
+const MovementTrail = preload("res://vfx/movement_trail.gd")
 const MAX_MARKS: int = 64
+var _movement_trail: Node
 var enabled_by_user: bool = true
 var _background: Node2D
 var game: Node
@@ -27,6 +29,11 @@ func configure(owner_game: Node) -> void:
 		_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		game.add_child(_background)
 		_background.draw.connect(func() -> void: _draw_background(_background))
+	if not is_instance_valid(_movement_trail):
+		_movement_trail = MovementTrail.new()
+		_movement_trail.name = "MovementTrail"
+		add_child(_movement_trail)
+		_movement_trail.configure(game,self)
 	_rng.seed = 20261025
 
 func _level() -> int:
@@ -38,13 +45,20 @@ func _blocked() -> bool:
 		return true
 	if not enabled_by_user or _level() == 0 or bool(game.get("story_safe")) or bool(game.get("_paused")) or get_tree().paused:
 		return true
+	if game.get("player").get("dead") == true: return true
+	var outcome: Variant = game.get("outcome")
+	if outcome != null and str(outcome) != "": return true
 	var overlay: Variant = game.get("_overlay")
 	if overlay != null and String(overlay) != "":
 		return true
-	var impact: Variant = game.get("impact")
-	return impact != null and is_instance_valid(impact) and bool(impact.get("reduced_motion"))
+	return false
+
+func is_movement_trail_owner() -> bool:
+	# Ownership stays true when F3 is OFF: old emitters must not reappear.
+	return is_instance_valid(_movement_trail)
 
 func clear() -> void:
+	if is_instance_valid(_movement_trail): _movement_trail.clear()
 	_marks.clear()
 	_lead = 0.0
 	_spawn_clock = 0.0
@@ -57,6 +71,10 @@ func _notification(what: int) -> void:
 		clear()
 
 func sample_camera_lead(delta: float) -> float:
+	var impact: Variant = game.get("impact") if is_instance_valid(game) else null
+	if impact != null and is_instance_valid(impact) and impact.get("reduced_motion") == true:
+		_lead = 0.0
+		return 0.0
 	if _blocked():
 		clear()
 		return 0.0
@@ -91,12 +109,12 @@ func _process(delta: float) -> void:
 			if _marks.size() >= MAX_MARKS:
 				break
 			var offset := Vector2(-direction * _rng.randf_range(100, 290), _rng.randf_range(-150, -70) if index % 2 == 0 else _rng.randf_range(18, 50))
-			_marks.append({"at": (player.global_position + offset).round(), "life": 0.16, "max": 0.16, "d": direction, "length": _rng.randi_range(26, 64) if dash else _rng.randi_range(12, 30), "edge": index % 3 == 2})
+			_marks.append({"at": (player.global_position + offset).round(), "life": 0.16, "max": 0.16, "d": velocity.normalized() if velocity.length_squared()>1.0 else Vector2(direction,0), "length": _rng.randi_range(26, 64) if dash else _rng.randi_range(12, 30), "edge": index % 3 == 2})
 	if is_instance_valid(_background):
 		_background.queue_redraw()
 
 func is_active() -> bool:
-	return not _marks.is_empty()
+	return not _marks.is_empty() or (is_instance_valid(_movement_trail) and _movement_trail.is_active())
 
 func _exit_tree() -> void:
 	if is_instance_valid(_background):
@@ -106,7 +124,8 @@ func _draw_background(canvas: CanvasItem) -> void:
 	for mark: Dictionary in _marks:
 		var alpha: float = float(mark["life"]) / float(mark["max"]) * (0.5 if _level() == 2 else 0.34)
 		var at: Vector2 = mark["at"]
-		var back: Vector2 = Vector2(-float(mark["d"]) * float(mark["length"]), 0)
+		var direction: Vector2 = mark["d"]
+		var back: Vector2 = -direction * float(mark["length"])
 		canvas.draw_line(at, (at + back).round(), Color(0.62, 0.72, 0.9, alpha), 2.0 if int(mark["length"]) > 40 else 1.0, false)
 		if bool(mark["edge"]):
 			canvas.draw_line(at, at + Vector2(0, -3), Color(0.62, 0.72, 0.9, alpha), 1.0, false)

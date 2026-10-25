@@ -113,10 +113,11 @@ func run() -> void:
 	check(blur._background is Node2D and blur._background.z_index == 1, "background speed marks sit below actors and projectiles")
 	check(blur.sample_camera_lead(0.1) <= 24, "speed service returns bounded lead without applying camera motion")
 	game.impact.reduced_motion = true
-	check(blur.sample_camera_lead(0.1) == 0 and not blur.is_active(), "F2 reduced motion disables speed marks and lead")
+	check(blur.sample_camera_lead(0.1) == 0 and blur.is_active(), "F2 suppresses camera lead while independent movement feedback stays enabled")
 	game.impact.reduced_motion = false
 	blur.enabled_by_user = false
-	check(blur.sample_camera_lead(0.1) == 0, "F3 can disable replacement background feedback")
+	blur._process(0.01)
+	check(blur.sample_camera_lead(0.1) == 0 and not blur.is_active(), "F3 independently disables and clears movement feedback")
 	var source: String = FileAccess.get_file_as_string("res://vfx/motion_blur.gd")
 	check(not source.contains("hint_screen_texture") and not source.contains("texture(screen") and not source.contains("ColorRect"), "no full-screen actor/projectile/UI sampling or blur remains")
 	game.player.position = at
