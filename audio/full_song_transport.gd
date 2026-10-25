@@ -5,8 +5,10 @@ signal section_changed(section: String)
 signal jumped(generation: int, chart_time: float)
 signal completed
 var bpm: float = 203.0
+var offset_ms: float = 245.0
 var offset_seconds: float = 0.245
 var duration: float = 0.0
+var _config: Dictionary = {}
 var fixed_end: float = 0.0
 var random_start: float = 0.0
 var random_end: float = 0.0
@@ -22,8 +24,10 @@ var ended: bool = false
 var error: String = ""
 
 func configure(config: Dictionary, song_duration: float) -> bool:
+    _config = config.duplicate(true)
     bpm = float(config.get("bpm", 203.0))
-    offset_seconds = float(config.get("offset_ms", 245.0)) / 1000.0
+    offset_ms = float(config.get("offset_ms", 245.0))
+    offset_seconds = offset_ms / 1000.0
     duration = song_duration
     error = ""
     if not is_finite(bpm) or bpm <= 0.0 or not is_finite(duration):
@@ -40,6 +44,25 @@ func configure(config: Dictionary, song_duration: float) -> bool:
 
 func beat_time(beat: float) -> float:
     return beat * 60.0 / bpm + offset_seconds
+
+func set_offset_ms(value_ms: float) -> bool:
+    if running or not is_finite(value_ms):
+        return false
+    var next_offset: float = value_ms / 1000.0
+    var seconds_per_beat: float = 60.0 / bpm
+    var next_fixed: float = float(_config.get("fixed_end_beat", 200.0)) * seconds_per_beat + next_offset
+    var next_random_start: float = float(_config.get("random_start_beat", 200.0)) * seconds_per_beat + next_offset
+    var next_random_end: float = float(_config.get("random_end_beat", 264.0)) * seconds_per_beat + next_offset
+    var next_rest_end: float = float(_config.get("rest_end_beat", 296.0)) * seconds_per_beat + next_offset
+    if not (next_fixed > 0.0 and is_equal_approx(next_fixed, next_random_start) and next_random_end > next_random_start and next_rest_end > next_random_end and duration > next_rest_end):
+        return false
+    offset_ms = value_ms
+    offset_seconds = next_offset
+    fixed_end = next_fixed
+    random_start = next_random_start
+    random_end = next_random_end
+    rest_end = next_rest_end
+    return true
 
 func start() -> void:
     chart_time = 0.0

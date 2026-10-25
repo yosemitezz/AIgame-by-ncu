@@ -164,6 +164,25 @@ func get_heavy_groups() -> Array[Dictionary]:
         result.append(value)
     return result
 
+func replace_offset_ms(value_ms: float) -> bool:
+    if not _full or _full_chart_path.is_empty() or running or not is_finite(value_ms):
+        return false
+    var clamped: float = clampf(value_ms, 0.0, 1000.0)
+    var current: float = float(timeline.get("offset_ms", 245.0))
+    if is_equal_approx(clamped, current):
+        return true
+    var chart: RefCounted = SourceParser.new()
+    chart.fast_interval_threshold_beats = float(timeline.get("fast_interval_threshold_beats", 1.1))
+    if not chart.parse_file(_full_chart_path, bpm, clamped, 4.0):
+        return false
+    if _audio == null or _audio.stream == null or _audio.stream.get_length() + 0.000001 < float(chart.chart_end_time):
+        return false
+    if not _transport.set_offset_ms(clamped):
+        return false
+    timeline["offset_ms"] = clamped
+    _full_chart = chart
+    return true
+
 static func compensated_audio_position(playback: float, since_mix: float, reported_latency: float, adjustment_ms: float = 0.0) -> float:
     return playback + since_mix - reported_latency - clampf(adjustment_ms, -200.0, 200.0) / 1000.0
 
