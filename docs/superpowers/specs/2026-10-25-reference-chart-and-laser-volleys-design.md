@@ -370,6 +370,13 @@ exactly once and that the first heavy is beat 73.
 `hit_vfx_contract_test`, `impact_feedback_test`, `audio_calibration_test`, `boss_room_test`,
 `heavy_lane_test`, `heavy_judge_test` (baseline only), and `source-chart`.
 
+**Later update (2026-10-25).** The reference chart's only teleport phrase inside the
+user-confirmed 265.073-302.905s blink window (276.009s) is covered by its concurrent laser
+formations, so the legacy fixed-arena clearance rejects it. Shipped data keeps the confirmed
+window, and the main infinite-room flow does not enable blink. `boss_blink_test` keeps all of
+its mechanics assertions but brackets a chart-valid fair phrase (200.0-240.0s) instead of the
+old source schedule. See `docs/climax-blink.md` for the recorded deviation.
+
 ## 9. Verification
 
 1. Focused data/contract checks:
