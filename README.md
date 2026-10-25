@@ -18,8 +18,6 @@ Godot 4.7 纯 2D 像素横版动作游戏：西方奇幻地牢、灵活跑跳、
 
 双击**项目根目录 `play.cmd`**。本机主目录为 `D:\code\aigame-ncu-integrate`；也可用 Godot 4.7 打开根目录 `project.godot` 后运行主场景。`boss_attack/` 是保留的朋友原始子工程，不是当前完整游戏入口。
 
-逻辑画面 800×450，默认窗口 1600×900，最近邻整数缩放。缓存、证据与日志分别在 D 盘工程内的 `.local/` 和 `artifacts/`，不纳入提交。
-
 ## 操作
 
 | 操作 | 按键 |
@@ -49,12 +47,6 @@ Boss 房战败按 R 直接在该房重试，保留本次运行中的地牢解锁
 默认选定音轨和完整谱面为 203 BPM / +245ms。原曲已按用户确认复用仓库已有文件，未声称音乐为原创或 MIT 资产。固定段、血量门槛与乐句循环、休息段禁伤，以及朋友普通/加速/方块 X/+ 和四类激光设计均保留；`fixed_2` 仍为空。
 
 已移除源冲刺在释放拍之后再次等待蓄势帧的问题。`data/audio_calibration.json` 可配置额外设备延迟补偿，默认 0ms；不修改基础谱面偏移。逻辑测试不等于声卡、蓝牙或实际听感校准。重鼓提示仅作反馈，防御始终依据真实攻击接触和弹刀时间窗，不按漏拍扣血。
-
-### 高潮闪现压身斩
-
-仅在用户确认的原曲 **04:25–05:03**（精确配置 265.073–302.905 秒）启用，其他密集段不会自动视为高潮。该窗口将一次原有侧移→冲斩适配为提前识别、短消失、合法前方显形，再在原出刀拍形成有效钢刃；安全候选不满足时取消，不追踪已经躲开的玩家。
-
-它保留原招的**可弹霸体**：左 Shift 成功会反震武器并累积架势，三次有效弹刀可破架，原喷弹继续。测试中显形后反应时间 500ms；每窗口每次音乐代际最多一次，冷却 8 秒。若提前击败 Boss，不会强制拖到高潮或播放必中的演出。参数见 `data/boss_blink_profile.json`。
 
 ## 验证与协作
 
@@ -131,8 +123,6 @@ Validation: the19-check unified migration suite passed, followed by the203BPM co
 Full-song milestone: the main encounter defaults to the existing selected OGG and complete 203 BPM/+245 ms chart. The left heavy lane previews two seconds and judges ±125 ms for feedback only; real defense still requires contact. See docs/full-song-runtime.md and THIRD_PARTY_NOTICES.md.
 
 </details>
-
-## 原 main 简介（原样保留）
 
 > just for fun
 > enjoy it XDDD
