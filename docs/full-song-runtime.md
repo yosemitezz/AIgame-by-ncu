@@ -22,22 +22,24 @@ The deterministic coverage fixture advances the actual main Boss, Projectile and
 
 | Source pattern | Phrases | Projectile emissions |
 | --- | ---: | ---: |
-| normal 1: charge / dash / ring | 36 | 288 |
-| normal 2: side sweep / spray | 35 | 630 |
-| normal 3: fan / dash | 35 | 105 |
-| normal 4: dash / double ring | 35 | 560 |
-| fast 1 | 22 | 352 |
-| fast 2 | 22 | 264 |
-| fast 3: two dashes | 22 | 0 |
-| fast 4 | 21 | 588 |
-| Total | 228 | 2787 |
+| normal 1: charge / dash / ring | 29 | 232 |
+| normal 2: side sweep / spray | 29 | 522 |
+| normal 3: fan / dash | 28 | 84 |
+| normal 4: dash / double ring | 28 | 448 |
+| fast 1 | 31 | 496 |
+| fast 2 | 31 | 372 |
+| fast 3: two dashes | 31 | 0 |
+| fast 4 | 30 | 840 |
+| Total | 237 | 2994 |
 
-Additional source geometry comprises 24 fixed cubes and 48 laser formations. Fixed-cube orientation is seeded in the test only; the live encounter retains its configured random X/+ choice. The undefined fixed_2 slot remains empty.
+Additional source geometry comprises 36 fixed cubes and 67 laser formations. Fixed-cube orientation is seeded in the test only; the live encounter retains its configured random X/+ choice. The undefined fixed_2 slot remains empty.
+
+Laser formations fire beat-clustered volleys: source lines whose damage times fall within half a beat (`0.5 * 60 / 203` s) fire together, and each volley re-centers once on the player's arena center at the start of its own warning. A warning already visible when the hazard is created never moves, and cubes never track.
 ## Verified milestone
 
 The selected-source validation copy uses committed baseline `b73ab5210a67b02b1c9e53291e050f97fb5a4e8c` plus only this milestone's files. Concurrent uncommitted hero/recoil/smear work is preserved outside the commit and is not part of these results.
 
-The full-song emission accounting matches all 228 phrases, all 862 distinct actions, all 2787 requested/successful projectiles, all 24 fixed cubes and all 48 laser formations. The deterministic seed yields 13 X and 11 + cubes; each of the four laser geometries appears 12 times. Peak live objects are 44/180 projectiles and 6/24 hazards, with no budget rejection, duplicate or missing event. Rest deliberately clears nine already-emitted projectiles; EOF leaves no live danger. The 147.783ms source-warning regression is retained: an on-time short warning must not be mistaken for a stale catch-up event.
+The full-song emission accounting matches all 237 phrases, all 922 distinct actions, all 2994 requested/successful projectiles, all 36 fixed cubes and all 67 laser formations. The deterministic seed yields 18 X and 18 + cubes; the four laser geometries appear 17 diamond, 17 parallel, 17 grid and 16 rotating times. Peak live objects are 46/180 projectiles and 6/24 hazards, with no budget rejection, duplicate or missing event. Rest deliberately clears nine already-emitted projectiles; EOF leaves no live danger. The 147.783ms source-warning regression is retained: an on-time short warning must not be mistaken for a stale catch-up event.
 
 Checks cover source parsing, complete event accounting, heavy-marker bounds/glyphs/input, real main-scene wiring, repeat/EOF and pause behavior, source rewind overshoot, delayed seek acknowledgment, input arriving before the render update, contact-parry compatibility and startup. Tests use the Dummy audio device and injected real-backend sample values; they decode the actual selected OGG but do not claim a full listening/device-latency or difficulty acceptance test. The editor's warning that the retained `boss_attack` folder contains another project is expected; no runtime script errors or leaked-object warnings are accepted.
 

@@ -146,7 +146,8 @@ class CoverageGame extends Node2D:
             key = "formation|%d" % int(geometry["lines"][0]["formation_index"])
         else:
             geometry_ok = false
-        hazard_records[key] = {"kind": kind, "lines": geometry["lines"].size(), "count": int(hazard_records.get(key, {}).get("count", 0)) + 1}
+        var tracking: Dictionary = geometry.get("tracking", {})
+        hazard_records[key] = {"kind": kind, "lines": geometry["lines"].size(), "count": int(hazard_records.get(key, {}).get("count", 0)) + 1, "tracking": tracking.duplicate(true)}
         for line: Dictionary in geometry["lines"]:
             var segment: Vector2 = (line["b"] as Vector2) - (line["a"] as Vector2)
             geometry_ok = geometry_ok and segment.length() > 20.0 and float(line["warning_time"]) < float(line["damage_time"]) and float(line["active_until"]) >= float(line["damage_time"])
@@ -260,7 +261,17 @@ func build_expected() -> Dictionary:
     for fixed: Dictionary in chart.fixed_attack_events:
         expected_fixed["fixed|%.6f" % float(fixed["time"])] = {"time": float(fixed["time"]), "reason": safety_reason(float(fixed["time"]), float(fixed["time"]), rest_start, rest_end, duration)}
     for formation: Dictionary in chart.laser_formations:
-        expected_formations["formation|%d" % int(formation["index"])] = {"time": float(formation["start_time"]), "lines": formation["lasers"].size(), "pattern": formation["pattern"], "reason": safety_reason(float(formation["start_time"]), float(formation["start_time"]), rest_start, rest_end, duration)}
+        var damages: Array[float] = []
+        for laser: Dictionary in formation["lasers"]:
+            damages.append(float(laser["damage_time"]))
+        damages.sort()
+        var volleys: int = 0
+        var anchor: float = 0.0
+        for damage: float in damages:
+            if volleys == 0 or damage - anchor > spb * 0.5:
+                volleys += 1
+                anchor = damage
+        expected_formations["formation|%d" % int(formation["index"])] = {"time": float(formation["start_time"]), "lines": formation["lasers"].size(), "pattern": formation["pattern"], "reason": safety_reason(float(formation["start_time"]), float(formation["start_time"]), rest_start, rest_end, duration), "volleys": volleys}
     return {"phrases": chart.action_phrases.size(), "modes": modes, "fixed": chart.fixed_attack_events.size(), "formations": chart.laser_formations.size(), "actions": raw_actions, "projectiles": raw_shots, "patterns": per_pattern, "rest_start": rest_start, "rest_end": rest_end, "duration": duration}
 
 func run() -> void:
@@ -295,8 +306,8 @@ func run() -> void:
     game.boss._cube_rng.seed = 20261024
     game.boss.set_physics_process(false)
     var expected: Dictionary = build_expected()
-    check(expected["phrases"] == 228 and expected["modes"]["basic"] == 141 and expected["modes"]["fast"] == 87, "source contains228 phrases:141normal and87fast")
-    check(expected["fixed"] == 24 and expected["formations"] == 48, "source contains24fixed cues and48laser formations")
+    check(expected["phrases"] == 237 and expected["modes"]["basic"] == 114 and expected["modes"]["fast"] == 123, "source contains237 phrases:114normal and123fast")
+    check(expected["fixed"] == 36 and expected["formations"] == 67, "source contains36fixed cues and67laser formations")
     check(game.music._device_dummy and game.music.is_full_song(), "real full-song runtime uses Dummy with no physical playback")
     await physics_frame
     game.boss.start_encounter()
@@ -330,6 +341,7 @@ func run() -> void:
                 missing.append({"key": key, "pattern": row["pattern"], "type": row["type"], "time": row["time"]})
             else:
                 cancellations[reason] = int(cancellations.get(reason, 0)) + 1
+    var half_beat: float = game.music.seconds_per_beat() * 0.5
     var missing_hazards: Array[String] = []
     for table: Dictionary in [expected_fixed, expected_formations]:
         for key: String in table:
@@ -338,12 +350,20 @@ func run() -> void:
             if not game.hazard_records.has(key):
                 missing_hazards.append(key)
             else:
-                game.geometry_ok = game.geometry_ok and int(game.hazard_records[key]["count"]) == 1
-                if row.has("lines"): game.geometry_ok = game.geometry_ok and int(game.hazard_records[key]["lines"]) == int(row["lines"])
+                var record: Dictionary = game.hazard_records[key]
+                var tracking: Dictionary = record.get("tracking", {})
+                game.geometry_ok = game.geometry_ok and int(record["count"]) == 1
+                if row.has("lines"):
+                    game.geometry_ok = game.geometry_ok and int(record["lines"]) == int(row["lines"])
+                    game.geometry_ok = game.geometry_ok and int(tracking.get("clusters", -1)) == int(row["volleys"])
+                    game.geometry_ok = game.geometry_ok and absf(float(tracking.get("window", -1.0)) - half_beat) <= 0.000001
+                else:
+                    game.geometry_ok = game.geometry_ok and int(tracking.get("clusters", -1)) == 0
     check(frames < max_frames and not game.music.running and game.story_safe, "bounded virtual60Hz reaches living Boss EOF safety")
     check(game.music.get_transport_generation() == 1, "random threshold queues immediately: exactly one chart pass, no replay epoch")
     check(missing.is_empty() and duplicates.is_empty() and int(game.stats.get("unmatched_plan", 0)) == 0, "every eligible source action executes once or has an explicit safety-boundary cancellation")
     check(missing_hazards.is_empty() and game.geometry_ok, "all source fixed/laser cues produce matching real geometry once")
+    check(int(game.skip_reasons.get("laser_line", 0)) == 0, "reference chart never drops a laser line as stale")
     check(int(game.stats.get("projectile_requests", 0)) == expected_physical_shots, "actual projectile spawn requests equal source count for executed ring/fan/spray actions")
     check(int(game.stats.get("projectile_success", 0)) == expected_physical_shots and int(game.stats.get("projectile_rejected_budget", 0)) == 0 and int(game.stats.get("hazard_rejected_budget", 0)) == 0, "real TTL/geometry cleanup avoids hidden budget rejection")
     check(game.hazard_counts.has("cube_x") and game.hazard_counts.has("cube_plus"), "real fixed carriers include both seeded X/plus geometry")
