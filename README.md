@@ -12,24 +12,7 @@ Validation: 60 bounded check groups passed, including 44 actual chapter-integrat
 
 
 Godot 4.7 纯 2D 像素横版动作游戏：西方奇幻地牢、灵活跑跳、三剑连斩、接触弹刀与谱面 Boss 战。
-
-## 当前本地精修
-
-开发分支 `feat/polish-story-local-20261025`，仍从根目录 `play.cmd` 运行。本轮先完成分阶段展翼、连跳后持剑、三剑独特造型、按真实历史位置的移动残影，以及更清晰的主剑路。F2 控制镜头反馈，F3 控制速度拖尾与局部模糊。[飞行与持剑](docs/flight-polish.md) · [移动效果](docs/movement-trail.md) · [刀光精修](docs/attack-polish.md)。
-
-剧情接入另作后续本地里程碑，当前不上传远端。
-
-## 本地红发 Boss 与展翼冲刺版
-
-当前本地分支 `feat/boss-redhair-local-20261024`，在三武器版上优化高挑红发太刀 Boss，并将主角空中翻滚改为展翼推进。Boss 刀刃判定与既有操作、位移规则保持原规格。入口仍是根目录 `play.cmd`，此次仅本地保存。
-
-[Boss 外观与判定保护](docs/boss-redhair.md) · [展翼动作说明](docs/wing-flight.md)
-
-## 本地三武器动作版
-
-三武器基线分支 `feat/weapon-identities-local-20261024`：轻剑穿刺、第三段螺旋钻进；重剑三段劈砍、第三段释放真实剑气；双手剑前后圆斩。J 连按衔接，Q/K 或 1/2/3 切武器，左 Shift 格挡与方向双击闪避保持不变。此次只在本地保存，未推送 main。
-
-[动作、范围与验证说明](docs/weapon-identities.md)
+我们的目标是追求极致的打击感和手感，剧情会在0.0.2上线
 
 ## 运行
 
