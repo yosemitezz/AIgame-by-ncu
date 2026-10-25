@@ -9,7 +9,7 @@ var _last_played: Dictionary = {}
 var _elapsed: float = 0.0
 var _dummy: bool = false
 var _rng := RandomNumberGenerator.new()
-const KINDS: Array[String] = ["light", "heavy", "parry", "reflect", "break", "swing", "dash", "hurt", "stun", "launch", "air_jump"]
+const KINDS: Array[String] = ["light", "heavy", "parry", "reflect", "break", "swing", "dash", "hurt", "stun", "launch", "air_jump", "laser_warn", "laser_fire", "boss_cast", "boss_volley"]
 const RATE: int = 32000
 
 func _ready() -> void:
@@ -35,7 +35,7 @@ func _process(delta: float) -> void:
 func play_impact(kind: String) -> void:
     if not _streams.has(kind) or _players.is_empty():
         return
-    var minimum: float = 0.13 if kind == "dash" else (0.06 if kind == "swing" else 0.025)
+    var minimum: float = float({"dash": 0.13, "swing": 0.06, "laser_fire": 0.10, "laser_warn": 0.25, "boss_cast": 0.12, "boss_volley": 0.05}.get(kind, 0.025))
     if _elapsed - float(_last_played.get(kind, -10.0)) < minimum:
         return
     _last_played[kind] = _elapsed
@@ -46,7 +46,7 @@ func play_impact(kind: String) -> void:
     voice.stop()
     voice.stream = _streams[kind]
     # Louder than before (was -17 / -14 / -12 dB) and a slight random pitch so repeated hits do not machine-gun.
-    var gain: Dictionary = {"heavy": -4.0, "break": -3.0, "parry": -6.0, "reflect": -8.0, "light": -7.0, "stun": -8.0, "launch": -6.0, "hurt": -7.0, "swing": -13.0, "dash": -14.0, "air_jump": -12.0}
+    var gain: Dictionary = {"heavy": -4.0, "break": -3.0, "parry": -6.0, "reflect": -8.0, "light": -7.0, "stun": -8.0, "launch": -6.0, "hurt": -7.0, "swing": -13.0, "dash": -14.0, "air_jump": -12.0, "laser_warn": -12.5, "laser_fire": -4.5, "boss_cast": -9.5, "boss_volley": -11.0}
     voice.volume_db = float(gain.get(kind, -9.0))
     voice.pitch_scale = _rng.randf_range(0.94, 1.07) if kind in ["light", "heavy", "swing", "hurt"] else 1.0
     voice.play()
@@ -56,7 +56,7 @@ func _noise() -> float:
 
 func _synth(kind: String) -> AudioStreamWAV:
     _rng.seed = hash(kind)
-    var length: float = {"light": 0.2, "heavy": 0.42, "parry": 0.3, "reflect": 0.22, "break": 0.5, "swing": 0.2, "dash": 0.16, "hurt": 0.3, "stun": 0.45, "launch": 0.4, "air_jump": 0.36}.get(kind, 0.2)
+    var length: float = {"light": 0.2, "heavy": 0.42, "parry": 0.3, "reflect": 0.22, "break": 0.5, "swing": 0.2, "dash": 0.16, "hurt": 0.3, "stun": 0.45, "launch": 0.4, "air_jump": 0.36, "laser_warn": 0.62, "laser_fire": 0.72, "boss_cast": 0.46, "boss_volley": 0.28}.get(kind, 0.2)
     var count: int = int(length * RATE)
     var pcm := PackedByteArray()
     pcm.resize(count * 2)
@@ -122,6 +122,38 @@ func _synth(kind: String) -> AudioStreamWAV:
                 sample = low * (0.5 + 0.5 * sin(TAU * 26.0 * t)) * exp(-t * 7.0) * 0.5
                 sample += (sin(TAU * 1568.0 * t) + sin(TAU * 2093.0 * t) * 0.6) * exp(-t * 11.0) * 0.12
                 attack = minf(t * 400.0, 1.0)
+            "laser_warn":
+                # Rising charge hum: filtered air, a climbing tone and a bright shimmer.
+                var charge: float = clampf(t / maxf(0.001, length * 0.85), 0.0, 1.0)
+                var fade: float = 1.0 - smoothstep(0.84, 1.0, u)
+                low += (n - low) * 0.10
+                sample = sin(TAU * (150.0 * t + 320.0 * t * t)) * (0.16 + 0.24 * charge) * (0.55 + 0.45 * sin(TAU * 7.5 * t))
+                sample += low * (0.30 + 0.30 * charge) * sin(PI * minf(u * 1.6, 1.0))
+                sample += (sin(TAU * 1180.0 * t) + sin(TAU * 1770.0 * t) * 0.5) * 0.07 * charge * (0.4 + 0.6 * sin(TAU * 12.0 * t))
+                sample *= fade
+                attack = minf(t * 400.0, 1.0)
+            "laser_fire":
+                # Heavy beam discharge: sub boom, air blast, descending zap and hot overtones.
+                sample = sin(TAU * (105.0 * t - 70.0 * t * t)) * exp(-t * 5.0) * 0.85
+                sample += n * exp(-t * 20.0) * 0.55
+                sample += sin(TAU * (1500.0 * t - 2100.0 * t * t)) * exp(-t * 5.5) * 0.30
+                sample += (sin(TAU * 2400.0 * t) + sin(TAU * 3700.0 * t) * 0.7) * exp(-t * 9.5) * 0.14
+                low += (n - low) * 0.55
+                sample += low * exp(-t * 8.0) * 0.28
+            "boss_cast":
+                # Dark summoning whoosh under a detuned low drone and a glassy ping.
+                low += (n - low) * (0.08 + 0.5 * u)
+                sample = low * sin(PI * minf(u * 1.2, 1.0)) * 0.55
+                sample += (sin(TAU * 128.0 * t) + sin(TAU * 137.5 * t) * 0.8) * exp(-t * 8.5) * 0.28
+                sample += (sin(TAU * 1760.0 * t) + sin(TAU * 2640.0 * t) * 0.5) * exp(-t * 17.0) * 0.08
+                sample += n * exp(-t * 60.0) * 0.22
+            "boss_volley":
+                # Snappy bullet spray: short thump, crack and a cold crystal ping.
+                sample = sin(TAU * (300.0 * t - 480.0 * t * t)) * exp(-t * 22.0) * 0.5
+                sample += n * exp(-t * 65.0) * 0.38
+                sample += (sin(TAU * 1650.0 * t) + sin(TAU * 2480.0 * t) * 0.6) * exp(-t * 20.0) * 0.13
+                low += (n - low) * 0.35
+                sample += low * exp(-t * 22.0) * 0.2
             _:
                 sample = n * exp(-t * 40.0) * 0.4
         var shaped: float = tanh(sample * attack * 1.25) * 0.88

@@ -31,6 +31,7 @@ class StaticScore extends Node:
 
 class StaticHero extends Node2D:
     var dead: bool = false
+    var health: int = 8
     var parry_timer: float = 0.0
     var facing: int = -1
     func parry_success(_enemy: Node, _at: Vector2, _kind: String, _token: int) -> bool: return false
@@ -38,6 +39,7 @@ class StaticHero extends Node2D:
 class NavigationGame extends Node2D:
     var player: Node2D
     var music: Node
+    var room_id: String = "boss"
     var boss: Node2D
     var story_safe: bool = false
     var _paused: bool = false
@@ -197,6 +199,7 @@ func check_runtime() -> void:
     await check_boss_middle_platform_descent()
     await check_boss_bounds_and_wall()
     await check_boss_cleanup()
+    await check_infinite_flight()
 
 func check_boss_pursuit() -> void:
     var game: NavigationGame = fresh_boss(Vector2(2940,300),Vector2(3070,300))
@@ -334,6 +337,71 @@ func check_boss_cleanup() -> void:
     damage_before = game.damage_events
     for tick in range(6): await physics_tick(game)
     check(game.boss.position == at and game.damage_events == damage_before and not bool(game.boss.get_blade_state()["active"]),"dead Boss cannot move or release delayed contact")
+    await dispose_game(game)
+
+func check_infinite_flight() -> void:
+    var game: NavigationGame = fresh_boss(Vector2(5000,-2000),Vector2(5200,-2140))
+    check(game.boss.has_method("set_infinite_room"),"Boss exposes the production infinite-flight movement mode")
+    if not game.boss.has_method("set_infinite_room"):
+        await dispose_game(game)
+        return
+    game.boss.set_infinite_room(true)
+    var before: Vector2 = game.boss.position
+    for tick in range(30): await physics_tick(game)
+    check(game.boss.position.y < before.y-25.0 and game.boss.position.x > before.x,"air pursuit follows the target in both axes far outside the old arena")
+    check(game.boss.collision_mask == 0,"infinite flight cannot be stopped by the old room masonry")
+    var arena: Rect2 = game.boss.get_attack_arena()
+    check(arena.has_point(game.player.position) and arena.get_center().distance_to(game.player.position) < 230.0,"attack planning space follows an infinitely travelling player")
+    game.boss._authored_actions.clear()
+    game.boss.velocity = Vector2(0,150)
+    var dash_target: Vector2 = game.player.position
+    game.boss._execute_authored_action({"type":"dash","time":game.music.now,"duration_beats":0.5,"source_serial":91,"source_pattern":"fast_1","source_index":0,"resolved_target":dash_target,"source_locked_target":dash_target},game.music.now)
+    var end: float = game.music.now + 0.5 * game.music.seconds_per_beat()
+    while game.music.now < end:
+        await physics_tick(game)
+    check(game.boss.position.distance_to(dash_target) < 0.01 and game.boss.velocity == Vector2.ZERO,"authored dash reaches its exact 2D target without residual pursuit drift")
+    game.boss.velocity = Vector2(0,-130)
+    var shift_target: Vector2 = game.player.position + Vector2(80,40)
+    game.boss._execute_authored_action({"type":"teleport","time":game.music.now,"source_serial":91,"source_pattern":"fast_1","source_index":1,"resolved_target":shift_target,"source_locked_target":shift_target},game.music.now)
+    var shift_ticks: int = 0
+    while not game.boss._authored_shift.is_empty() and shift_ticks < 120:
+        await physics_tick(game)
+        shift_ticks += 1
+    check(game.boss.position.distance_to(shift_target) <= 1.0,"authored shift reaches its 2D destination; actual=%s target=%s ticks=%d" % [game.boss.position,shift_target,shift_ticks])
+    check(game.boss.velocity == Vector2.ZERO,"authored shift clears residual vertical motion")
+    game.boss._authored_dash.clear()
+    game.boss._clear_blade()
+    game.boss._authored_actions.clear()
+    game.boss._authored_actions.append({"type":"dash","time":game.music.now+1.0,"source_serial":92,"source_pattern":"fast_3","source_index":3,"resolved_target":Vector2.ZERO,"source_locked_target":Vector2.ZERO})
+    game.boss._execute_authored_action({"type":"aim","time":game.music.now,"source_serial":92,"source_pattern":"fast_3","source_index":2,"resolved_target":game.player.position,"source_locked_target":game.player.position},game.music.now)
+    check(game.boss._authored_actions[0]["resolved_target"] == game.player.position and game.boss._authored_actions[0]["source_locked_target"] == game.player.position,"fast repeated aim retains the infinite two-dimensional player target")
+    check(game.boss.get_warning_geometry()["to"] == game.player.position,"fast repeated aim previews the actual airborne target instead of a horizontal-only point")
+    game.story_safe = true
+    game.boss.velocity = Vector2(100,-100)
+    await physics_tick(game)
+    check(game.boss.velocity == Vector2.ZERO and game.boss.position.y < before.y,"narrative rest freezes the airborne body without gravity or drift")
+    game.story_safe = false
+    var shot: Node2D = load("res://combat/projectile.gd").new()
+    game.add_child(shot)
+    shot.configure(game,game.player.position+Vector2(0,-500),Vector2.ZERO)
+    shot._physics_process(STEP)
+    check(not shot.get("_cleared"),"Boss projectile survives far above the retired room coordinates")
+    shot.queue_free()
+    await dispose_game(game)
+
+    game = fresh_boss(Vector2(5300,-2000),Vector2(5370,-2000))
+    game.boss.set_infinite_room(true)
+    game.boss.set_duel_enabled(true)
+    game.boss.velocity = Vector2(0,140)
+    game.music.beat.emit(0)
+    var duel_y: float = game.boss.position.y
+    var duel_ticks: int = 0
+    var hovered: bool = game.boss._duel_state == "draw"
+    while not game.boss._duel_state.is_empty() and duel_ticks < 120:
+        await physics_tick(game)
+        hovered = hovered and is_equal_approx(game.boss.position.y,duel_y) and game.boss.velocity.y == 0.0
+        duel_ticks += 1
+    check(hovered and duel_ticks >= 70,"airborne draw cut retreat and recovery hover without ground-era vertical drift")
     await dispose_game(game)
 
 func run() -> void:

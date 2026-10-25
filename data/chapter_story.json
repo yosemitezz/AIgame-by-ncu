@@ -1,0 +1,320 @@
+{
+  "version": 1,
+  "chapter_id": "bellkeep_chapter_one",
+  "draft_note": "以用户最新要求为主的可替换台词初稿；朋友参考仅作可选后续资料，不纳入本章主干。人物身份和背叛具体动机留白。",
+  "rescue_policy": "conditional",
+  "corruption_per_unique_kill": 0.045,
+  "corruption_before_boss_cap": 0.62,
+  "bark_seconds": 3.6,
+  "bark_queue_limit": 4,
+  "advance_min_seconds": 0.12,
+  "scenes": {
+    "opening": "opening_memory",
+    "rescue": "rescue_fall",
+    "ending": "win_fatigue",
+    "ending_assisted": "win_assist"
+  },
+  "lines": {
+    "OPEN_MEMORY": {
+      "speaker": "旅人",
+      "text": "头好疼……这身甲，是谁的？"
+    },
+    "OPEN_EYE": {
+      "speaker": "飞眼",
+      "text": "喂，盔甲里那位。别盯门了——门后没写你的名字。"
+    },
+    "OPEN_TRUST": {
+      "speaker": "飞眼",
+      "text": "名字晚点再想。先站稳——前面那位，可不等你自我介绍。"
+    },
+    "T_MOVE": {
+      "speaker": "飞眼",
+      "text": "很好，腿没丢。盯住敌人的肩——它动之前，刃先动。"
+    },
+    "T_JUMP": {
+      "speaker": "飞眼",
+      "text": "跳得不错。空中再借一把力——铁链可不长眼。"
+    },
+    "T_DODGE": {
+      "speaker": "飞眼",
+      "text": "同方向快按两次，闪开再回来。别光往后躲——后头路也不长。"
+    },
+    "T_HIT": {
+      "speaker": "飞眼",
+      "text": "打中了。J 接着按能连三段；最后一下，记得给自己留收势。"
+    },
+    "T_PARRY": {
+      "speaker": "飞眼",
+      "text": "对，就是左 Shift 碰实的那一下。响声脆，说明没拿脸接。"
+    },
+    "T_WEAPON": {
+      "speaker": "飞眼",
+      "text": "1、2、3 直接选，Q/K 轮换。刀不同，距离和收势也不同。"
+    },
+    "T_CLIMB": {
+      "speaker": "飞眼",
+      "text": "W/S 抓稳上下爬。出刀就松手——先看清落脚处，再动刀。"
+    },
+    "T_DOOR": {
+      "speaker": "飞眼",
+      "text": "门也有讲道理的时候。靠近按 E，记得留条回来的路。"
+    },
+    "T_CHECKPOINT": {
+      "speaker": "飞眼",
+      "text": "这盏灯记得你。倒下了就回来——路，不用再认第二遍。"
+    },
+    "T_FIRST_KILL": {
+      "speaker": "飞眼",
+      "text": "手稳了。不错——你的影子，也稳了。"
+    },
+    "T_GROWTH": {
+      "speaker": "飞眼",
+      "text": "你看，比刚才顺手多了。别停——千万别停。"
+    },
+    "T_ELITE": {
+      "speaker": "飞眼",
+      "text": "拦路的倒了。喘口气——前头的门，现在肯听话了。"
+    },
+    "F_ELITE": {
+      "speaker": "飞眼",
+      "text": "门开了。你越强，我越省事——继续。"
+    },
+    "T_BOSS": {
+      "speaker": "飞眼",
+      "text": "这回看她的刀柄。能接的用左 Shift 迎上去，接不了就先躲。"
+    },
+    "F_BOSS": {
+      "speaker": "飞眼",
+      "text": "别怕，往死里打。你越强……我就越放心。"
+    },
+    "RESCUE_CALL": {
+      "speaker": "飞眼",
+      "text": "喂，别闭眼——看着我。"
+    },
+    "RESCUE_RESTORE": {
+      "speaker": "飞眼",
+      "text": "还能站起来。先把气喘匀——别急着送第二次。"
+    },
+    "RESCUE_SHOCK": {
+      "speaker": "",
+      "text": "她没有补刀。你再次握剑扑上去，她露出诧异又痛苦的神情。"
+    },
+    "WIN_ASSIST": {
+      "speaker": "飞眼",
+      "text": "赢了就站稳。别急着倒——我可没打算抬人。"
+    },
+    "WIN_FATIGUE": {
+      "speaker": "旅人",
+      "text": "赢了……可这身子，怎么越来越重。"
+    },
+    "WIN_EYE": {
+      "speaker": "飞眼",
+      "text": "够了。站着，别动。"
+    },
+    "BETRAY_MOCK": {
+      "speaker": "飞眼",
+      "text": "刀不错。人，更听话。"
+    },
+    "DEATH_NARRATIVE": {
+      "speaker": "",
+      "text": "你死亡"
+    }
+  },
+  "nodes": {
+    "opening_memory": {
+      "phase": "opening",
+      "duration": 2.5,
+      "line": "OPEN_MEMORY",
+      "next": "opening_eye",
+      "eye_mood": "friendly",
+      "blackout": [
+        0.9,
+        0.15
+      ],
+      "dizzy": [
+        0.2,
+        0.0
+      ]
+    },
+    "opening_eye": {
+      "phase": "opening",
+      "duration": 3.2,
+      "line": "OPEN_EYE",
+      "next": "opening_trust",
+      "eye_mood": "friendly",
+      "blackout": [
+        0.15,
+        0.0
+      ]
+    },
+    "opening_trust": {
+      "phase": "opening",
+      "duration": 3.8,
+      "line": "OPEN_TRUST",
+      "next": "@explore",
+      "eye_mood": "friendly"
+    },
+    "rescue_fall": {
+      "phase": "rescue",
+      "duration": 1.1,
+      "line": "",
+      "next": "rescue_call",
+      "eye_mood": "concerned",
+      "blackout": [
+        0.15,
+        0.94
+      ],
+      "dizzy": [
+        1.0,
+        0.7
+      ]
+    },
+    "rescue_call": {
+      "phase": "rescue",
+      "duration": 2.2,
+      "line": "RESCUE_CALL",
+      "next": "rescue_restore",
+      "eye_mood": "concerned",
+      "blackout": [
+        0.94,
+        0.92
+      ],
+      "dizzy": [
+        0.7,
+        0.45
+      ]
+    },
+    "rescue_restore": {
+      "phase": "rescue",
+      "duration": 2.7,
+      "line": "RESCUE_RESTORE",
+      "next": "rescue_shock",
+      "eye_mood": "concerned",
+      "blackout": [
+        0.92,
+        0.12
+      ],
+      "dizzy": [
+        0.45,
+        0.0
+      ],
+      "commands": [
+        "rescue_restore"
+      ],
+      "rescue_flare": true
+    },
+    "rescue_shock": {
+      "phase": "rescue",
+      "duration": 2.0,
+      "line": "RESCUE_SHOCK",
+      "next": "@explore",
+      "eye_mood": "concerned",
+      "blackout": [
+        0.12,
+        0.0
+      ],
+      "commands": [
+        "boss_shock"
+      ]
+    },
+    "win_assist": {
+      "phase": "aftermath",
+      "duration": 3.1,
+      "line": "WIN_ASSIST",
+      "next": "win_fatigue",
+      "eye_mood": "friendly"
+    },
+    "win_fatigue": {
+      "phase": "aftermath",
+      "duration": 2.8,
+      "line": "WIN_FATIGUE",
+      "next": "win_eye",
+      "eye_mood": "friendly"
+    },
+    "win_eye": {
+      "phase": "aftermath",
+      "duration": 2.2,
+      "line": "WIN_EYE",
+      "next": "betray_blackout",
+      "eye_mood": "friendly",
+      "blackout": [
+        0.0,
+        0.35
+      ]
+    },
+    "betray_blackout": {
+      "phase": "betrayal",
+      "duration": 2.4,
+      "line": "",
+      "next": "betray_eye",
+      "eye_mood": "cold",
+      "blackout": [
+        0.35,
+        1.0
+      ]
+    },
+    "betray_eye": {
+      "phase": "betrayal",
+      "duration": 2.2,
+      "line": "BETRAY_MOCK",
+      "next": "betray_beat",
+      "eye_mood": "cold",
+      "blackout": [
+        1.0,
+        1.0
+      ],
+      "eye_closeup": true
+    },
+    "betray_beat": {
+      "phase": "betrayal",
+      "duration": 1.8,
+      "line": "",
+      "next": "@narrative_dead",
+      "eye_mood": "cold",
+      "blackout": [
+        1.0,
+        1.0
+      ],
+      "faint": [
+        0.0,
+        1.0
+      ],
+      "eye_closeup": true
+    }
+  },
+  "tutorials": {
+    "moved": "T_MOVE",
+    "jumped": "T_JUMP",
+    "air_jumped": "T_JUMP",
+    "dodged": "T_DODGE",
+    "attack_hit": "T_HIT",
+    "parried": "T_PARRY",
+    "weapon_changed": "T_WEAPON",
+    "climbed": "T_CLIMB",
+    "door_opened": "T_DOOR",
+    "checkpoint": "T_CHECKPOINT",
+    "boss_entered": "T_BOSS"
+  },
+  "controls": {
+    "continue_hint": "Enter/E 下一句 · Backspace 跳过 · Esc 暂停",
+    "replay_hint": "Enter 返回地牢 · V 重看结局"
+  },
+  "completion_label": "",
+  "ordinary_death_cause": "UNKNOWN",
+  "story_direction": {
+    "authority": "2026-10-25 parent relay of latest user: 主要根据我的改",
+    "confirmed": [
+      "失忆主角以干净铠甲开始，在真实地牢遭遇小怪。",
+      "实体飞眼话痨逗比但战斗教学靠谱，帮助变强并从一开始利用主角。",
+      "精英倒下与进入Boss房后各追加一句只像鼓励的双关短句，胜利辅助台词不假定主角残血，主角统一使用“旅人”说话人。",
+      "杀敌后黑气逐步缠绕，前期细微似成长，击败Boss后浓重，暗示堕落和即将被夺舍。",
+      "Boss第一次真正将主角打到濒死却不补刀；飞眼救回，主角再次扑上，Boss诧异而痛苦。",
+      "主角赢得Boss战后疲惫，突然被暗算，眼前发黑；最后看见飞眼冰冷眼神和简短嘲弄。",
+      "平常死亡播报正常色；结局红色你死亡并流血，保留Boss胜利和章节完成记录。"
+    ],
+    "deferred": [
+      "人物身份、过去关系、飞眼动机及具体背叛机制。",
+      "朋友参考只作可选资料，不作为已确认背景。"
+    ]
+  }
+}

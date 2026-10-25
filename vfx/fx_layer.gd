@@ -43,6 +43,9 @@ const RAMP_SOURCE: Dictionary = {
 	"bat_seed": ["eedbff", "c69aff", "8e65b7", "514267"],
 	"bat_bloom": ["fff0ff", "e59bff", "a46ab8", "60416f"],
 	"jailer_link": ["f3ffcf", "cce675", "95a94d", "4d6148"],
+	# Boss hazard / bullet-hell: hot coral cores with a magenta-violet rim.
+	"laser": ["ffffff", "fff3cc", "ff967f", "ff5f8f", "b63a7a", "5a1d4a"],
+	"boss": ["fff0ff", "ffc6e2", "ef6aa8", "a43a8c", "521c4a"],
 }
 
 class Ghost extends Node2D:
@@ -526,6 +529,32 @@ func _spawn_impl(kind: String, at: Vector2, dir: Vector2, power: float) -> void:
 		"enemy_slash":
 			_shape("arc", at, 0.28, "warm", {"d": d, "r": 18.0 + 8.0 * power, "w": 3.0, "flip": false, "half": 1.3})
 			_sparks(at + Vector2(d * 14.0, 0.0), Vector2(d, 0.0), 8, "warm", 130.0, 0.4)
+		"boss_volley":
+			var vp: float = clampf(power, 0.8, 2.0)
+			var aim_dir: Vector2 = dir.normalized() if dir.length() > 0.01 else Vector2.UP
+			_shape("flash", at, 0.1, "laser", {"r": 15.0 * vp})
+			_shape("cross", at, 0.18, "laser", {"r": 20.0 * vp})
+			_shape("ring", at, 0.34, "boss", {"r0": 4.0, "r1": 26.0 * vp, "w": 3.0, "ry": 0.9})
+			_sparks(at, aim_dir, 12, "laser", 180.0, 0.45, "streak", 0.9)
+		"boss_cast":
+			var cp: float = clampf(power, 0.9, 2.2)
+			_shape("flash", at, 0.13, "boss", {"r": 24.0 * cp})
+			_shape("rays", at, 0.5, "laser", {"n": 14, "r1": 44.0 * cp, "rot": 1.5})
+			_shape("ring", at, 0.46, "boss", {"r0": 5.0, "r1": 38.0 * cp, "w": 4.0, "ry": 0.9})
+			_shape("ring", at, 0.56, "laser", {"r0": 3.0, "r1": 26.0 * cp, "w": 2.0, "ry": 0.7, "sides": 4, "twist": 1.2})
+			_sparks(at, dir if dir.length() > 0.01 else Vector2.UP, 18, "boss", 190.0, 0.7, "twinkle", 1.3)
+		"laser_warn":
+			_shape("star", at, 0.3, "laser", {"r": 7.0})
+			_shape("ring", at, 0.36, "laser", {"r0": 20.0, "r1": 7.0, "w": 2.0, "ry": 1.0})
+			_sparks(at, dir if dir.length() > 0.01 else Vector2.UP, 5, "gold", 60.0, 0.35, "twinkle", 1.1)
+		"laser_fire":
+			var fp: float = clampf(power, 0.9, 2.2)
+			_shape("flash", at, 0.16, "laser", {"r": 30.0 * fp})
+			_shape("cross", at, 0.22, "laser", {"r": 28.0 * fp})
+			_shape("ring", at, 0.5, "laser", {"r0": 4.0, "r1": 62.0 * fp, "w": 4.0, "ry": 0.7})
+			_shape("rays", at, 0.52, "boss", {"n": 16, "r1": 54.0 * fp, "rot": 0.9})
+			_sparks(at, dir if dir.length() > 0.01 else Vector2.DOWN, 24, "laser", 270.0, 0.7, "streak", 1.1)
+			_sparks(at, Vector2.ZERO, 12, "warm", 150.0, 0.9, "shard", 1.6)
 		"parry_ready":
 			_shape("ring", at, 0.2, "cool", {"r0": 16.0, "r1": 5.0, "w": 2.0, "ry": 1.0})
 		"weapon_swap":
@@ -1101,7 +1130,7 @@ func _track_projectiles() -> void:
 		while trail.size() > 12:
 			trail.pop_front()
 		var style: Variant = node.get("style")
-		_proj_trails[id] = {"pts": trail, "friendly": bool(node.get("friendly")), "style": str(style) if style != null else "default"}
+		_proj_trails[id] = {"pts": trail, "friendly": bool(node.get("friendly")), "style": str(style) if style != null else "default", "boss": node.has_meta("boss_source")}
 	for id: Variant in _proj_trails.keys():
 		if not seen.has(id):
 			_proj_trails.erase(id)
@@ -1172,6 +1201,7 @@ func _draw_projectile_trails(c: CanvasItem, glow: bool) -> void:
 		if n < 2:
 			continue
 		var friendly: bool = info["friendly"]
+		var boss: bool = bool(info.get("boss", false))
 		var tail_ramp: String = _trail_ramp(str(info.get("style","default")), friendly)
 		var line := PackedVector2Array()
 		var cols := PackedColorArray()
@@ -1181,9 +1211,19 @@ func _draw_projectile_trails(c: CanvasItem, glow: bool) -> void:
 			if friendly:
 				cols.append(_col(tail_ramp, 1.0 - u, u * (0.12 if glow else 0.72)))
 			else:
-				# Hostile shots keep a thin, low-alpha warm tail so safe lanes stay readable.
-				cols.append(_col(tail_ramp, 0.2 + (1.0 - u) * 0.6, u * (0.06 if glow else 0.34)))
-		var w: float = 3.0 if friendly else 2.0
+				# Hostile shots keep a readable warm tail; Boss volleys burn
+				# slightly longer and brighter than ordinary enemy fire.
+				var boost: float = 1.45 if boss else 1.0
+				cols.append(_col(tail_ramp, 0.2 + (1.0 - u) * 0.6, u * (0.06 if glow else 0.34) * boost))
+		if boss and not glow:
+			var halo := PackedColorArray()
+			for i: int in n:
+				var hu: float = float(i) / float(n - 1)
+				halo.append(_col("laser", 0.4 + (1.0 - hu) * 0.4, hu * 0.14))
+			c.draw_polyline_colors(line, halo, 8.0, false)
+			var head: Vector2 = line[line.size() - 1]
+			c.draw_rect(Rect2(head - Vector2(3, 3), Vector2(6, 6)), _col("laser", 0.55, 0.18))
+		var w: float = 3.0 if friendly else (2.8 if boss else 2.0)
 		c.draw_polyline_colors(line, cols, w * (2.6 if glow else 1.0), false)
 
 func _arc(c: CanvasItem, s: Dictionary, t: float, glow: bool) -> void:

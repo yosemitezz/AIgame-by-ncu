@@ -1,5 +1,5 @@
 extends SceneTree
-## Four frozen actual Boss-room frames. No input replay, AI or audio progression.
+## Frozen actual Boss-room frames. No input replay, AI or audio progression.
 var game: Node
 var captures: Array[Dictionary] = []
 var output: String = "res://artifacts/boss-redhair/"
@@ -13,7 +13,7 @@ func capture(name: String) -> void:
 	await process_frame;await process_frame;await RenderingServer.frame_post_draw
 	var image: Image=root.get_texture().get_image()
 	var result: int=image.save_png(output+name+".png")
-	captures.append({"name":name,"result":result,"native_size":[image.get_width(),image.get_height()],"room_id":game.room_id,"boss_pose":game.boss.get_presentation_pose(),"music_running":game.music.running,"boss_physics":game.boss.is_physics_processing(),"player_physics":game.player.is_physics_processing()})
+	captures.append({"name":name,"result":result,"native_size":[image.get_width(),image.get_height()],"room_id":game.room_id,"boss_pose":game.boss.get_presentation_pose(),"music_running":game.music.running,"boss_physics":game.boss.is_physics_processing(),"player_physics":game.player.is_physics_processing(),"player_position":game.player.global_position,"boss_position":game.boss.global_position,"camera_position":game._camera.position,"player_flight":game.player.flight_enabled,"boss_infinite_room":game.boss.infinite_room,"attack_arena":game.boss.get_attack_arena()})
 	print("BOSS_STATIC ",name," ",result)
 func run() -> void:
 	root.size=Vector2i(800,450);root.content_scale_size=Vector2i(800,450);AudioServer.set_bus_mute(0,true)
@@ -23,7 +23,7 @@ func run() -> void:
 	for key: String in ["bellkeep_room","bellkeep_checkpoint","bellkeep_elite","bellkeep_shards","bellkeep_doors"]:
 		if has_meta(key):remove_meta(key)
 	game=load("res://main.tscn").instantiate();root.add_child(game);current_scene=game
-	freeze(game);game._start_boss();game.music.stop_score();freeze(game)
+	freeze(game);game._start_boss(false);game.music.stop_score();freeze(game)
 	game._announcement_time=0;game._room_prepare=0;game._portal_confirm_room=""
 	game.boss._cancel_all_attacks();game.boss._active=false;game.boss.velocity=Vector2.ZERO;game.boss.reaction_state="none"
 	game.boss.position=Vector2(3020,300);game.boss.facing=-1
@@ -38,6 +38,14 @@ func run() -> void:
 		await capture("runtime-parry-recoil")
 		game.boss.reaction_state="guard_break";game.boss.reaction_progress=.22
 		await capture("runtime-guard-break")
+		game.boss.reaction_state="none";game.boss.reaction_progress=0;game.boss._reaction_blocks_attacks=false
+		game.boss.position=Vector2(5310,-2270);game.boss.facing=-1;game.boss.velocity=Vector2.ZERO
+		game.boss._blade_clip="cut_b";game.boss._blade_duration=.20;game.boss._blade_elapsed=.075;game.boss._blade_previous.clear()
+		game.player.position=Vector2(5200,-2140);game.player.velocity=Vector2(0,-285);game.player.facing=1;game.player.animation_state="jump";game.player.frame=1
+		game.player.wing_amount=1.0;game.player.wing_flap=.65;game.story_safe=false
+		game.player.wings.visible=true;game.player.wings.queue_redraw()
+		game._camera.position=game.camera_target(game.player.position,1);game._camera.force_update_scroll()
+		await capture("runtime-infinite-cut")
 	var record: FileAccess=FileAccess.open(output+("runtime-idle-comparison-manifest.json" if OS.get_cmdline_user_args().has("--idle-only") else "runtime-capture-manifest.json"),FileAccess.WRITE)
 	record.store_string(JSON.stringify({"static_only":true,"input_playback":false,"renderer":RenderingServer.get_video_adapter_name(),"captures":captures},"  ")+"\n")
 	complete=true;game.queue_free();await process_frame;quit(0)

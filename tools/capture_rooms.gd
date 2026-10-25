@@ -64,7 +64,7 @@ func run() -> void:
     game._portal_confirm_room = ""
     game._mount_room("boss")
     game._room_prepare = 0.0
-    game._start_boss()
+    game._start_boss(false)
     game.music.stop_score()
     freeze(game)
     game._announcement_time = 0.0

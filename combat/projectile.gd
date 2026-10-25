@@ -29,7 +29,10 @@ func _physics_process(delta: float) -> void:
 		clear()
 		return
 	_age += delta
-	if _age > clampf(lifetime, 0.1, 8.0) or global_position.y > 720.0 or global_position.y < -350.0:
+	var outside: bool = global_position.y > 720.0 or global_position.y < -350.0
+	if str(game.get("room_id")) == "boss" and is_instance_valid(game.player):
+		outside = global_position.distance_to(game.player.global_position) > 1400.0
+	if _age > clampf(lifetime, 0.1, 8.0) or outside:
 		clear()
 		return
 	var previous: Vector2 = global_position
@@ -140,6 +143,27 @@ func _draw() -> void:
 	# Only the collision-readable core lives here. The scene FxLayer owns every tail.
 	var ink: Color = core_color()
 	var outline := Color("151829")
+	var boss_shot: bool = has_meta("boss_source")
+	if boss_shot:
+		# Boss volleys get a pulsing aura and a larger core so dense patterns
+		# stay legible. The damage radius is unchanged.
+		var pulse: float = 0.5 + 0.5 * sin(_age * 16.0)
+		var aura: Color = ink
+		aura.a = 0.14 + 0.10 * pulse
+		var halo: float = 10.0 + 1.5 * pulse
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(0.0, -halo), Vector2(halo, 0.0),
+			Vector2(0.0, halo), Vector2(-halo, 0.0)
+		]), aura)
+		var rim: Color = ink
+		rim.a = 0.30
+		var rim_r: float = 7.5 + pulse
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(0.0, -rim_r), Vector2(rim_r, 0.0),
+			Vector2(0.0, rim_r), Vector2(-rim_r, 0.0)
+		]), rim)
+		var spin: float = _age * 2.2 if style in ["elite_rune", "jailer_link"] else 0.0
+		draw_set_transform(Vector2.ZERO, spin, Vector2(1.32, 1.32))
 	if style in ["sentry_shard", "lantern_fan"]:
 		draw_colored_polygon(PackedVector2Array([Vector2(0,-5),Vector2(4,0),Vector2(0,5),Vector2(-4,0)]), outline)
 		draw_colored_polygon(PackedVector2Array([Vector2(0,-4),Vector2(3,0),Vector2(0,4),Vector2(-3,0)]), ink)
@@ -164,3 +188,5 @@ func _draw() -> void:
 		draw_rect(Rect2(-2,-4,4,8), ink)
 		draw_rect(Rect2(-4,-2,8,4), ink)
 	draw_rect(Rect2(-1,-1,2,2), Color("f3ffea"))
+	if boss_shot:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

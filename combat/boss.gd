@@ -10,6 +10,7 @@ const BladeGeometry = preload("res://combat/boss_blade_geometry.gd")
 const BossHazard = preload("res://combat/boss_hazard.gd")
 const PLAN_ARENA: Rect2 = Rect2(2660.0, 40.0, 670.0, 290.0)
 const LASER_ARENA: Rect2 = Rect2(2660.0, 40.0, 670.0, 260.0)
+const LASER_TRACK_HALF_BEAT: float = 0.5
 const Pixels = preload("res://assets/art/pixel_actor.gd")
 const ARENA_LEFT: float = 2660.0
 const ARENA_RIGHT: float = 3330.0
@@ -69,6 +70,9 @@ var blink_starts: int = 0
 var blink_completed: int = 0
 var blink_cancelled: int = 0
 var _navigation_reason: String = "idle"
+var infinite_room: bool = false
+var _movement_clock: float = 0.0
+var _next_flex_blink: float = 2.4
 var _duel_enabled: bool = true
 var _duel_state: String = ""
 var _duel_elapsed: float = 0.0
@@ -183,6 +187,23 @@ func configure(p_game: Node, at: Vector2) -> void:
             game.music.transport_changed.connect(_on_transport_changed)
     _cube_rng.randomize()
     _configure_authored()
+
+func set_infinite_room(enabled: bool) -> void:
+    infinite_room = enabled
+    collision_mask = 0 if enabled else 1
+    velocity = Vector2.ZERO
+    if enabled:
+        _cancel_blink("infinite_flight")
+        _clear_duel("infinite_flight")
+
+func get_attack_arena() -> Rect2:
+    if infinite_room and is_instance_valid(game) and is_instance_valid(game.player):
+        return Rect2(game.player.global_position + Vector2(-360.0, -240.0), Vector2(720.0, 440.0))
+    return PLAN_ARENA
+
+func get_laser_arena() -> Rect2:
+    var arena: Rect2 = get_attack_arena()
+    return arena if infinite_room else LASER_ARENA
 
 func start_encounter() -> void:
     if dead or _active:
@@ -326,6 +347,7 @@ func _physics_process(delta: float) -> void:
     _duel_cooldown = maxf(0.0, _duel_cooldown - delta)
     _blade_elapsed += delta
     _animation_clock += delta
+    if _active and not game.story_safe and not dead: _movement_clock += delta
     _authored_pose_elapsed += delta
     _warning_elapsed += delta
     if _release_elapsed >= 0.0:
@@ -353,10 +375,11 @@ func _physics_process(delta: float) -> void:
         velocity.x = move_toward(velocity.x, 0.0, delta * 500.0)
         animation_state = "dead"
     elif not _active or game.story_safe:
-        velocity.x = 0.0
+        velocity = Vector2.ZERO if infinite_room else Vector2(0.0, velocity.y)
         animation_state = "idle"
     elif _reaction_blocks_attacks:
         velocity.x = move_toward(velocity.x, 0.0, delta * 400.0)
+        if infinite_room: velocity.y = move_toward(velocity.y, 0.0, delta * 400.0)
         animation_state = reaction_state
     elif _stagger_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
@@ -373,9 +396,11 @@ func _physics_process(delta: float) -> void:
     elif not _authored_shift.is_empty():
         _advance_authored_shift(float(game.music.get_score_time()))
         velocity.x = 0.0
+        if infinite_room: velocity.y = 0.0
         animation_state = "dash"
     elif not _authored_dash.is_empty():
         _advance_authored_dash(float(game.music.get_score_time()))
+        if infinite_room: velocity.y = 0.0
         if not _authored_dash.is_empty():
             velocity.x = 0.0
             animation_state = "dash"
@@ -384,12 +409,13 @@ func _physics_process(delta: float) -> void:
     elif _windup_timer > 0.0:
         _windup_timer = maxf(0.0, _windup_timer - delta)
         velocity.x = move_toward(velocity.x, 0.0, delta * 1000.0)
+        if infinite_room: velocity.y = move_toward(velocity.y, 0.0, delta * 1000.0)
         animation_state = "windup"
         if _windup_timer <= 0.0:
             _release_attack()
     elif _charge_timer > 0.0:
         _charge_timer = maxf(0.0, _charge_timer - delta)
-        velocity.x = facing * 430.0
+        velocity = _aim * 430.0 if infinite_room else Vector2(facing * 430.0, velocity.y)
         animation_state = "dash"
         _try_melee_contact(50.0, false, true, contact_token)
     elif _combo_pending:
@@ -397,16 +423,17 @@ func _physics_process(delta: float) -> void:
         animation_state = "windup"
     elif _recovery_timer > 0.0:
         velocity.x = move_toward(velocity.x, 0.0, delta * 800.0)
+        if infinite_room: velocity.y = move_toward(velocity.y, 0.0, delta * 800.0)
         animation_state = "attack"
     else:
         _pursue_player()
         animation_state = "run" if absf(velocity.x) > 1.0 else "idle"
-    if not is_on_floor():
+    if not infinite_room and not is_on_floor():
         velocity.y = minf(velocity.y + 950.0 * delta, 650.0)
     move_and_slide()
-    if _uses_full_song() and _blink_phase.is_empty(): _try_start_blink()
+    if _uses_full_song() and _blink_phase.is_empty() and not infinite_room: _try_start_blink()
     _sample_blade(delta)
-    global_position.x = clampf(global_position.x, ARENA_LEFT, ARENA_RIGHT)
+    if not infinite_room: global_position.x = clampf(global_position.x, ARENA_LEFT, ARENA_RIGHT)
     if reaction_state != "none" and not dead:
         animation_state = reaction_state
         frame = clampi(int(reaction_progress * 3.999), 0, 3)
@@ -456,26 +483,40 @@ func _release_attack() -> void:
             velocity.y = -95.0
             game.emit_fx("enemy_dash", source, Vector2(facing, 0), 1.3)
         "fan":
+            _danmaku_burst(source, _aim, 1.0, "boss_volley")
             var count: int = 7 if phase == "final" else 5
             for i: int in count:
                 var offset: float = lerpf(-0.5, 0.5, float(i) / float(count - 1))
-                game.spawn_projectile(source, _aim.rotated(offset) * 118.0)
+                _spawn_boss_shot(source, _aim.rotated(offset) * 118.0, "sentry_shard")
         "ring":
+            _danmaku_burst(source, Vector2.UP, 1.1, "boss_volley")
             var count: int = 12 if phase == "final" else 10
             for i: int in count:
                 # A clear upward gap prevents a solid unbroken wall of projectiles.
                 if i == count / 4:
                     continue
                 var angle: float = TAU * float(i) / float(count)
-                game.spawn_projectile(source, Vector2.from_angle(angle) * 100.0)
+                _spawn_boss_shot(source, Vector2.from_angle(angle) * 100.0, "elite_rune")
         "rain":
             var middle: float = clampf(game.player.global_position.x, ARENA_LEFT + 80, ARENA_RIGHT - 80)
+            _danmaku_burst(source, (Vector2(middle, 112) - source).normalized(), 1.2, "boss_volley")
             for i: int in 5:
                 var offset: float = float(i - 2) * 48.0
                 # Deliberate central safe lane; lateral drift makes the shower readable.
                 if i == 2:
                     continue
-                game.spawn_projectile(Vector2(middle + offset, 112), Vector2(-facing * 12.0, 130.0))
+                _spawn_boss_shot(Vector2(middle + offset, 112), Vector2(-facing * 12.0, 130.0), "wisp_seed")
+
+func _spawn_boss_shot(at: Vector2, velocity: Vector2, shot_style: String = "default") -> void:
+    var projectile: Node2D = game.spawn_projectile(at, velocity, false, shot_style)
+    if is_instance_valid(projectile):
+        projectile.set_meta("boss_source", get_instance_id())
+
+func _danmaku_burst(at: Vector2, direction: Vector2, power: float, effect_kind: String) -> void:
+    if not is_instance_valid(game) or bool(game.story_safe):
+        return
+    if game.has_method("emit_fx"):
+        game.emit_fx(effect_kind, at, direction.normalized() if direction.length() > 0.01 else Vector2.ZERO, power)
 
 func _release_combo_contact() -> void:
     if not _combo_pending or dead or game.story_safe or _reaction_blocks_attacks or _posture_lockout > 0.0:
@@ -792,7 +833,7 @@ func _prepare_upcoming(score: float) -> void:
             continue
         var pattern: Dictionary = _pattern_for_phrase(phrase)
         var target: Vector2 = game.player.global_position
-        var plan: Dictionary = FriendPlanner.build_plan(pattern, start, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
+        var plan: Dictionary = FriendPlanner.build_plan(pattern, start, game.music.seconds_per_beat(), global_position, target, get_attack_arena())
         _prepared_plans[key] = plan
         _warning_elapsed = 0.0
         _warning_duration = maxf(0.001, start - score)
@@ -804,7 +845,7 @@ func _begin_authored_pattern(pattern: Dictionary, start_score_time: float, locke
     var target: Vector2 = game.player.global_position if not locked_target.is_finite() else locked_target
     # Preparation previews a pose; the immutable source target locks only now,
     # at the phrase start, never at the earlier visual anticipation.
-    var plan: Dictionary = FriendPlanner.build_plan(pattern, start_score_time, game.music.seconds_per_beat(), global_position, target, PLAN_ARENA)
+    var plan: Dictionary = FriendPlanner.build_plan(pattern, start_score_time, game.music.seconds_per_beat(), global_position, target, get_attack_arena())
     if (plan["actions"] as Array).is_empty():
         return false
     _clear_duel("source_preempt")
@@ -897,7 +938,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
         "aim":
             if pattern == "fast_3" and int(action["source_index"]) >= 2:
                 target = game.player.global_position
-                target.x = clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0)
+                if not infinite_room: target.x = clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0)
                 action["source_locked_target"] = target
                 for future: Dictionary in _authored_actions:
                     if int(future["source_serial"]) == serial and str(future["type"]) == "dash" and float(future["time"]) >= float(action["time"]):
@@ -906,7 +947,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
                         break
             _warning_elapsed = 0.0
             _warning_duration = float(action.get("telegraph_duration", game.music.seconds_per_beat() * 2.0))
-            _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + _warning_duration}
+            _warning_geometry = {"kind": "authored_path", "pattern": pattern, "from": global_position, "to": target if infinite_room else Vector2(target.x, global_position.y), "locked_target": action["source_locked_target"], "start_time": score, "damage_time": score + _warning_duration}
             _set_authored_pose("draw", _warning_duration)
         "teleport", "center":
             if _blink_source_owned and _blink_phase == "windup" and kind == "teleport" and absf(float(action["time"]) - _blink_source_release) < 0.002:
@@ -916,10 +957,11 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
                 return
             _cancel_blink("source_motion_preempt")
             _clear_blade()
-            var x: float = PLAN_ARENA.get_center().x if kind == "center" else target.x
-            var distance: float = absf(x - global_position.x)
+            var x: float = get_attack_arena().get_center().x if kind == "center" else target.x
+            var destination: Vector2 = Vector2(x, target.y) if infinite_room else Vector2(clampf(x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y)
+            var distance: float = global_position.distance_to(destination) if infinite_room else absf(x - global_position.x)
             var duration: float = clampf(distance / float(duel_profile.get("shift_speed", 1000.0)), 0.10, float(duel_profile.get("shift_max_seconds", 0.65)))
-            _authored_shift = {"target": Vector2(clampf(x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y), "start_time": score, "end_time": score + duration}
+            _authored_shift = {"target": destination, "start_time": score, "end_time": score + duration}
             _navigation_reason = "source_shift"
             velocity.x = 0.0
             _set_authored_pose("shift", duration)
@@ -939,7 +981,7 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
                 _cancel_blink("source_motion_preempt")
             _authored_shift.clear()
             var duration: float = maxf(0.08, float(action.get("duration_beats", 1.0)) * game.music.seconds_per_beat())
-            var to: Vector2 = Vector2(clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y)
+            var to: Vector2 = target if infinite_room else Vector2(clampf(target.x, ARENA_LEFT + 30.0, ARENA_RIGHT - 30.0), global_position.y)
             facing = 1 if to.x >= global_position.x else -1
             contact_token = serial * 8 + int(action["source_index"])
             _contact_resolved = false
@@ -953,6 +995,9 @@ func _execute_authored_action(action: Dictionary, score: float) -> void:
             _warning_geometry.clear()
             game.emit_fx("enemy_dash", global_position + Vector2(0, -26), Vector2(facing, 0), 1.0)
         "ring", "fan", "side_spray":
+            var cast_from: Vector2 = global_position + Vector2(0, -26)
+            var aim: Vector2 = (action["source_locked_target"] as Vector2) + Vector2(0, -13) - cast_from
+            _danmaku_burst(cast_from, aim, 1.2, "boss_volley")
             var shots: Array[Dictionary] = FriendPatterns.vectors(kind, action, global_position + Vector2(0, -26), (action["source_locked_target"] as Vector2) + Vector2(0, -13))
             for shot: Dictionary in shots:
                 var style: String = "elite_rune" if kind == "ring" else ("wisp_seed" if kind == "side_spray" else "sentry_shard")
@@ -973,7 +1018,8 @@ func _advance_authored_dash(score: float) -> void:
     var progress: float = clampf((score - float(dash["start_time"])) / duration, 0.0, 1.0)
     var motion_progress: float = 1.0 - pow(1.0 - progress, 2.0)
     var desired: Vector2 = (dash["from"] as Vector2).lerp(dash["to"], motion_progress)
-    var collision: KinematicCollision2D = move_and_collide(Vector2(desired.x - global_position.x, 0.0))
+    var motion: Vector2 = desired - global_position if infinite_room else Vector2(desired.x - global_position.x, 0.0)
+    var collision: KinematicCollision2D = move_and_collide(motion)
     if collision != null and absf(collision.get_normal().x) > 0.5:
         _navigation_reason = "source_dash_wall"
         _blade_previous.clear()
@@ -988,15 +1034,14 @@ func _advance_authored_shift(score: float) -> void:
     if _authored_shift.is_empty():
         return
     var target: Vector2 = _authored_shift["target"]
-    var remaining: float = maxf(0.001, float(_authored_shift["end_time"]) - score)
-    var step_seconds: float = minf(get_physics_process_delta_time(), remaining)
-    var difference: float = target.x - global_position.x
-    var motion: float = signf(difference) * minf(absf(difference), float(duel_profile.get("shift_speed", 1000.0)) * step_seconds)
-    var collision: KinematicCollision2D = move_and_collide(Vector2(motion, 0.0))
+    var step_seconds: float = get_physics_process_delta_time()
+    var difference: Vector2 = target - global_position if infinite_room else Vector2(target.x - global_position.x, 0.0)
+    var motion: Vector2 = difference.normalized() * minf(difference.length(), float(duel_profile.get("shift_speed", 1000.0)) * step_seconds)
+    var collision: KinematicCollision2D = move_and_collide(motion)
     if collision != null and absf(collision.get_normal().x) > 0.5:
         _navigation_reason = "source_shift_wall"
         _authored_shift.clear()
-    elif absf(target.x - global_position.x) <= 1.0 or score >= float(_authored_shift["end_time"]):
+    elif (global_position.distance_to(target) <= 1.0 if infinite_room else absf(target.x - global_position.x) <= 1.0) or score >= float(_authored_shift["end_time"]):
         _authored_shift.clear()
 
 func _spawn_authored_cube(event: Dictionary) -> void:
@@ -1007,16 +1052,17 @@ func _spawn_authored_cube(event: Dictionary) -> void:
     var occurrence: int = _cube_launch_count
     _cube_launch_count += 1
     var diamond: bool = _cube_rng.randi_range(0, 1) == 1
-    var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(event["time"]), game.music.seconds_per_beat(), global_position + Vector2(0, -30), LASER_ARENA, occurrence, diamond)
+    var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(event["time"]), game.music.seconds_per_beat(), global_position + Vector2(0, -30), get_laser_arena(), occurrence, diamond)
     if _uses_full_song() and float(plan["damage_time"]) - float(game.music.get_score_time()) < float(game.music.timeline.get("minimum_remaining_warning_seconds", 0.15)):
         _trace_skipped("cube", "fixed_1", float(game.music.get_score_time()))
         return
     var hazard: Node2D = BossHazard.new()
-    hazard.configure_cube(game, self, plan, LASER_ARENA, hazard_generation)
+    hazard.configure_cube(game, self, plan, get_laser_arena(), hazard_generation)
     if game.spawn_boss_hazard(hazard):
         attack_serial += 1
         authored_last_pattern = "cube_plus" if bool(plan["diamond"]) else "cube_x"
         authored_pattern_count += 1
+        _danmaku_burst(global_position + Vector2(0, -30), (plan["to"] as Vector2) - global_position, 1.5, "boss_cast")
         _set_authored_pose("cast", game.music.seconds_per_beat() * 0.8)
     else:
         _trace_skipped("hazard_capacity", "fixed_1", float(game.music.get_score_time()))
@@ -1026,7 +1072,8 @@ func _spawn_authored_formation(event: Dictionary) -> void:
         return
     var formation: Dictionary = event.duplicate(true)
     formation["occurrence"] = int(event.get("occurrence", 0)) + _authored_cycle * (1 if _uses_full_song() else maxi(1, int(ceil(float(friend_director.chart.laser_formations.size()) / 4.0))))
-    var lines: Array[Dictionary] = FriendLasers.build_lines(formation, friend_slots.get_laser_formations(), LASER_ARENA)
+    var arena: Rect2 = get_laser_arena()
+    var lines: Array[Dictionary] = FriendLasers.build_lines(formation, friend_slots.get_laser_formations(), arena)
     for line: Dictionary in lines:
         for key: String in ["warning_time", "damage_time", "active_until"]:
             line[key] = float(line[key]) + _loop_origin_score
@@ -1045,9 +1092,14 @@ func _spawn_authored_formation(event: Dictionary) -> void:
         if lines.is_empty():
             return
     var hazard: Node2D = BossHazard.new()
-    hazard.configure_lines(game, self, lines, LASER_ARENA, hazard_generation, str(formation["pattern"]))
+    var half_beat: float = 0.0
+    if is_instance_valid(game) and is_instance_valid(game.music) and game.music.has_method("seconds_per_beat"):
+        half_beat = float(game.music.seconds_per_beat()) * LASER_TRACK_HALF_BEAT
+    hazard.configure_lines(game, self, lines, arena, hazard_generation, str(formation["pattern"]), half_beat)
     if not game.spawn_boss_hazard(hazard):
         _trace_skipped("hazard_capacity", str(formation["pattern"]), float(game.music.get_score_time()))
+    else:
+        _danmaku_burst(global_position + Vector2(0, -30), arena.get_center() - global_position, 1.5, "boss_cast")
 
 func _invalidate_authored() -> void:
     hazard_generation += 1
@@ -1094,7 +1146,7 @@ func get_blink_status() -> Dictionary:
     return {"enabled": bool(blink_profile.get("enabled", false)), "phase": _blink_phase, "landing": _blink_landing, "hero_lock": _blink_hero_lock, "window": _blink_window, "epoch": _blink_epoch, "next_score": _blink_next_score, "reason": _blink_reason, "starts": blink_starts, "completed": blink_completed, "cancelled": blink_cancelled, "uses": _blink_window_uses.duplicate(true), "cut_score": _blink_cut_score, "cut_chart": _blink_cut_chart, "phase_duration": _blink_duration, "source_owned": _blink_source_owned, "source_completed_token": _blink_source_completed_token}
 
 func _prepare_source_blink(score: float) -> void:
-    if not bool(blink_profile.get("enabled", false)) or not _uses_full_song() or not bool(game.music.running) or dead or game.story_safe or not _active or not _blink_phase.is_empty() or _reaction_blocks_attacks or combat_freeze > 0.0 or game.get("_paused") == true: return
+    if infinite_room or not bool(blink_profile.get("enabled", false)) or not _uses_full_song() or not bool(game.music.running) or dead or game.story_safe or not _active or not _blink_phase.is_empty() or _reaction_blocks_attacks or combat_freeze > 0.0 or game.get("_paused") == true: return
     var chart: float = float(game.music.get_chart_time())
     var selected: int = -1
     for i: int in (blink_profile.get("climax_windows", []) as Array).size():
@@ -1176,7 +1228,7 @@ func _blink_laser_clear(candidate: Vector2 = Vector2.INF, remaining_seconds: flo
         if _loop_origin_score + float(original["active_until"]) < now: continue
         var formation: Dictionary = original.duplicate(true)
         formation["occurrence"] = int(original.get("occurrence", 0)) + _authored_cycle
-        var lines: Array[Dictionary] = FriendLasers.build_lines(formation, config, LASER_ARENA)
+        var lines: Array[Dictionary] = FriendLasers.build_lines(formation, config, get_laser_arena())
         for line: Dictionary in lines:
             var at: float = _loop_origin_score + float(line["damage_time"])
             var active_until: float = _loop_origin_score + float(line["active_until"])
@@ -1184,7 +1236,7 @@ func _blink_laser_clear(candidate: Vector2 = Vector2.INF, remaining_seconds: flo
     for cue: Dictionary in friend_director.chart.fixed_attack_events:
         var at: float = _loop_origin_score + float(cue["time"]) + game.music.seconds_per_beat() * 4.0
         if at + 0.9 < danger_from or at > until: continue
-        var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(cue["time"]), game.music.seconds_per_beat(), global_position, LASER_ARENA, int(cue["index"]), false)
+        var plan: Dictionary = FriendPlanner.build_fixed_cube(friend_slots.get_fixed_pattern()["parameters"], _loop_origin_score + float(cue["time"]), game.music.seconds_per_beat(), global_position, get_laser_arena(), int(cue["index"]), false)
         # Future cube orientation is random at launch; both possible line families
         # must leave this counter window safe. Live carriers use their exact lines.
         for degrees: float in [0.0, 45.0, 90.0, 135.0]:
@@ -1429,6 +1481,24 @@ func try_navigation_jump(target: Vector2, damaging: bool = false) -> bool:
 func _pursue_player() -> void:
     var target: Vector2 = game.player.global_position
     _duel_target = target
+    if infinite_room:
+        var offset: Vector2 = target - global_position
+        var distance: float = offset.length()
+        facing = 1 if offset.x >= 0.0 else -1
+        var desired_x: float = 0.0
+        var speed: float = 150.0 if phase == "final" else 118.0
+        if distance < 120.0:
+            desired_x = -facing * 185.0
+        elif absf(offset.x) > 250.0:
+            desired_x = facing * speed
+        else:
+            desired_x = facing * sin(_movement_clock * 1.7) * 92.0
+        var desired_y: float = clampf(offset.y * 2.1 + sin(_movement_clock * 2.3) * 82.0, -190.0, 190.0)
+        velocity.x = move_toward(velocity.x, desired_x, 880.0 * get_physics_process_delta_time())
+        velocity.y = move_toward(velocity.y, desired_y, 760.0 * get_physics_process_delta_time())
+        _try_flexible_blink()
+        _navigation_reason = "infinite_air_pursuit"
+        return
     var dx: float = target.x - global_position.x
     facing = 1 if dx >= 0.0 else -1
     velocity.x = float(facing) * float(duel_profile.get("pursuit_speed", 188.0)) if absf(dx) > float(duel_profile.get("stop_distance", 58.0)) else 0.0
@@ -1436,6 +1506,23 @@ func _pursue_player() -> void:
         try_navigation_jump(target, false)
     var foot: Dictionary = _floor_at(global_position.x + float(facing) * 22.0, global_position.y)
     if foot.is_empty() and is_on_floor(): velocity.x = 0.0
+
+func _try_flexible_blink() -> void:
+    if _movement_clock < _next_flex_blink or not infinite_room or game.story_safe or dead:
+        return
+    if not _authored_actions.is_empty() or not _authored_dash.is_empty() or not _authored_shift.is_empty() or not _blink_phase.is_empty():
+        return
+    if _windup_timer > 0.0 or _charge_timer > 0.0 or _combo_pending or not _blade_clip.is_empty():
+        return
+    var angle: float = _movement_clock * 1.31 + 0.65
+    var radius: float = 176.0 + 48.0 * absf(sin(_movement_clock * 0.71))
+    var target: Vector2 = game.player.global_position + Vector2.from_angle(angle) * radius
+    game.emit_fx("dash_ghost", global_position + Vector2(0, -24), (target - global_position).normalized(), 0.8)
+    global_position = target
+    velocity = Vector2.ZERO
+    _blade_previous.clear()
+    _next_flex_blink = _movement_clock + 2.4 + absf(sin(_movement_clock * 0.93)) * 0.9
+    _navigation_reason = "infinite_air_blink"
 
 func _try_duel_on_beat() -> void:
     if _try_start_blink(): return
@@ -1479,6 +1566,8 @@ func _clear_duel(reason: String) -> void:
 
 func _advance_duel(delta: float) -> void:
     _duel_elapsed += delta
+    if infinite_room and _duel_state not in ["jump", "slam"]:
+        velocity.y = 0.0
     match _duel_state:
         "draw", "draw_b":
             velocity.x = 0.0

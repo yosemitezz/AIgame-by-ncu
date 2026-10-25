@@ -18,7 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.04, 0.08, 0.75)
+color = Color(0.025, 0.035, 0.075, 0.94)
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -38,7 +38,7 @@ theme_override_constants/separation = 10
 
 [node name="Label" type="Label" parent="Center/Panel/VBox"]
 layout_mode = 2
-text = "Settings"
+text = "设置"
 horizontal_alignment = 1
 
 [node name="MasterRow" type="HBoxContainer" parent="Center/Panel/VBox"]
@@ -47,7 +47,7 @@ layout_mode = 2
 [node name="MasterName" type="Label" parent="Center/Panel/VBox/MasterRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Master"
+text = "主音量"
 
 [node name="MasterSlider" type="HSlider" parent="Center/Panel/VBox/MasterRow"]
 unique_name_in_owner = true
@@ -67,7 +67,7 @@ layout_mode = 2
 [node name="MusicName" type="Label" parent="Center/Panel/VBox/MusicRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Music"
+text = "音乐"
 
 [node name="MusicSlider" type="HSlider" parent="Center/Panel/VBox/MusicRow"]
 unique_name_in_owner = true
@@ -82,7 +82,7 @@ layout_mode = 2
 [node name="SfxName" type="Label" parent="Center/Panel/VBox/SfxRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "SFX"
+text = "音效"
 
 [node name="SfxSlider" type="HSlider" parent="Center/Panel/VBox/SfxRow"]
 unique_name_in_owner = true
@@ -97,7 +97,7 @@ layout_mode = 2
 [node name="WindowName" type="Label" parent="Center/Panel/VBox/WindowRow"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Display"
+text = "显示"
 
 [node name="WindowOption" type="OptionButton" parent="Center/Panel/VBox/WindowRow"]
 unique_name_in_owner = true
@@ -106,4 +106,4 @@ layout_mode = 2
 [node name="BackButton" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Back"
+text = "返回"

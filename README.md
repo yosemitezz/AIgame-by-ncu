@@ -1,5 +1,16 @@
 # Bellkeep: Shattered Refrain
 
+## Current checked game - 2026-10-25
+
+Start the root `play.cmd`. The project opens the pixel title/settings screen and enters the complete dungeon. The current Boss room follows aerial combat and offers a five-tap audio calibration; contact parry is still required, with no missed-beat damage. The reference score and its four normal/four fast families, cubes and grouped laser volleys run through one music transport.
+
+This version includes distinct three-sword actions, staged wing flight and historical trails, the red-haired katana Boss, and the physical flying-eye chapter. Kill corruption, once-only near-death rescue, earned Boss victory and the separate red narrative-death ending are integrated. Story identity/backstory remains undefined; dialogue is an editable draft based on the user's original plot. E/Enter continues, Backspace skips; after the ending Enter/R returns with completion preserved, V replays, and F5 starts over.
+
+Validation: 60 bounded check groups passed, including 44 actual chapter-integration assertions, title/settings/quit, calibration, contact geometry and full-song coverage (2994 expected and actual shots for the current reference chart). This is not a hand-feel or full-song listening verdict. The old 04:25-05:03 climax pressure-blink is not yet adapted to the new aerial room; ordinary aerial repositioning is a different behavior.
+
+`tools/build_windows.ps1` builds a versioned Windows portable PCK with the installed Godot runtime under ignored `exports/`; prior deliveries are preserved. No export templates, installer or external release is installed/published by this workflow. Build manifests identify the exact source commit and file hashes.
+
+
 Godot 4.7 纯 2D 像素横版动作游戏：西方奇幻地牢、灵活跑跳、三剑连斩、接触弹刀与谱面 Boss 战。
 
 ## 当前本地精修

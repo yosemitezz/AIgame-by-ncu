@@ -17,7 +17,9 @@ const Boss = preload("res://combat/boss.gd")
 const Score = preload("res://audio/music_director.gd")
 const Level = preload("res://levels/bellkeep.gd")
 const BossChamber = preload("res://levels/boss_chamber.gd")
+const BossRoom = preload("res://levels/boss_room.gd")
 const RoomTransition = preload("res://flow/room_transition.gd")
+const ChapterController = preload("res://flow/chapter_controller.gd")
 const HUD = preload("res://ui/hud.gd")
 const HeavyLane = preload("res://ui/heavy_lane.gd")
 const Pixels = preload("res://assets/art/pixel_actor.gd")
@@ -31,6 +33,10 @@ const CombatVFX = preload("res://presentation/combat_vfx.gd")
 ## (dash ghosts, dust, pickups, warnings) is drawn once, by one owner, to avoid doubled effects.
 const PIXEL_CORE_FX: Array[String] = ["enemy_slash", "parry", "blade_parry", "projectile_parry", "guard_break", "hit", "hurt", "impact", "parry_ready"]
 
+var chapter: Node
+var chapter_enabled: bool = OS.get_environment("BELLKEEP_DISABLE_STORY") != "1"
+var chapter_persist: bool = true
+var chapter_locked: bool = false
 var room_id: String = "dungeon"
 var room_spec: Dictionary = {}
 var room_flow: RefCounted = RoomTransition.new()
@@ -38,6 +44,7 @@ var _portal_confirm_room: String = ""
 var _portal_confirm_until: float = 0.0
 var _portal_press_frame: int = -1
 var _room_prepare: float = 0.0
+var _calibrating: bool = false
 
 var player: CharacterBody2D
 var boss: CharacterBody2D
@@ -88,6 +95,7 @@ func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     _rng.seed = 424242
     _setup_input()
+    ChapterController.restore_run(self)
     checkpoint_active = bool(get_tree().get_meta("bellkeep_checkpoint", false))
     elite_defeated = bool(get_tree().get_meta("bellkeep_elite", false))
     _collected = get_tree().get_meta("bellkeep_shards", {}).duplicate()
@@ -96,10 +104,15 @@ func _ready() -> void:
         checkpoint = Vector2(2500, 280) if elite_defeated else Level.CHECKPOINT
     room_id = str(get_tree().get_meta("bellkeep_room", "dungeon"))
     if room_id not in ["dungeon", "boss"]: room_id = "dungeon"
-    level = BossChamber.new() if room_id == "boss" else Level.new()
+    level = BossRoom.new() if room_id == "boss" else Level.new()
     level.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(level)
     level.setup(self)
+    if level.has_signal("calibration_complete"):
+        level.connect("calibration_complete", _on_boss_calibration_complete)
+    if room_id == "boss" and level is BossChamber:
+        for body: Node in level.get_children():
+            if body is StaticBody2D: body.collision_layer = 0
     room_spec = level.get_room_spec()
     if room_id == "boss": checkpoint = room_spec["spawn"]
     level.restore_opened_ids(get_tree().get_meta("bellkeep_doors", []))
@@ -121,6 +134,7 @@ func _ready() -> void:
     player.died.connect(_on_player_died)
     player.weapon_changed.connect(_on_weapon_changed)
     add_child(player)
+    player.set_boss_room_mode(room_id == "boss")
     _camera = Camera2D.new()
     _camera.position = camera_target(player.position, player.facing)
     _camera.position_smoothing_enabled = false
@@ -173,6 +187,13 @@ func _ready() -> void:
         set_story_safe(true)
         player.set_physics_process(false)
 
+    if chapter_enabled:
+        chapter = ChapterController.new()
+        chapter.name = "ChapterController"
+        add_child(chapter)
+        chapter.configure(self)
+        _refresh_hud()
+
 func _on_weapon_changed(id: String) -> void:
     var hints: Dictionary = {
         "light": "轻剑：穿刺 / 突刺 / 第三段螺旋钻进",
@@ -180,6 +201,7 @@ func _on_weapon_changed(id: String) -> void:
         "great": "双手剑：扭身圆斩 / 剑路扫过前后"
     }
     if outcome == "" and not room_flow.active: announce(str(hints.get(id,"")),3.0)
+    if is_instance_valid(chapter): chapter.event("weapon_changed"); chapter.save()
 
 func _setup_input() -> void:
     _bind("move_left", [KEY_A, KEY_LEFT])
@@ -218,6 +240,7 @@ func spawn_enemy(kind: String, at: Vector2, patrol: Rect2 = Rect2()) -> Node2D:
     var enemy := Enemy.new()
     enemy.process_mode = Node.PROCESS_MODE_PAUSABLE
     enemy.configure(self, kind, at)
+    enemy.set_meta("chapter_spawn_id", "%s:%s:%d:%d" % [room_id,kind,roundi(at.x),roundi(at.y)])
     enemy.patrol_bounds = patrol
     enemy.z_index = 2
     add_child(enemy)
@@ -237,15 +260,16 @@ func _make_gate(x: float) -> StaticBody2D:
     return gate
 
 func _physics_process(_delta: float) -> void:
-    if _reloading or _paused or room_flow.active or _room_prepare > 0.0 or not is_instance_valid(player):
+    if _reloading or _paused or _calibrating or room_flow.active or _room_prepare > 0.0 or not is_instance_valid(player) or (is_instance_valid(chapter) and chapter.blocked()):
         return
     if outcome != "":
         if outcome == "victory" and Input.is_action_just_pressed("interact"): interact_portal()
         return
     var bounds: Rect2 = room_spec.get("bounds", Level.WORLD_BOUNDS)
-    player.position.x = clampf(player.position.x, 12.0 if room_id == "dungeon" else Boss.ARENA_LEFT, bounds.end.x - 40.0 if room_id == "dungeon" else Boss.ARENA_RIGHT)
-    if player.position.y > float(room_spec.get("fall_limit", Level.FALL_LIMIT)):
-        damage_player(1, player.position + Vector2(0, 50))
+    if room_id == "dungeon":
+        player.position.x = clampf(player.position.x, 12.0, bounds.end.x - 40.0)
+    if room_id == "dungeon" and player.position.y > float(room_spec.get("fall_limit", Level.FALL_LIMIT)):
+        damage_player(1, player.position + Vector2(0, 50), false)
         if not player.dead:
             player.reset_traversal()
             player._cancel_attack()
@@ -256,11 +280,12 @@ func _physics_process(_delta: float) -> void:
             player.velocity = Vector2.ZERO
             player.invuln = 1.0
             announce("Voice: A fall is not the end. The shrine remembers.", 3.0)
-    if Input.is_action_just_pressed("interact") and not player.dead:
+    if Input.is_action_just_pressed("interact") and not player.dead and not (is_instance_valid(chapter) and chapter.consume_interact_guard()):
         if interact_portal():
             return
         if level.try_interact(player.position):
             get_tree().set_meta("bellkeep_doors", level.get_opened_ids())
+            if is_instance_valid(chapter): chapter.event("interact"); chapter.save()
     if room_id == "dungeon" and not checkpoint_active and Level.CHECKPOINT_RECT.has_point(player.position):
         checkpoint_active = true
         checkpoint = Level.CHECKPOINT
@@ -269,6 +294,7 @@ func _physics_process(_delta: float) -> void:
         player.health_changed.emit(player.health, player.max_health)
         emit_fx("checkpoint", checkpoint + Vector2(0, -20), Vector2.UP, 2.0)
         announce("EMBER SHRINE  /  Health restored. R returns here.", 4.0)
+        if is_instance_valid(chapter): chapter.event("checkpoint"); chapter.save()
     for i: int in room_spec.get("shard_indices", range(Level.SHARDS.size())):
         if _collected.has(i):
             continue
@@ -276,6 +302,7 @@ func _physics_process(_delta: float) -> void:
             _collected[i] = true
             score = _collected.size()
             get_tree().set_meta("bellkeep_shards", _collected.duplicate())
+            if is_instance_valid(chapter): chapter.save()
             emit_fx("pickup", Level.SHARDS[i], Vector2.UP, 0.8)
     _zone = 0
     for i: int in Level.ZONES.size():
@@ -285,8 +312,9 @@ func _physics_process(_delta: float) -> void:
         _portal_confirm_room = ""
 
 func _process(delta: float) -> void:
-    if _reloading or _paused:
-        return
+    if _reloading: return
+    if is_instance_valid(chapter): chapter.tick(delta)
+    if _paused: return
     _clock += delta
     if not _portal_confirm_room.is_empty() and _clock > _portal_confirm_until:
         _portal_confirm_room = ""
@@ -314,6 +342,8 @@ func _process(delta: float) -> void:
     queue_redraw()
 
 func camera_target(at: Vector2, facing: int = 1, speed_lead: float = 0.0) -> Vector2:
+    if room_id == "boss":
+        return Vector2(at.x + facing * 45.0 + speed_lead, at.y - 90.0).round()
     var half_view: Vector2 = get_viewport_rect().size * 0.5
     var bounds: Rect2 = room_spec.get("bounds", Level.WORLD_BOUNDS)
     var left: float = half_view.x if room_id == "dungeon" else bounds.position.x + half_view.x
@@ -352,15 +382,17 @@ func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) ->
             hits[enemy.get_instance_id()] = true
             if source.has_method("confirm_attack_hit"):
                 source.confirm_attack_hit()
+            if is_instance_valid(chapter): chapter.event("attack")
             request_impact(source,enemy,combo_index==3,false,"weapon_" + str(source.get("weapon")))
             if enemy != boss and enemy.has_method("react") and not bool(enemy.dead):
                 enemy.react("launch" if combo_index == 3 else ("stun" if combo_index == 2 else "knockback"), source.global_position)
         elif enemy == boss:
             hits[enemy.get_instance_id()] = true
 
-func damage_player(amount: int, origin: Vector2) -> void:
+func damage_player(amount: int, origin: Vector2, allow_story_rescue: bool = true) -> void:
     if story_safe or outcome != "" or not is_instance_valid(player):
         return
+    if is_instance_valid(chapter) and chapter.try_rescue(amount,origin,allow_story_rescue): return
     if player.receive_hit(amount, origin):
         request_impact(null, player)
 
@@ -434,6 +466,7 @@ func clear_boss_hazards() -> void:
             hazard.queue_free()
 
 func set_story_safe(value: bool) -> void:
+    if chapter_locked and not value: value = true
     story_safe = value
     if value:
         clear_sword_waves()
@@ -459,7 +492,7 @@ func set_story_safe(value: bool) -> void:
         _warnings.clear()
         _strokes.clear()
 
-func _start_boss() -> void:
+func _start_boss(calibrate: bool = true) -> void:
     if boss_started or outcome != "": return
     # Kept as a synchronous integration hook; normal play only calls this after
     # the portal's full-black mount and preparation have completed.
@@ -467,16 +500,43 @@ func _start_boss() -> void:
     var status: Dictionary = music.get_full_song_status()
     if status.get("requested", false) and not status.get("ready", false):
         set_story_safe(true)
+        player.set_physics_process(true)
         announce("Score unavailable. E returns to the dungeon; R retries.", 60.0)
         return
-    boss_started = true
+    if calibrate and level.has_method("start_room_entry"):
+        _calibrating = true
+        set_story_safe(true)
+        player.set_physics_process(false)
+        level.start_room_entry()
+        if _calibrating:
+            announce("校准：跟随重鼓按任意键；ESC 跳过。", 60.0)
+        return
     set_story_safe(false)
+    player.set_physics_process(true)
+    _begin_boss_battle()
+
+func _on_boss_calibration_complete(offset_ms: float) -> void:
+    if room_id != "boss" or boss_started or outcome != "": return
+    _calibrating = false
+    if music.has_method("replace_offset_ms"):
+        music.replace_offset_ms(offset_ms)
+    set_story_safe(false)
+    player.set_physics_process(true)
+    _begin_boss_battle()
+
+func _begin_boss_battle() -> void:
     boss = Boss.new()
     boss.process_mode = Node.PROCESS_MODE_PAUSABLE
     boss.z_index = 2
     add_child(boss)
     boss.configure(self, room_spec["boss_spawn"])
+    boss.set_infinite_room(true)
+    boss_started = true
     boss.start_encounter()
+    if level.has_method("begin_battle"):
+        level.begin_battle(boss)
+    if is_instance_valid(chapter): chapter.event("boss_enter")
+    _refresh_hud()
 
 func _populate_room() -> void:
     if room_id != "dungeon": return
@@ -487,6 +547,8 @@ func _populate_room() -> void:
     if not elite_defeated: _elite_gate = _make_gate(2580)
 
 func _portal_target() -> String:
+    if _calibrating: return ""
+    if is_instance_valid(chapter) and (chapter.blocked() or (room_id == "dungeon" and chapter.state.chapter_complete)): return ""
     if room_id == "boss":
         return "dungeon" if outcome == "victory" or not boss_started else ""
     if elite_defeated and player.global_position.distance_to(Vector2(2560,300)) <= 48.0:
@@ -494,7 +556,7 @@ func _portal_target() -> String:
     return ""
 
 func interact_portal() -> bool:
-    if room_flow.active or _room_prepare > 0.0 or _paused or player.dead: return false
+    if room_flow.active or _room_prepare > 0.0 or _paused or player.dead or (is_instance_valid(chapter) and (chapter.blocked() or chapter.consume_interact_guard())): return false
     var target: String = _portal_target()
     if target.is_empty(): return false
     var frame_number: int = Engine.get_physics_frames()
@@ -509,7 +571,7 @@ func interact_portal() -> bool:
     return true
 
 func begin_room_transition(target: String) -> bool:
-    if _paused or player.dead or (outcome != "" and outcome != "victory") or not room_flow.begin(target): return false
+    if _paused or player.dead or (is_instance_valid(chapter) and chapter.blocked()) or (outcome != "" and outcome != "victory") or not room_flow.begin(target): return false
     _portal_confirm_room = ""
     music.stop_score()
     set_story_safe(true)
@@ -547,6 +609,7 @@ func _mount_room(next_room: String) -> void:
     _elite_gate = null
     _arena_gate = null
     boss = null
+    _calibrating = false
     _retire_room_node(level)
     _particles.clear()
     _strokes.clear()
@@ -559,16 +622,22 @@ func _mount_room(next_room: String) -> void:
     if is_instance_valid(_motion_fx): _motion_fx.clear()
     room_id = next_room
     get_tree().set_meta("bellkeep_room", room_id)
-    level = BossChamber.new() if room_id == "boss" else Level.new()
+    level = BossRoom.new() if room_id == "boss" else Level.new()
     level.process_mode = Node.PROCESS_MODE_PAUSABLE
     add_child(level)
     level.setup(self)
+    if level.has_signal("calibration_complete"):
+        level.connect("calibration_complete", _on_boss_calibration_complete)
+    if room_id == "boss" and level is BossChamber:
+        for body: Node in level.get_children():
+            if body is StaticBody2D: body.collision_layer = 0
     room_spec = level.get_room_spec()
     if room_id == "dungeon": level.restore_opened_ids(get_tree().get_meta("bellkeep_doors", []))
     outcome = ""
     boss_started = false
     checkpoint = room_spec["spawn"] if room_id == "boss" else (Vector2(2500,280) if elite_defeated else (Level.CHECKPOINT if checkpoint_active else Level.SPAWN))
     player.revive(checkpoint)
+    player.set_boss_room_mode(room_id == "boss")
     player.set_physics_process(false)
     player.reset_physics_interpolation()
     _zone = 0
@@ -583,14 +652,20 @@ func _mount_room(next_room: String) -> void:
 
 func _finish_room_preparation() -> void:
     _room_prepare = 0.0
+    if is_instance_valid(chapter) and chapter.blocked(): return
+    if room_id == "boss":
+        player.reset_direction_taps()
+        _start_boss()
+        _refresh_hud()
+        return
     set_story_safe(false)
     player.set_physics_process(true)
     player.reset_direction_taps()
-    if room_id == "boss": _start_boss()
-    else: announce("The portal returns you to the dungeon threshold.", 3.0)
+    announce("The portal returns you to the dungeon threshold.", 3.0)
     _refresh_hud()
 
 func on_enemy_defeated(enemy: Node2D) -> void:
+    if is_instance_valid(chapter): chapter.event("enemy_defeated", {"id":str(enemy.get_meta("chapter_spawn_id","")),"kind":str(enemy.kind)})
     if enemy.kind == "elite":
         elite_defeated = true
         checkpoint = Vector2(2500, 280)
@@ -601,6 +676,7 @@ func on_enemy_defeated(enemy: Node2D) -> void:
         player.health = player.max_health
         player.health_changed.emit(player.health, player.max_health)
         announce("The seal breaks. Health restored; the threshold is remembered.", 4.0)
+        if is_instance_valid(chapter): chapter.save()
     else:
         emit_fx("pickup", enemy.position + Vector2(0, -16), Vector2.UP, 0.35)
 
@@ -620,7 +696,8 @@ func on_boss_defeated() -> void:
     music.stop_score()
     player.velocity = Vector2.ZERO
     player.set_physics_process(false)
-    announce("Voice: You did well. Stay still. It is almost over.", 4.0)
+    if is_instance_valid(chapter): chapter.on_boss_defeated()
+    else: announce("Voice: You did well. Stay still. It is almost over.", 4.0)
     emit_fx("burst", boss.position + Vector2(0, -32), Vector2.UP, 3.0)
 
 func _on_player_died() -> void:
@@ -641,6 +718,7 @@ func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power
     # Receive-hit legacy callbacks are synchronous. Accepted hero contacts below
     # replace their body-center flash with one actual-intersection weapon burst.
     if kind=="hit" and _weapon_hit_context: return
+    if is_instance_valid(chapter) and kind in ["jump","air_jump"] and is_instance_valid(player) and at.distance_to(player.global_position)<2.0: chapter.event("jump")
     vfx_requested.emit(kind, at, direction, power)
     # Gradient visuals come from vfx/fx_layer.gd via vfx_requested above; camera shake and hit-stop
     # belong to the impact controller below.
@@ -653,6 +731,10 @@ func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power
             impact.play_action("dash")
         elif kind in ["stun", "launch", "air_jump", "hurt"]:
             impact.play_action(kind)
+        elif kind in ["laser_warn", "laser_fire", "boss_cast", "boss_volley"] and not story_safe and outcome == "":
+            impact.play_action(kind)
+            if kind == "laser_fire":
+                impact.add_kick(direction if direction.length() > 0.01 else Vector2.DOWN, 3.2)
 
 func on_parry_contact(defender: Node, source: Node, contact: Vector2, kind: String) -> void:
     if story_safe or _paused or get_tree().paused or outcome != "" or not is_instance_valid(defender) or not is_instance_valid(source):
@@ -675,6 +757,7 @@ func on_parry_contact(defender: Node, source: Node, contact: Vector2, kind: Stri
     if is_instance_valid(impact):
         impact.request(defender, source, kind == "guard_break", true, "break" if kind == "guard_break" else ("reflect" if kind == "projectile" else ""))
     parry_contacted.emit(defender, source, contact, kind)
+    if is_instance_valid(chapter): chapter.event("parry")
 
 func request_impact(source: Node, target: Node, heavy: bool = false, parry: bool = false, variant: String = "") -> void:
     if is_instance_valid(impact):
@@ -700,13 +783,23 @@ func _refresh_hud() -> void:
     var target: String = _portal_target()
     var portal_hint: String = ("E 返回地牢" if room_id == "boss" else "E 进入独立 Boss 房") if not target.is_empty() else ""
     if _portal_confirm_room != "": portal_hint = "再次按 E 确认传送 / 离开或稍候取消"
-    hud_updated.emit({"room_id": room_id, "room_title": room_spec.get("title", zone["title"]), "room_bounds": room_spec.get("bounds", Level.WORLD_BOUNDS), "room_platforms": room_spec.get("platforms", []), "portal_at": room_spec.get("portal_at", Vector2.ZERO), "portal_hint": portal_hint, "portal_confirm": _portal_confirm_room != "", "transition": room_flow.active or _room_prepare > 0.0, "transition_progress": room_flow.progress if room_flow.active else (0.5 if _room_prepare > 0.0 else 0.0), "speed_effects_level": speed_effects_level, "player_at": player.position, "opened_doors": level.get_opened_ids(), "collected": _collected, "checkpoint_active": checkpoint_active, "elite_defeated": elite_defeated, "overlay": _overlay, "reduced_motion": impact.reduced_motion if is_instance_valid(impact) else false, "muted": AudioServer.is_bus_mute(0), "weapon": player.weapon, "hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": outcome, "narration": _announcement if _announcement_time > 0 else "", "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
+    var story_view: Dictionary = chapter.presentation() if is_instance_valid(chapter) else {}
+    var shown_outcome: String = "" if is_instance_valid(chapter) and outcome == "victory" else outcome
+    var shown_narration: String = "" if str(story_view.get("line", "")) != "" else (_announcement if _announcement_time > 0 else "")
+    var shown_bounds: Rect2 = room_spec.get("bounds", Level.WORLD_BOUNDS)
+    if is_instance_valid(level) and level.has_method("get_map_bounds"):
+        shown_bounds = level.get_map_bounds(player.global_position)
+    hud_updated.emit({"room_id": room_id, "room_title": room_spec.get("title", zone["title"]), "room_bounds": shown_bounds, "room_platforms": room_spec.get("platforms", []), "portal_at": room_spec.get("portal_at", Vector2.ZERO), "portal_hint": portal_hint, "portal_confirm": _portal_confirm_room != "", "transition": room_flow.active or _room_prepare > 0.0, "transition_progress": room_flow.progress if room_flow.active else (0.5 if _room_prepare > 0.0 else 0.0), "speed_effects_level": speed_effects_level, "player_at": player.position, "opened_doors": level.get_opened_ids(), "collected": _collected, "checkpoint_active": checkpoint_active, "elite_defeated": elite_defeated, "overlay": _overlay, "reduced_motion": impact.reduced_motion if is_instance_valid(impact) else false, "muted": AudioServer.is_bus_mute(0), "weapon": player.weapon, "hp": player.health, "max_hp": player.max_health, "shards": score, "total_shards": Level.SHARDS.size(), "zone": zone["title"], "hint": zone["hint"], "boss_hp": boss.health if is_instance_valid(boss) else -1, "boss_max": boss.max_health if is_instance_valid(boss) else 0, "phase": boss.phase if is_instance_valid(boss) else "", "beat": music.total_beats if is_instance_valid(music) else 0, "section": music.current_section if is_instance_valid(music) else "", "outcome": shown_outcome, "narration": shown_narration, "safe": story_safe, "paused": _paused, "ending": _ending_clock, "progress": player.position.x / Level.LEVEL_END, "boss_guard": boss.guard_posture if is_instance_valid(boss) else 0, "boss_guard_max": boss.guard_max if is_instance_valid(boss) else 3, "reaction": boss.reaction_state if is_instance_valid(boss) else "", "parry_notice": last_parry_kind if _parry_notice_time > 0 else ""})
 
 func _unhandled_input(event: InputEvent) -> void:
+    if _calibrating: return
     if event is InputEventKey and event.pressed and not event.echo:
-        if event.physical_keycode == KEY_ESCAPE and outcome == "":
+        if is_instance_valid(chapter) and chapter.handle_input(event):
+            get_viewport().set_input_as_handled()
+            return
+        if event.physical_keycode == KEY_ESCAPE and (outcome == "" or is_instance_valid(chapter)):
             _set_overlay("pause" if _overlay == "" else "")
-        elif event.physical_keycode == KEY_TAB and outcome == "":
+        elif event.physical_keycode == KEY_TAB and outcome == "" and not (is_instance_valid(chapter) and chapter.blocked()):
             _set_overlay("" if _overlay == "map" else "map")
         elif event.physical_keycode == KEY_R:
             _reload(false)
@@ -731,8 +824,8 @@ func _set_overlay(screen: String) -> void:
     _overlay = screen if screen in ["pause", "map"] else ""
     _paused = _overlay != ""
     get_tree().paused = _paused
-    if is_instance_valid(music):
-        music.set_score_paused(_paused)
+    if is_instance_valid(chapter): chapter.set_paused(_paused)
+    elif is_instance_valid(music): music.set_score_paused(_paused)
     _refresh_hud()
 
 func _on_score_completed() -> void:
@@ -744,6 +837,7 @@ func _reload(full: bool) -> void:
     if _reloading:
         return
     _reloading = true
+    if is_instance_valid(chapter): chapter.prepare_reload(full)
     room_flow.active = false
     _room_prepare = 0.0
     if is_instance_valid(music): music.stop_score()
@@ -767,7 +861,7 @@ func _draw() -> void:
             var at: Vector2 = gate.position
             for y: int in range(-115, 120, 12):
                 draw_rect(Rect2(at + Vector2(-3, y), Vector2(6, 7)), Color("e9bb68"))
-    if outcome == "victory" and _ending_clock > 1.8:
+    if outcome == "victory" and not is_instance_valid(chapter) and _ending_clock > 1.8:
         # An unidentified shadow and an interrupted memory; no identity is asserted.
         var at: Vector2 = player.position + Vector2(-player.facing * 28, 0)
         draw_rect(Rect2(at + Vector2(-6, -29), Vector2(13, 29)), Color("0b0c18"))

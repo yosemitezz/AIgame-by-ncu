@@ -8,27 +8,51 @@ $env:TMP=$env:TEMP
 $env:APPDATA=Join-Path $projectRoot '.local/appdata'
 $env:LOCALAPPDATA=$env:APPDATA
 $env:XDG_CACHE_HOME=Join-Path $projectRoot '.local/cache'
-$checks=@('main_dungeon_migration_test','main_player_migration_test','player_mobility_test','combat_timing_test','friend_controls_test','friend_input_map_test','ut_hud_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','music_203_config_test','heavy_judge_test','heavy_lane_test','full_song_transport_test','full_song_boss_test','full_song_coverage_test','main_full_song_test','parry_controller_test','boss_parry_test','boss_blade_geometry_test','boss_duel_runtime_test','boss_navigation_test','boss_duel_visual_test','parry_integration_test','hero_motion_test','main_visual_migration_test','main_authored_boss_test','main_boss_runtime_test','main_enemy_cast_test','main_enemy_visual_test','source-chart','font','weapon_switch_test','boss_blink_test','room_geometry_test','room_hud_test','room_transition_test','weapon_identity_controller_test','sword_wave_test','weapon_runtime_test','weapon_motion_test','boss_redhair_visual_test','wing_flight_visual_test','flight_polish_test','movement_trail_test','attack_polish_test','hit_vfx_contract_test','startup')
+$checks=@('main_dungeon_migration_test','main_player_migration_test','player_mobility_test','combat_timing_test','friend_controls_test','friend_input_map_test','ut_hud_test','main_scene_migration_test','integration_test','hit_reaction_test','impact_feedback_test','music_contract_test','music_203_config_test','heavy_judge_test','heavy_lane_test','full_song_transport_test','full_song_boss_test','full_song_coverage_test','laser_tracking_test','audio_calibration_test','full_song_offset_test','boss_room_test','main_full_song_test','parry_controller_test','boss_parry_test','boss_blade_geometry_test','boss_duel_runtime_test','boss_navigation_test','boss_duel_visual_test','parry_integration_test','hero_motion_test','main_visual_migration_test','main_authored_boss_test','main_boss_runtime_test','main_enemy_cast_test','main_enemy_visual_test','source-chart','font','weapon_switch_test','boss_blink_test','room_geometry_test','room_hud_test','room_transition_test','weapon_identity_controller_test','sword_wave_test','weapon_runtime_test','weapon_motion_test','boss_redhair_visual_test','wing_flight_visual_test','flight_polish_test','movement_trail_test','attack_polish_test','hit_vfx_contract_test','chapter_story_test','chapter_visual_test','chapter_integration_test','chapter_font_test','title_screen_test','title_quit_test','startup')
 if($From){$index=[Array]::IndexOf($checks,$From);if($index -lt 0){throw 'Unknown -From'};$checks=$checks[$index..($checks.Count-1)]}
 if($Only.Count){foreach($item in $Only){if($item -notin $checks){throw ('Unknown check: '+$item)}};$checks=@($checks | Where-Object {$_ -in $Only})}
 $previousPlaceholder=[Environment]::GetEnvironmentVariable('BELLKEEP_USE_PLACEHOLDER','Process')
+$previousStoryDisabled=[Environment]::GetEnvironmentVariable('BELLKEEP_DISABLE_STORY','Process')
+# Baseline combat fixtures do not replay or persist the chapter; its actual-main
+# integration fixture explicitly enables it with persistence disabled.
+$env:BELLKEEP_DISABLE_STORY='1'
 if(-not $LocalScore){$env:BELLKEEP_USE_PLACEHOLDER='1'}
 try {
 foreach($name in $checks){
  $stdout=Join-Path $projectRoot ('artifacts/unified-'+$name+'-console.log')
  $stderr=Join-Path $projectRoot ('artifacts/unified-'+$name+'-error.log')
  $log=Join-Path $projectRoot ('artifacts/unified-'+$name+'.log')
- $args=@('--headless','--audio-driver','Dummy','--path',$projectRoot,'--log-file',$log)
- if($name -eq 'source-chart'){$args+=@('--script','res://tools/audit_friend_chart.gd')}
- elseif($name -eq 'font'){$args+=@('--script','res://tools/font_glyph_check.gd')}
- elseif($name -eq 'startup'){$args+=@('--quit-after','60')}
- else{$args+=@('--script',('res://tests/'+$name+'.gd'))}
- $proc=Start-Process -FilePath $Godot -ArgumentList $args -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
- if(-not $proc.WaitForExit(60000)){$proc.Kill();throw ($name+' timed out')}
- $out=(Get-Content -LiteralPath $stdout -Raw)+(Get-Content -LiteralPath $stderr -Raw)
- if($proc.ExitCode -ne 0 -or $out -match 'SCRIPT ERROR:|ERROR:|FAIL |leaked|still in use at exit' -or ($name -notin @('font','startup') -and $out -notmatch '0 failed')){Write-Output $out;throw ($name+' FAILED exit '+$proc.ExitCode)}
+ $godotArgs=@('--headless','--audio-driver','Dummy','--path',$projectRoot,'--log-file',$log)
+ if($name -eq 'source-chart'){$godotArgs+=@('--script','res://tools/audit_friend_chart.gd')}
+ elseif($name -eq 'font'){$godotArgs+=@('--script','res://tools/font_glyph_check.gd')}
+ elseif($name -eq 'startup'){$godotArgs+=@('--quit-after','60')}
+ else{$godotArgs+=@('--script',('res://tests/'+$name+'.gd'))}
+ $startInfo=New-Object System.Diagnostics.ProcessStartInfo
+ $startInfo.FileName=$Godot
+ $startInfo.Arguments=(($godotArgs | ForEach-Object {'"'+($_ -replace '"','\"')+'"'}) -join ' ')
+ $startInfo.UseShellExecute=$false
+ $startInfo.CreateNoWindow=$true
+ $startInfo.RedirectStandardOutput=$true
+ $startInfo.RedirectStandardError=$true
+ $process=New-Object System.Diagnostics.Process
+ $process.StartInfo=$startInfo
+ [void]$process.Start()
+ $stdoutTask=$process.StandardOutput.ReadToEndAsync()
+ $stderrTask=$process.StandardError.ReadToEndAsync()
+ if(-not $process.WaitForExit(60000)){
+  & taskkill.exe /PID $process.Id /T /F | Out-Null
+  $process.WaitForExit()
+  throw ($name+' FAILED timeout after 60 seconds')
+ }
+ $process.WaitForExit()
+ $exitCode=$process.ExitCode
+ [IO.File]::WriteAllText($stdout,$stdoutTask.Result)
+ [IO.File]::WriteAllText($stderr,$stderrTask.Result)
+ $out=$stdoutTask.Result+$stderrTask.Result
+ if($exitCode -ne 0 -or $out -match 'SCRIPT ERROR:|ERROR:|FAIL |leaked|still in use at exit' -or ($name -notin @('font','startup') -and $out -notmatch '0 failed')){Write-Output $out;throw ($name+' FAILED exit '+$exitCode)}
  Write-Output ($name+' PASS '+(($out -split "`n" | Where-Object {$_ -match 'passed, 0 failed|Font glyph'}) -join ' '))
 }
 } finally {
  [Environment]::SetEnvironmentVariable('BELLKEEP_USE_PLACEHOLDER',$previousPlaceholder,'Process')
+ [Environment]::SetEnvironmentVariable('BELLKEEP_DISABLE_STORY',$previousStoryDisabled,'Process')
 }

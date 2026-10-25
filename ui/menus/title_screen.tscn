@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://ui/menus/title_screen.gd" id="1_screen"]
+[ext_resource type="PackedScene" path="res://ui/menus/title_menu.tscn" id="2_title"]
+[ext_resource type="PackedScene" path="res://ui/menus/settings_menu.tscn" id="3_settings"]
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="TitleMenu" parent="." instance=ExtResource("2_title")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="SettingsMenu" parent="." instance=ExtResource("3_settings")]
+unique_name_in_owner = true
+layout_mode = 1

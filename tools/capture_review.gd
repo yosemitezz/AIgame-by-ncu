@@ -54,7 +54,7 @@ func run() -> void:
     if is_instance_valid(game._elite_gate):
         game._elite_gate.queue_free()
         game._elite_gate = null
-    game._start_boss()
+    game._start_boss(false)
     game.music.stop_score()
     game.music.set_process(false)
     game.boss.set_physics_process(false)

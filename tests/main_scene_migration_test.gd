@@ -126,7 +126,7 @@ func run() -> void:
     var retired_level: Node = game.level
     game._start_boss()
     check(game.room_id == "boss", "explicit integration hook enters the independent Boss room")
-    check(game.level.get_script().resource_path == "res://levels/boss_chamber.gd", "main mounts the real Boss chamber script")
+    check(game.level.get_script().resource_path == "res://levels/boss_room.gd", "main mounts the infinite Boss room script")
     check(game.level != retired_level and retired_level.get_parent() == null, "Boss hook removes the former dungeon tree")
     game.music.stop_score()
     # Full-song stop intentionally enters safety; reopen only this static combat fixture.

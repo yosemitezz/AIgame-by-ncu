@@ -19,7 +19,10 @@ static func describe(actor: Object, state: String = "idle", frame: int = 0) -> D
     if snapshot is Dictionary and not snapshot.is_empty():
         return snapshot.duplicate(true)
     var pose: Dictionary = {}
-    if actor.has_method("get_presentation_pose"):
+    if actor.has_meta("chapter_pose"):
+        var chapter_pose: Variant = actor.get_meta("chapter_pose")
+        if chapter_pose is Dictionary: pose = chapter_pose.duplicate(true)
+    if pose.is_empty() and actor.has_method("get_presentation_pose"):
         var requested: Variant = actor.call("get_presentation_pose")
         if requested is Dictionary:
             pose = requested.duplicate(true)

@@ -15,6 +15,9 @@ const LightWings = preload("res://vfx/light_wings.gd")
 const INFINITE_AIR_JUMPS: bool = true
 const WING_OPEN_RATE: float = 9.0
 const WING_FOLD_TIME: float = 0.9
+const FLIGHT_RISE_SPEED: float = 285.0
+const FLIGHT_FALL_SPEED: float = 245.0
+const FLIGHT_ACCELERATION: float = 980.0
 const MOBILITY_PATH: String = "res://data/player_mobility.json"
 static var _mobility_data: Dictionary = {}
 static var RUN_SPEED: float = mobility_value("run_speed", 232.0)
@@ -128,6 +131,7 @@ var wing_amount: float = 0.0
 var wing_flap: float = 0.0
 var _wings_out: bool = false
 var wings: Node2D
+var flight_enabled: bool = false
 # One per-direction authority. The computed legacy property supports old fixture resets.
 var _dash_cooldowns: Dictionary = {Vector2.LEFT: 0.0, Vector2.RIGHT: 0.0, Vector2.UP: 0.0, Vector2.DOWN: 0.0}
 var _dash_cooldown: float:
@@ -173,6 +177,13 @@ static func mobility_value(key: String, fallback: float) -> float:
 
 func configure(owner_game: Node) -> void:
 	game = owner_game
+
+func set_boss_room_mode(enabled: bool) -> void:
+	flight_enabled = enabled
+	reset_direction_taps()
+	if enabled:
+		_wings_out = true
+		wing_flap = 1.0
 
 func _ready() -> void:
 	collision_layer = 2
@@ -426,7 +437,10 @@ func _physics_process(delta: float) -> void:
 			_fx("dash_ghost", global_position + Vector2(0.0, -13.0), -dash_direction, 0.55)
 			_trail_clock = 0.045
 	else:
-		if not is_on_floor():
+		if flight_enabled:
+			var desired_y: float = -FLIGHT_RISE_SPEED if Input.is_action_pressed("jump") else FLIGHT_FALL_SPEED
+			velocity.y = move_toward(velocity.y, desired_y, FLIGHT_ACCELERATION * delta)
+		elif not is_on_floor():
 			velocity.y = minf(velocity.y + GRAVITY * delta, 620.0)
 		if _hurt_lock <= 0.0:
 			var desired: float = _move_axis * RUN_SPEED * (CROUCH_SPEED if crouching else 1.0)

@@ -172,7 +172,7 @@ func run() -> void:
 			energy += float(v) * float(v)
 		stats[kind] = {"peak": peak, "rms": sqrt(energy / float(maxi(1, n / 3))), "length": float(n) / float(stream.mix_rate)}
 		all_ok = all_ok and peak > 6000 and peak < 32000 and stream.mix_rate >= 32000
-	check(all_ok and stats.size() == 11, "all 11 impact sounds exist, are audible and do not hard clip")
+	check(all_ok and stats.size() == 15, "all 15 impact sounds exist, are audible and do not hard clip")
 	check(stats["heavy"]["rms"] > stats["light"]["rms"] * 1.2 and stats["heavy"]["length"] > stats["light"]["length"] * 1.5, "heavy hit is louder and longer than a light hit")
 	check(stats["break"]["length"] >= 0.45 and stats["stun"]["length"] >= 0.4 and stats["launch"]["length"] >= 0.35, "break, stun and launch sounds have a long tail")
 	check(stats["light"]["rms"] > 2500.0, "light hit has real body (rms %.0f)" % stats["light"]["rms"])

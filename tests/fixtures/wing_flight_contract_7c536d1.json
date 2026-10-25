@@ -7917,7 +7917,7 @@
     "presentation/parry_frames/hero_flash_great.png": "a093a67c2f070f0625f7c8c48081ad7a550ff68f7377334d8452d62a62f95d5b"
   },
   "runtime_files": {
-    "actors/player.gd": "57ab940d7d80327400e843a82c65cc3fff771d1a13e90778ed9f856e6e063a8c",
+    "actors/player.gd": "440f2819c31743e8d454d6cd068e0487acb8adfa89dee03546bfbeed07edfb1e",
     "combat/attack_profile.gd": "01f9f3375bd7ff2535f43fb2befd22564efc08085ad5f02816fda065bda83b5d",
     "combat/melee_query.gd": "56c3e56384f182f958957b7b6d825808f742845365552c84f8d2dd2c7d477e73",
     "data/hero_attack_profiles.json": "49ddc87b9489fe5d99a12c5f5ea6997f3341fcb80668ed54653738e55b6e0f94",

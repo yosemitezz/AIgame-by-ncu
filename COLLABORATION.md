@@ -102,3 +102,7 @@ Baseline7c536d1; current local branch feat/boss-redhair-local-20261024. No push/
 ## Local flight/VFX/chapter polish 2026-10-25
 
 Current branch feat/polish-story-local-20261025 preserves the upstream README-only8a6dd7d cleanup and all local8a1b103/7c536d1 history. User explicitly requested new three-weapon silhouettes and inertial rear carry; old weapon-raster equality is intentionally superseded, while movement/range/damage/timing remain protected. Flight owns hero rig/renderer/wings and hero sheets. Attack VFX owns fx_layer/combat_vfx. MovementTrail owns motion_blur/new history backend. Root owns hit-contact integration, main/HUD hooks, local saves and local Git. Story state owns data-driven chapter; chapter visuals own new eye/aura/overlay; controller owns orchestration. Independent review is read only. No push/main publication is authorized this wave. User's original amnesia/eye-trust/kill-corruption/Boss-rescue/ambush ending is the narrative authority; friend backstory is deferred, not canon.
+
+## Current publication authorization 2026-10-25
+
+The user explicitly requested checking the current game, submitting it to the existing repository, making this version main, and building it. This supersedes earlier local-only/main-hold notes for this checked wave. Preserve all histories and concurrent work; normal fast-forward/merge and push only, no force/reset/clean. Runtime/build output stays under ignored D-drive exports/artifacts. Review fixes are limited to release blockers.

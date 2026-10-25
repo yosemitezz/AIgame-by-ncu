@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://ui/menus/title_menu.gd" id="1_title"]
+[ext_resource type="Script" path="res://ui/menus/title_backdrop.gd" id="2_backdrop"]
 
 [node name="TitleMenu" type="Control"]
 layout_mode = 3
@@ -11,55 +12,93 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_title")
 
-[node name="Dim" type="ColorRect" parent="."]
+[node name="Backdrop" type="Control" parent="."]
+show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.07, 0.12, 0.92)
+mouse_filter = 2
+script = ExtResource("2_backdrop")
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Header" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_top = 28.0
+offset_bottom = 100.0
 grow_horizontal = 2
-grow_vertical = 2
+theme_override_constants/separation = 2
 
-[node name="Panel" type="PanelContainer" parent="Center"]
+[node name="Brand" type="Label" parent="Header"]
+unique_name_in_owner = true
 layout_mode = 2
-
-[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Brand" type="Label" parent="Center/Panel/VBox"]
-layout_mode = 2
+theme_override_colors/font_color = Color(0.941, 0.902, 0.824, 1)
 theme_override_font_sizes/font_size = 36
-text = "BELLKEEP"
+text = "钟 堡"
 horizontal_alignment = 1
 
-[node name="Tag" type="Label" parent="Center/Panel/VBox"]
+[node name="Tag" type="Label" parent="Header"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "pixel action · rhythm gates"
+theme_override_colors/font_color = Color(0.878, 0.706, 0.282, 1)
+text = "B E L L K E E P"
 horizontal_alignment = 1
 
-[node name="PlayButton" type="Button" parent="Center/Panel/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 36)
+[node name="Chapter" type="Label" parent="Header"]
 layout_mode = 2
-text = "Play"
+theme_override_colors/font_color = Color(0.612, 0.643, 0.729, 1)
+text = "SHATTERED REFRAIN · 第一章"
+horizontal_alignment = 1
 
-[node name="SettingsButton" type="Button" parent="Center/Panel/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 36)
-layout_mode = 2
-text = "Settings"
+[node name="Menu" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -124.0
+offset_right = 120.0
+offset_bottom = -26.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
 
-[node name="QuitButton" type="Button" parent="Center/Panel/VBox"]
+[node name="PlayButton" type="Button" parent="Menu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 36)
+custom_minimum_size = Vector2(240, 30)
 layout_mode = 2
-text = "Quit"
+text = "开始游戏"
+
+[node name="SettingsButton" type="Button" parent="Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 30)
+layout_mode = 2
+text = "设置"
+
+[node name="QuitButton" type="Button" parent="Menu"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 30)
+layout_mode = 2
+text = "退出"
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -160.0
+offset_top = -20.0
+offset_right = 160.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.42, 0.45, 0.56, 1)
+text = "方向键 选择    ENTER 确认"
+horizontal_alignment = 1
