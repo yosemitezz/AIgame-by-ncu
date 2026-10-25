@@ -54,14 +54,14 @@ func run() -> void:
     check(music.is_full_song(), "director loads the shipping full song")
     var before: Array[Dictionary] = music.get_heavy_groups()
     var chart_before: RefCounted = music._full_chart
-    check(before.size() == 107, "fixture exposes all 107 heavy groups")
+    check(before.size() == 121, "fixture exposes all 121 heavy groups")
     check(music.replace_offset_ms(345.0), "director applies a stopped-session offset")
     check(is_equal_approx(float(music.get_full_song_status()["offset_ms"]), 345.0), "status reports the new offset")
     check(is_equal_approx(float(music.timeline["offset_ms"]), 345.0), "timeline commits the new offset")
     var after: Array[Dictionary] = music.get_heavy_groups()
-    check(after.size() == 107 and music._full_chart != chart_before, "chart is re-parsed instead of mutated")
+    check(after.size() == 121 and music._full_chart != chart_before, "chart is re-parsed instead of mutated")
     check(is_equal_approx(float(after[0]["time"]) - float(before[0]["time"]), 0.1), "every heavy group shifts by exactly 100 ms")
-    check(music._full_chart.timed_note_count == 1171 and music._full_chart.action_phrases.size() == 228, "chart counts and phrases are unchanged")
+    check(music._full_chart.timed_note_count == 1702 and music._full_chart.action_phrases.size() == 237, "chart counts and phrases are unchanged")
     var committed_chart: RefCounted = music._full_chart
     check(music.replace_offset_ms(345.0), "equal offset is an idempotent success")
     check(music._full_chart == committed_chart, "equal offset does not re-parse")

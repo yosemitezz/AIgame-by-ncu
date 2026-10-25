@@ -113,7 +113,7 @@ func run() -> void:
     var status: Dictionary = music.get_full_song_status()
     check(is_equal_approx(music.bpm,203.0) and is_equal_approx(float(status["offset_ms"]),245.0),"actual recording uses203 BPM and245ms offset")
     var stats: Dictionary = music._full_chart.get_stats()
-    check(int(stats["timed_notes"]) == 1171 and music.get_heavy_groups().size() == 107 and int(stats["action_phrases"]) == 228,"main parsed full1171/107/228 source chart")
+    check(int(stats["timed_notes"]) == 1702 and music.get_heavy_groups().size() == 121 and int(stats["action_phrases"]) == 237,"main parsed full1702/121/237 source chart")
     var audio: AudioStreamPlayer = music._audio
     check(str(music.timeline.get("audio_path","")) == AUDIO_PATH and str(status["chart_path"]).begins_with("res://boss_attack/"),"shipping resources use public project paths, not host C paths")
     var recording: FileAccess = FileAccess.open(AUDIO_PATH,FileAccess.READ)

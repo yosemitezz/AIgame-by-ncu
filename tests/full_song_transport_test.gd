@@ -72,9 +72,9 @@ func run() -> void:
     music._dummy = true
     check(music.is_full_song() and music._audio.stream is AudioStreamOggVorbis, "actual selected existing OGG loads into main AudioStreamPlayer")
     check(absf(float(music.get_full_song_status()["duration"]) - duration) < 0.001, "Godot decoder duration matches Ogg granule audit")
-    check(music._full_chart.timed_note_count == 1171 and music._full_chart.action_phrases.size() == 228, "complete source chart is parsed without short-placeholder truncation")
+    check(music._full_chart.timed_note_count == 1702 and music._full_chart.action_phrases.size() == 237, "complete source chart is parsed without short-placeholder truncation")
     var heavy: Array[Dictionary] = music.get_heavy_groups()
-    check(heavy.size() == 107 and not str(heavy[0]["id"]).is_empty(), "107 source heavy groups expose stable exact-key IDs")
+    check(heavy.size() == 121 and not str(heavy[0]["id"]).is_empty(), "121 source heavy groups expose stable exact-key IDs")
     check(is_equal_approx(float(heavy[0]["time"]), 73.0 * 60.0 / 203.0 + 0.245), "first heavy time is sourcebeat73 plus one245ms offset")
     var beats: Array[int] = []
     music.beat.connect(func(index: int) -> void: beats.append(index))

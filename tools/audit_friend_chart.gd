@@ -20,7 +20,7 @@ func _initialize() -> void:
     stats["fast_phrases"] = fast
     stats["source_sha256"] = FileAccess.get_sha256(path)
     stats["errors"] = parser.errors
-    var expected: Dictionary = {"notes":1172,"timed_notes":1171,"unique_times":862,"timing_groups":703,"heavy_groups":107,"endbeat_records":230,"ordinary_lasers":182,"phases":21,"paired_note_groups":315,"action_phrases":228,"fixed_attack_events":24,"laser_formations":48,"basic_phrases":141,"fast_phrases":87}
+    var expected: Dictionary = {"notes":1703,"timed_notes":1702,"unique_times":1048,"timing_groups":839,"heavy_groups":121,"endbeat_records":331,"ordinary_lasers":259,"phases":17,"paired_note_groups":360,"action_phrases":237,"fixed_attack_events":36,"laser_formations":67,"basic_phrases":114,"fast_phrases":123}
     var mismatches: Array[String] = []
     for key: String in expected:
         if int(stats.get(key,-1)) != int(expected[key]): mismatches.append(key)

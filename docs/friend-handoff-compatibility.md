@@ -15,3 +15,5 @@ Main health8/Boss48/damage1 and wide combo profiles are preserved. The standalon
 Focused evidence is in ignored artifacts: main-boss-runtime-test62/0; main-authored-boss-test86/0; friend-source-chart-parser-audit14/0; enemy cast90/0; enemy visual859/0. Independent review closed the pause lease and victory death-pose defects. Subjective feel, full-song synchronization and full playthrough are not claimed.
 
 The MusicDirector configuration now accepts203BPM without the former200BPM clamp. A separate optional timeline path enables real configured-score checks; the default file and its112BPM value are unchanged. music_203_config_test exercises a real MusicDirector and its sole clock at203BPM.
+
+Later update (2026-10-25): the shipped chart was replaced by the reference chart (`5caa2721292be473c7d8ca760c8948d1aab43b42fc82a80fb02e352369aebe5f`, 59615 bytes). The earlier byte-identity statement describes the previous handoff only.

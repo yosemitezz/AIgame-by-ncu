@@ -60,3 +60,5 @@ Final bounded verification:
 | Lead read-only source-chart audit | 14 passed, 0 failed; dynamically 228 phrases = 141 basic + 87 fast; 230 raw endbeat records / 182 ordinary lasers |
 
 These runs have explicit process exit and error-log checks. No private source data is included in the main runtime configuration. The legacy parry suite's old fixed-beat 4 generic-slash fixture must be updated to the new fixed cube schedule; the actual contact/recoil/armor assertions passed and main runtime coverage verifies the replacement schedule. The parser retains source same-phase/equal-pair-interval combination without adding an unrequested pair-boundary adjacency rule. Counts are recomputed from data rather than hardcoded.
+
+Later update (2026-10-25): the shipped chart was replaced by the reference chart (`5caa2721292be473c7d8ca760c8948d1aab43b42fc82a80fb02e352369aebe5f`, 59615 bytes). The earlier byte-identity statement describes the previous handoff only.

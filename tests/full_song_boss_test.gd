@@ -79,7 +79,7 @@ func run() -> void:
     game.boss.configure(game, Vector2(2900, 300))
     game.boss.set_physics_process(false)
     game.boss.start_encounter()
-    check(game.music.is_full_song() and game.boss.friend_director.chart.action_phrases.size() == 228, "actual main Boss loads complete source director")
+    check(game.music.is_full_song() and game.boss.friend_director.chart.action_phrases.size() == 237, "actual main Boss loads complete source director")
     check(game.boss.get_authored_status()["full_song"] and game.boss.authored_pattern_count == 0, "audio start does not dispatch an invented beat0 attack")
     var first: Dictionary = game.boss.friend_director.chart.action_phrases[0]
     var first_time: float = float(first["start_time"])

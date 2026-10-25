@@ -106,13 +106,13 @@ func _initialize() -> void:
     check(judge.update(INF).is_empty() and judge.get_visible(NAN).is_empty(), "non-finite transport inputs are ignored")
     judge.register_block(1.0)
     check(judge.update(1.125)[0]["success"], "invalid transport inputs do not poison later valid time")
-    # Read-only validation of the existing 107-group source chart; no audio read/copied.
+    # Read-only validation of the reference chart; no audio read/copied.
     var parser: RefCounted = Parser.new()
     var parsed: bool = parser.parse_file("res://boss_attack/data/if_infinity.chart.json", 203.0, 0.0, 4.0)
-    check(parsed and parser.heavy_groups.size() == 107, "reviewed parser exposes all 107 existing full-song heavy groups")
+    check(parsed and parser.heavy_groups.size() == 121, "reviewed parser exposes all 121 source heavy groups")
     var full_groups: Array[Dictionary] = []
     full_groups.assign(parser.heavy_groups)
-    judge.setup(full_groups, 0.125, 107)
+    judge.setup(full_groups, 0.125, 121)
     var times: Array[float] = []
     for group: Dictionary in full_groups:
         times.append(float(group["time"]))
@@ -121,17 +121,17 @@ func _initialize() -> void:
         judge.register_block(time)
     var all_results: Array[Dictionary] = judge.update(times.back() + 3.0 if not times.is_empty() else 1.0)
     var ids: Dictionary = {}
-    var all_success: bool = all_results.size() == 107
+    var all_success: bool = all_results.size() == 121
     for result: Dictionary in all_results:
         ids[result["id"]] = true
-        all_success = all_success and result["success"] and absf(float(result["error_seconds"])) <= 0.125001 and int(result["id"]) >= 0 and int(result["id"]) < 107 and int(result["generation"]) == 107
-    check(all_success and ids.size() == 107, "full-song long frame gap yields 107 independent retained results and bounded unique IDs")
+        all_success = all_success and result["success"] and absf(float(result["error_seconds"])) <= 0.125001 and int(result["id"]) >= 0 and int(result["id"]) < 121 and int(result["generation"]) == 121
+    check(all_success and ids.size() == 121, "full-song long frame gap yields 121 independent retained results and bounded unique IDs")
     check(judge.update(times.back() + 4.0 if not times.is_empty() else 2.0).is_empty(), "full-song results never emit twice")
-    judge.setup(full_groups, 0.125, 108)
+    judge.setup(full_groups, 0.125, 122)
     var fresh: Array[Dictionary] = judge.update(times.back() + 5.0 if not times.is_empty() else 3.0)
-    var all_miss: bool = fresh.size() == 107
+    var all_miss: bool = fresh.size() == 121
     for result: Dictionary in fresh:
-        all_miss = all_miss and not result["success"] and result["generation"] == 108
-    check(all_miss, "new song loop has no accepted-input carry from prior 107 marks")
+        all_miss = all_miss and not result["success"] and result["generation"] == 122
+    check(all_miss, "new song loop has no accepted-input carry from prior 121 marks")
     print("HEAVY_JUDGE_TEST: %d passed, %d failed" % [passed, failed])
     quit(1 if failed > 0 else 0)

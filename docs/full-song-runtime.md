@@ -2,7 +2,7 @@
 
 The main encounter uses the already committed selected OGG at `res://boss_attack/audio/if_infinity.ogg`; it is byte-identical to the user-selected recording. No duplicate audio is added. See THIRD_PARTY_NOTICES.md for the recording's separate attribution and license scope.
 
-`data/full_song_timeline.json` explicitly sets 203 BPM and +245 ms. Chart metadata and its audio-note offset do not override that configuration. The existing source chart contains 1171 timed notes, 107 heavy groups and 228 action phrases, with its last event at 409.530714 seconds. The OGG is approximately 418.515737 seconds long. These matching counts and coverage do not prove subjective listening alignment on a particular sound device.
+`data/full_song_timeline.json` explicitly sets 203 BPM and +245 ms. Chart metadata and its audio-note offset do not override that configuration. The reference source chart contains 1702 timed notes, 121 heavy groups and 237 action phrases, with its last event at 409.530714 seconds. The OGG is approximately 418.515737 seconds long. These matching counts and coverage do not prove subjective listening alignment on a particular sound device.
 
 The macro gameplay gates are configurable adaptations: fixed from the beginning to beat 200; health-gated random from 200 to 264 (eight complete eight-beat phrases); safe rest from 264 to 296; final from 296 through the recording's end. The chosen rest lies in a source-chart gap. An unmet health gate repeats the random segment; meeting it queues the transition at the segment boundary. Narrative rest disables both sides and clears existing attacks. Ordinary chart gaps do not independently award victory. Song completion safely clears the encounter and offers retry if the Boss is still alive.
 
