@@ -73,6 +73,12 @@ func setup(owner_game: Node) -> void:
     music = owner_game.get("music")
     active = true
 
+func _resolve_music() -> void:
+    if is_instance_valid(game):
+        var current: Node = game.get("music")
+        if is_instance_valid(current):
+            music = current
+
 func get_room_spec() -> Dictionary:
     return {
         "id": ROOM_ID,
@@ -103,6 +109,7 @@ func restore_opened_ids(_ids: Array) -> void: pass
 func reset_interactions() -> void: pass
 
 func start_room_entry() -> void:
+    _resolve_music()
     active = true
     calibrating = false
     battle_running = false
@@ -191,6 +198,7 @@ func _hide_overlay_after_result(generation: int) -> void:
     _overlay.dismiss()
 
 func begin_battle(owner_boss: Node2D) -> void:
+    _resolve_music()
     boss = owner_boss
     battle_running = true
     calibrating = false
