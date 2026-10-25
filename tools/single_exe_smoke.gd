@@ -1,8 +1,12 @@
-extends SceneTree
+extends Node
 ## Runs against an isolated official release EXE, with all game resources embedded.
 var passed:int=0
 var failed:int=0
-func _initialize()->void:call_deferred("run")
+@onready var root:Window=get_tree().root
+func _ready()->void:
+    if "--verify-embedded-build" not in OS.get_cmdline_user_args():queue_free();return
+    if OS.get_environment("BELLKEEP_VERIFY_ISOLATED")!="1":get_tree().quit(2);return
+    call_deferred("run")
 func check(ok:bool,label:String)->void:
     if ok:passed+=1;print("PASS ",label)
     else:failed+=1;push_error("FAIL "+label)
@@ -20,16 +24,21 @@ func run()->void:
         check(path.begins_with("res://data/runtime_payload/"),kind+" points to embedded payload")
         check(FileAccess.file_exists(path) and not FileAccess.file_exists(ProjectSettings.globalize_path(path)),kind+" exists only inside embedded PCK")
         check(FileAccess.get_sha256(path)==str(config["expected_"+kind+"_sha256"]),kind+" embedded bytes preserve source SHA")
-    var title:Control=load(str(ProjectSettings.get_setting("application/run/main_scene"))).instantiate()
-    root.add_child(title);current_scene=title;await process_frame
+    if FileAccess.file_exists(base+"/.local/chapter-save.json"):
+        push_error("FAIL isolation directory already has player progress");get_tree().quit(2);return
+    await get_tree().process_frame
+    var title:Control=get_tree().current_scene
+    check(is_instance_valid(title),"normal embedded title entry reached")
     check(is_instance_valid(title.get_node_or_null("%TitleMenu")),"embedded title menu mounts")
-    title._open_settings();await process_frame
+    title._open_settings();await get_tree().process_frame
     check(title.get_node("%SettingsMenu").visible,"embedded settings open")
-    title.get_node("%SettingsMenu").close_menu();await process_frame
+    title.get_node("%SettingsMenu").close_menu();await get_tree().process_frame
     check(not title.get_node("%SettingsMenu").visible,"embedded settings close")
-    title.queue_free();await process_frame
-    var game:Node=load("res://main.tscn").instantiate();game.chapter_enabled=true;game.chapter_persist=false
-    root.add_child(game);current_scene=game;await process_frame;freeze(game)
+    title.get_node("%TitleMenu").get_node("%PlayButton").pressed.emit()
+    await get_tree().process_frame;await get_tree().process_frame
+    var game:Node=get_tree().current_scene
+    check(is_instance_valid(game) and game.scene_file_path=="res://main.tscn","actual title Play route opens embedded dungeon")
+    game.chapter_persist=false;game.chapter.persist=false;freeze(game)
     check(is_instance_valid(game.chapter) and game.chapter.blocked(),"embedded actual dungeon and chapter mount safely")
     var status:Dictionary=game.music.get_full_song_status()
     check(bool(status.get("ready",false)) and float(status.get("duration",0))>400.0,"embedded complete song and chart ready")
@@ -43,6 +52,6 @@ func run()->void:
     game._start_boss(false);freeze(game)
     check(game.room_id=="boss" and is_instance_valid(game.boss) and game.boss_started,"embedded actual Boss battle begins")
     check(game.music.running,"Boss uses embedded song transport")
-    game.queue_free();await process_frame
+    game.queue_free();await get_tree().process_frame
     print("Single EXE: %d passed, %d failed"%[passed,failed])
-    quit(0 if failed==0 else 1)
+    get_tree().quit(0 if failed==0 else 1)

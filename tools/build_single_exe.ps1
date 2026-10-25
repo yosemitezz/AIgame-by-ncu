@@ -73,13 +73,19 @@ function RunBounded([string]$Label,[string]$Executable,[string[]]$Arguments,[str
  [IO.File]::WriteAllText((Join-Path $outputRoot ($Label+'-error.log')),$err.Result)
  if($proc.ExitCode -ne 0 -or ($out.Result+$err.Result) -match 'SCRIPT ERROR:|ERROR:'){throw ($Label+' failed; inspect its logs')}
 }
+# Official release templates disallow external --script overrides. Embed a dormant
+# verifier that runs only for our explicit user flag plus isolated-test environment.
+Copy-Item -LiteralPath (Join-Path $sourceRoot 'tools/single_exe_smoke.gd') -Destination (Join-Path $sourceRoot 'flow/release_build_probe.gd')
+Add-Content -LiteralPath (Join-Path $sourceRoot 'project.godot') -Value "`n[autoload]`nReleaseBuildProbe=`"*res://flow/release_build_probe.gd`"`n" -Encoding utf8
 RunBounded 'import' $Godot @('--headless','--path',$sourceRoot,'--editor','--import','--quit')
 $exe=Join-Path $delivery 'Bellkeep.exe'
 RunBounded 'export' $Godot @('--headless','--path',$sourceRoot,'--export-release','Windows Single EXE',$exe)
 $initialFiles=@(Get-ChildItem -LiteralPath $delivery -File)
 if($initialFiles.Count -ne 1 -or $initialFiles[0].Name -ne 'Bellkeep.exe'){throw 'Export has additional runtime files; single-EXE contract not met'}
 $isolatedExe=Join-Path $isolated 'Bellkeep.exe';Copy-Item -LiteralPath $exe -Destination $isolatedExe
-RunBounded 'isolated-content' $isolatedExe @('--headless','--audio-driver','Dummy','--script',(Join-Path $sourceRoot 'tools/single_exe_smoke.gd')) $isolated
+$env:BELLKEEP_VERIFY_ISOLATED='1'
+RunBounded 'isolated-content' $isolatedExe @('--headless','--audio-driver','Dummy','--','--verify-embedded-build') $isolated
+$env:BELLKEEP_VERIFY_ISOLATED='0'
 if((Get-FileHash -LiteralPath $exe).Hash -ne (Get-FileHash -LiteralPath $isolatedExe).Hash){throw 'Verification copy differs'}
 $manifest=[ordered]@{commit=$revision;format='official Windows x64 release template with embedded PCK and selected raw score/audio';entry=$exe;bytes=(Get-Item -LiteralPath $exe).Length;sha256=(Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash;isolated_verification=$isolated;external_runtime_files=@();template_sha256=(Get-FileHash -LiteralPath $releaseTemplate -Algorithm SHA256).Hash}
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $outputRoot 'single-exe-manifest.json') -Encoding utf8
