@@ -331,8 +331,9 @@ Hazard checks:
 5. Move the player from `(400,300)` to `(460,300)`, set clock 9.5, step: lines 0-1 shift by
    exactly +60 in x, so each `origin == new_center + center_offset` and `a/b` also shift by +60;
    lines 2-3 are unchanged; `aimed == 1`.
-6. Move the player to `(340,300)`, set clock 11.5, step: lines 2-3 shift by -120 from their
-   spawn geometry to `new_center + center_offset`; lines 0-1 stay at the 460 center; `aimed == 2`.
+6. Move the player to `(340,300)`, set clock 11.5, step: lines 2-3 shift by -60 from their
+   spawn geometry (the spawn center was 400) to `new_center + center_offset`; lines 0-1 stay at
+   the 460 center; `aimed == 2`.
 7. Move the player again at clock 11.8 and step: both volleys are byte-identical to the previous
    snapshot (one-shot aim).
 8. A fixture created at clock 9.8 whose first warning is 9.5 keeps its spawn geometry after the
