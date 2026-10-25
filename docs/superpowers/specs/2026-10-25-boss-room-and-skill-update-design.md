@@ -12,13 +12,20 @@ Update the current Boss encounter so that the music chart drives a real, damage-
 
 - blink / source cut (`_try_start_blink`, `_begin_authorized_*`)
 - duel double slash (`_try_duel_on_beat`)
-- authored chart actions (`aim`, `teleport`, `center`, `dash`, `ring`, `fan`, `side_spray`)
+- authored chart actions (`aim`, `teleport`, `center`, `dash`)
+- projectile wave volleys from the chart (`ring` / `fan` / `side_spray`) and the legacy `rain`
+  volley, including their `boss_volley` / `danmaku` FX
+- laser pillars and geometric laser formations (`laser_formation`, `fixed_attack` cube) with
+  their existing warning geometry and `BossHazard` damage timing
 - guard posture, parry recoil, guard break, armor
 - health seal at 50 % during `fixed` / `random`
 - phase/rest/final boundaries, room flow, chapter integration
 
 The heavy clash is an **additional beat-timed skill**. It is not a replacement for the authored
-chart actions and not a replacement for ordinary parry.
+chart actions, not a replacement for ordinary parry, and it must not silence the Boss's wave
+volleys or laser pillars. Heavy groups sit on top of ordinary chart beats, so the clash preempts
+only melee movement/contact; the phrase's waves and any independent laser formation still fire.
+Pressing the wave/pillar attacks out of the encounter would be a regression, not a scope choice.
 
 To host that skill the Boss gets the attachment's camera-following infinite room, a five-tap
 audio calibration, passive sustain, and phrase-boundary projectile cleanup. Those are supporting
@@ -40,7 +47,8 @@ The current branch already has:
 - `main.gd` full-song integration, `room_id` / `room_flow` / `_room_prepare`, `story_safe`,
   `boss_started`, `outcome`, `_heavy_lane`, `on_parry_contact`, `damage_player`.
 - `combat/boss.gd`: infinite-room support (`set_infinite_room`), player-centred attack arena,
-  chart-authored actions, blink, duel, guard posture, integer health, health seal.
+  chart-authored actions including wave volleys and laser/cube formations, blink, duel, guard
+  posture, integer health, health seal.
 - `actors/player.gd`: integer health `8/8`, ordinary parry (`parry_success`, `PARRY_WINDOW`),
   dash-invuln, `set_boss_room_mode` (flight + wings only).
 - `audio/music_director.gd`: sole time authority; full-song transport, generation counter,
@@ -125,7 +133,9 @@ const HEAVY_POSE_SECONDS: float = 0.20
 3. `_cancel_contact_sequence()` — this is the existing preemption primitive. It cancels the
    current blink/duel/blade and the current serial's non-projectile authored actions, clears
    `_authored_dash` / `_authored_shift` / `_warning_geometry`, and retains `ring` / `fan` /
-   `side_spray` projectiles (those are retired separately by projectile fade).
+   `side_spray` actions of the same serial, so the current phrase keeps firing its wave volleys.
+   It does not clear `BossHazard` instances, so already-spawned laser pillars continue on the
+   music clock.
 4. `facing = -direction` (face the player); `_heavy_pose_facing = direction`.
 5. `_heavy_pose_time = HEAVY_POSE_SECONDS`.
 6. `global_position = target.global_position + Vector2(float(direction) * 58.0, 0.0)`;
@@ -150,9 +160,22 @@ Integration points:
   final `else: _pursue_player()` branch (`combat/boss.gd:427`), holding `velocity = Vector2.ZERO`
   (and `velocity.y = 0.0` in the infinite room) and `animation_state = "draw"`. Without this branch
   the Boss would walk into the player during the pose.
-- `_begin_attack`, `_begin_authored_pattern`, and `_try_duel_on_beat`: add
-  `_heavy_pose_time > 0.0` to their reject gates. The authored-phrase path runs every physics
-  frame, so without this gate the next chart phrase re-arms an attack inside the clash pose.
+- `_begin_attack` and `_try_duel_on_beat`: add `_heavy_pose_time > 0.0` to their reject gates.
+  These begin melee attacks and must not run inside the clash pose.
+- **Do not gate `_begin_authored_pattern` on `_heavy_pose_time`.** Chart phrases often start on the
+  same beat as a heavy group; rejecting the whole phrase would silently delete that phrase's
+  `ring` / `fan` / `side_spray` waves and its `aim` → `dash` chain. That is exactly how the Boss
+  loses its wave volleys. The phrase starts on time and queues its actions normally.
+- `_advance_authored_actions`: while `_heavy_pose_time > 0.0`, skip only movement/melee actions
+  (`teleport`, `center`, `dash`) with `authored_skipped_actions += 1` and
+  `_trace_skipped("heavy_pose_" + type, source_pattern, score)`. `ring` / `fan` / `side_spray`
+  still execute at their exact source time, so waves keep firing during the clash. `aim` also
+  runs: it is the telegraph for a following dash, and if that dash lands just after the pose the
+  player still gets its warning. Skipping rather than deferring prevents a stale dash from landing
+  0.2 s after its source time.
+- Laser pillars are `laser_formation` / `fixed_attack` events handled directly by
+  `_on_authored_event`; they are not queued in `_authored_actions`, so the pose skip above cannot
+  remove them. Existing `BossHazard` geometry also keeps advancing on the music clock.
 - `_cancel_all_attacks`: clear `_heavy_pose_time = 0.0` (safety, rest, outcome, transport epoch).
 - `_draw`: after `Pixels.paint`, when `_heavy_pose_time > 0.0`, draw the gold telegraph on the
   side that faces the player using the existing windup convention (`combat/boss.gd:1683-1692`):
@@ -398,7 +421,10 @@ iterates a snapshot of the real `projectiles` group, requires `is_instance_valid
 reflected shots are never touched.
 
 `combat/boss.gd` calls `game.fade_boss_projectiles(0.30)` at the start of `_begin_attack` and
-`_begin_authored_pattern`, and `0.20` inside `perform_heavy_clash`. Lasers/cubes
+`_begin_authored_pattern` only. **Do not fade inside `perform_heavy_clash`:** heavy groups are
+dense, and a 0.20 s fade would dissolve the very `ring` / `fan` / `side_spray` waves the current
+phrase just fired, which reads as "the Boss stopped shooting". Waves live out their normal
+lifetime across a clash; the next phrase boundary retires them. Lasers/cubes
 (`boss_hazards`) are untouched.
 
 ## 7. Infinite Boss room (`levels/boss_room.gd`)
@@ -615,7 +641,8 @@ New:
 
 Modified:
 
-- `combat/boss.gd` — heavy clash, no-hit-stun, heavy pose, projectile fade calls.
+- `combat/boss.gd` — heavy clash, no-hit-stun, heavy pose, movement-only pose skip,
+  phrase-boundary projectile fade calls (never on clash).
 - `combat/projectile.gd` — fade state.
 - `actors/player.gd` — boss-room mode flag, press history, heavy parry branch, bypass invuln.
 - `main.gd` — BossRoom mount, calibration lifecycle, heavy lifecycle, heal, fade, HUD bounds,
@@ -664,8 +691,13 @@ New:
      actions survive.
    - It returns false while reaction-blocked, posture-locked, dead, story-safe, or non-full-song.
    - `no_hit_stun` allows two hits inside 90 ms and still sets `hurt_flash`.
-   - `_try_duel_on_beat`, `_begin_attack`, and `_begin_authored_pattern` do not start during the
-     pose.
+   - `_try_duel_on_beat` and `_begin_attack` do not start during the pose.
+   - An authored phrase **does** start during the pose: its `ring` / `fan` / `side_spray` actions
+     still spawn projectiles and its `aim` still arms the dash warning; only `teleport` / `center` /
+     `dash` are skipped with a trace, and no late dash fires; a `laser_formation` event during the
+     pose still creates a `BossHazard`.
+   - `perform_heavy_clash` does not fade in-flight hostile projectiles: a wave spawned just before
+     the clash keeps `can_damage() == true` and has no fade state.
    - Main-side resolution: an entry stamped with the previous transport generation is dropped,
      while a new-generation entry queued in the same tick still resolves; resolving the same
      token twice consumes only one press; a press recorded in the physics tick resolves correctly
@@ -743,8 +775,8 @@ Existing tests that must keep passing unchanged: `boss_parry_test`, `boss_duel_r
 | A last-moment press is judged before it is recorded | Resolution runs from main's idle `_process`, after every child `_physics_process` capture in the frame; the 20 ms margin covers the chart-time edge. |
 | Heavy clash every heavy group is much harder | The clash is parryable with a 95 ms window, is skipped during Boss parry/guard reaction, and every success heals 1. If playtesting shows it is too dense, the next lever is a chart-time filter in the room, not a Boss rewrite. |
 | Phantom dash after teleport | `perform_heavy_clash` clears `_authored_dash`/`_authored_shift` via `_cancel_contact_sequence`; covered by `heavy_clash_test`. |
-| Next chart phrase re-arms during the clash pose | `_begin_authored_pattern`, `_begin_attack`, and `_try_duel_on_beat` all reject while `_heavy_pose_time > 0.0`; covered by `heavy_clash_test`. |
-| Stale projectiles overlap the clash | Hostile projectiles fade at every phrase start and at the clash; friendly/reflected shots are untouched. |
+| Heavy clash swallows the Boss's wave volleys or laser pillars | `_begin_authored_pattern` stays open during the pose; only `teleport` / `center` / `dash` are skipped, while `ring` / `fan` / `side_spray` still fire and `aim` still arms the dash warning. `perform_heavy_clash` does not fade projectiles. Laser formations are independent events and are never cleared by the clash; covered by `heavy_clash_test`. |
+| Stale projectiles overlap the clash | Hostile projectiles fade only at the next phrase start; a heavy clash never fades them, so in-flight waves live out their lifetime. Friendly/reflected shots are untouched throughout. |
 | Loop double-hits | Every resolution is stamped with the transport generation at request time and dropped if the generation changed; the room cursor reset plus `heavy_history_cleared` clear history before new requests. |
 | Platform collisions disabled on mount | The mount-time collision disable is restricted to `BossChamber`; `BossRoom` keeps its one-way platforms. |
 | Chapter rescue coordinates vs. infinite room | The room uses the old chamber baseline (y = 300, x around 2706–2990), so chapter rescue/shock clamps stay valid; platforms follow the player anyway. |
@@ -760,10 +792,11 @@ Existing tests that must keep passing unchanged: `boss_parry_test`, `boss_duel_r
 3. A left-Shift press within ±95 ms of the event resolves the clash: `perfect` ≤ 40 ms, `good`
    otherwise. Success heals 1 and shows the grade; miss deals 1 damage even through invulnerability.
 4. Ordinary melee/projectile parry, guard posture, blink, duel, and all authored chart actions
-   still work in the Boss room.
+   still work in the Boss room. Chart wave volleys (`ring` / `fan` / `side_spray`) and laser/cube
+   pillars keep firing during heavy clashes; the clash preempts only movement/melee.
 5. Boss hits do not stagger it in the Boss room, but still flash.
-6. Hostile projectiles fade out at authored phrase boundaries and at heavy clashes; reflected
-   shots never fade.
+6. Hostile projectiles fade out at authored phrase boundaries, never because of a heavy clash;
+   reflected shots never fade.
 7. With a full song and a real audio driver, five taps calibrate and shift the chart offset before
    the score starts; Dummy/headless/non-full-song/short-chart paths skip synchronously inside
    `start_room_entry()` and still start the Boss in the same call.
@@ -780,7 +813,7 @@ Existing tests that must keep passing unchanged: `boss_parry_test`, `boss_duel_r
 1. Transport/music offset API + calibration math + tests (no gameplay dependency).
 2. Projectile fade + tests.
 3. Player heavy press parsing, heavy parry branch, bypass-invuln + tests.
-4. Boss heavy clash, no-hit-stun, pose, preemption + tests.
+4. Boss heavy clash, no-hit-stun, pose, movement-only preemption that preserves waves/lasers + tests.
 5. `BossRoom` platforms, heavy cursor, calibration runtime + tests.
 6. `main` wiring: mount, calibration lifecycle, heavy resolution, heal, HUD/input gates.
 7. Update existing tests, capture tools, runner, and docs.
