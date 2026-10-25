@@ -35,8 +35,8 @@ script_export_mode=2
 binary_format/architecture="x86_64"
 '@
 [IO.File]::WriteAllText((Join-Path $sourceRoot 'export_presets.cfg'),$preset,[Text.UTF8Encoding]::new($false))
-function RunGodot([string]$Label,[string[]]$Arguments){
- $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=$Godot
+function RunGodot([string]$Label,[string[]]$Arguments,[string]$Executable=$Godot){
+ $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=$Executable
  $info.Arguments=(($Arguments | ForEach-Object {'"'+($_ -replace '"','\"')+'"'}) -join ' ')
  $info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
  $proc=[Diagnostics.Process]::new();$proc.StartInfo=$info;[void]$proc.Start()
@@ -53,6 +53,21 @@ if(-not (Test-Path -LiteralPath $pack)){throw 'Pack was not produced'}
 $runtime=Get-ChildItem -LiteralPath (Split-Path $Godot -Parent) -File -Filter '*.exe' | Where-Object Name -NotMatch 'console' | Select-Object -First 1
 if(-not $runtime){throw 'Installed graphical Godot runtime not found'}
 Copy-Item -LiteralPath $runtime.FullName -Destination (Join-Path $outputRoot 'Bellkeep.exe')
+# Nested Godot subprojects are not included by the resource exporter. The main
+# director also verifies/decodes these raw files, so retain its exact two paths.
+$timeline=Get-Content -LiteralPath (Join-Path $sourceRoot 'data/full_song_timeline.json') -Raw | ConvertFrom-Json
+$sidecars=@()
+foreach($resource in @($timeline.audio_path,$timeline.chart_path)){
+ if(-not $resource.StartsWith('res://')){throw 'Build accepts only versioned project audio/chart paths'}
+ $relative=$resource.Substring(6)
+ $source=[IO.Path]::GetFullPath((Join-Path $sourceRoot $relative))
+ if(-not $source.StartsWith($sourceRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Sidecar path outside source'}
+ $target=Join-Path $outputRoot $relative
+ New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+ Copy-Item -LiteralPath $source -Destination $target
+ $sidecars+=$relative
+}
+
 $launcher=@'
 @echo off
 setlocal
@@ -75,9 +90,16 @@ Copy-Item -LiteralPath (Join-Path $sourceRoot 'third_party') -Destination $notic
 $fontNotices=Join-Path $notices 'fonts';New-Item -ItemType Directory -Path $fontNotices -Force | Out-Null
 Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'assets/fonts') -File | Where-Object Extension -NotIn @('.otf','.ttf','.import') | Copy-Item -Destination $fontNotices
 [IO.File]::WriteAllText((Join-Path $notices 'GODOT_RUNTIME_NOTICE.txt'),"Unmodified Godot Engine runtime. Copyright (c) 2014-present Godot Engine contributors. Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. MIT license and third-party component notices: https://godotengine.org/license/ . This portable package uses the installed editor-capable runtime with an exported game PCK; it is not a custom engine or installer.")
+$env:BELLKEEP_USE_PLACEHOLDER='0';$env:BELLKEEP_DISABLE_STORY='0'
 RunGodot 'startup' @('--headless','--audio-driver','Dummy','--path',$outputRoot,'--main-pack',$pack,'--quit-after','60')
+RunGodot 'packed-scene' @('--headless','--audio-driver','Dummy','--path',$outputRoot,'--main-pack',$pack,'--script',(Join-Path $sourceRoot 'tools/packed_build_smoke.gd')) (Join-Path $outputRoot 'Bellkeep.exe')
 $manifest=[ordered]@{commit=$revision;godot=$Godot;format='portable Windows x64; installed Godot runtime plus exported PCK';entry='play.cmd';files=@()}
-foreach($file in @('Bellkeep.exe','Bellkeep.pck')){$item=Get-Item -LiteralPath (Join-Path $outputRoot $file);$manifest.files+=@{name=$file;bytes=$item.Length;sha256=(Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash}}
+foreach($file in (@('Bellkeep.exe','Bellkeep.pck')+$sidecars)){$item=Get-Item -LiteralPath (Join-Path $outputRoot $file);$manifest.files+=@{name=$file;bytes=$item.Length;sha256=(Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash}}
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $outputRoot 'build-manifest.json') -Encoding utf8
+$bundle=Join-Path $outputRoot ('Bellkeep-'+$revision.Substring(0,8)+'-Windows.zip')
+$payload=@('Bellkeep.exe','Bellkeep.pck','play.cmd','build-manifest.json','LICENSE','THIRD_PARTY_NOTICES.md','notices','boss_attack') | ForEach-Object {Join-Path $outputRoot $_}
+Compress-Archive -LiteralPath $payload -DestinationPath $bundle -CompressionLevel Optimal
+Write-Output ('BUILD_ZIP='+$bundle)
+Write-Output ('BUILD_ZIP_SHA256='+(Get-FileHash -LiteralPath $bundle -Algorithm SHA256).Hash)
 Write-Output ('BUILD_OUTPUT='+$outputRoot)
 Write-Output ('BUILD_COMMIT='+$revision)
