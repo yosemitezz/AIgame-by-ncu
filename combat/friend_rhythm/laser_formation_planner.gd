@@ -70,6 +70,7 @@ static func build_lines(formation: Dictionary, config: Dictionary, arena_rect: R
 			"pattern": pattern,
 			"angle_radians": deg_to_rad(angle_degrees),
 			"origin": origin,
+			"center_offset": origin - center,
 			"thickness": thickness,
 			"warning_time": float(record["time"]),
 			"damage_time": float(record["damage_time"]),
