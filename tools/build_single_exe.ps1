@@ -83,6 +83,13 @@ RunBounded 'export' $Godot @('--headless','--path',$sourceRoot,'--export-release
 $initialFiles=@(Get-ChildItem -LiteralPath $delivery -File)
 if($initialFiles.Count -ne 1 -or $initialFiles[0].Name -ne 'Bellkeep.exe'){throw 'Export has additional runtime files; single-EXE contract not met'}
 $isolatedExe=Join-Path $isolated 'Bellkeep.exe';Copy-Item -LiteralPath $exe -Destination $isolatedExe
+$footer=[IO.File]::OpenRead($exe)
+try {[void]$footer.Seek(-4,[IO.SeekOrigin]::End);$magic=New-Object byte[] 4;[void]$footer.Read($magic,0,4)} finally {$footer.Dispose()}
+if([Text.Encoding]::ASCII.GetString($magic) -ne 'GDPC'){throw 'Export does not contain the PCK footer'}
+foreach($relative in @('data/runtime_payload/selected_recording.oggdata','data/runtime_payload/selected_chart.json','project.godot','Bellkeep.pck')){
+ if(Test-Path -LiteralPath (Join-Path $isolated $relative)){throw 'External resource found in clean verification directory'}
+}
+
 $env:BELLKEEP_VERIFY_ISOLATED='1'
 RunBounded 'isolated-content' $isolatedExe @('--headless','--audio-driver','Dummy','--','--verify-embedded-build') $isolated
 $env:BELLKEEP_VERIFY_ISOLATED='0'

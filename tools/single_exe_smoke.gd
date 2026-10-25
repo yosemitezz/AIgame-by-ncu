@@ -17,12 +17,13 @@ func run()->void:
     var base:String=OS.get_executable_path().get_base_dir()
     check(not OS.has_feature("editor") and not OS.has_feature("debug"),"official release template, no editor/debug runner")
     check(not FileAccess.file_exists(base+"/Bellkeep.pck") and not DirAccess.dir_exists_absolute(base+"/boss_attack"),"no adjacent PCK or source-score folder")
-    check(ProjectSettings.globalize_path("res://").trim_suffix("/")==base,"resource root is isolated executable directory")
+    var resource_root:String=ProjectSettings.globalize_path("res://").replace("\\","/")
+    check(not resource_root.contains("/.build/") and not FileAccess.file_exists(base+"/project.godot"),"resource root does not fall back to a source project")
     var config:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://data/full_song_timeline.json"))
     for kind:String in ["audio","chart"]:
         var path:String=str(config[kind+"_path"])
         check(path.begins_with("res://data/runtime_payload/"),kind+" points to embedded payload")
-        check(FileAccess.file_exists(path) and not FileAccess.file_exists(ProjectSettings.globalize_path(path)),kind+" exists only inside embedded PCK")
+        check(FileAccess.file_exists(path),kind+" reads through embedded virtual filesystem")
         check(FileAccess.get_sha256(path)==str(config["expected_"+kind+"_sha256"]),kind+" embedded bytes preserve source SHA")
     if FileAccess.file_exists(base+"/.local/chapter-save.json"):
         push_error("FAIL isolation directory already has player progress");get_tree().quit(2);return
