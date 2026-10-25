@@ -8,6 +8,7 @@ signal animation_event(actor: Node, state: String, frame: int, facing: int)
 signal parry_contacted(defender: Node, source: Node, contact: Vector2, kind: String)
 
 const MeleeQuery = preload("res://combat/melee_query.gd")
+const ContactPoint = preload("res://combat/contact_point.gd")
 const SwordWave = preload("res://combat/sword_wave.gd")
 const Player = preload("res://actors/player.gd")
 const Enemy = preload("res://actors/enemy.gd")
@@ -47,6 +48,7 @@ var effects: Node2D
 var _motion_fx: Node
 var speed_effects_level: int = 1
 var _attack_hits: Dictionary = {}
+var _weapon_hit_context: bool = false
 var _sword_wave_serials: Dictionary = {}
 var parry_feedback_count: int = 0
 var last_parry_kind: String = ""
@@ -338,9 +340,15 @@ func hero_attack(source: Node2D, damage: int, reach: float, combo_index: int) ->
     for enemy: Node2D in MeleeQuery.collect(source,get_tree().get_nodes_in_group("enemies")):
         if not is_instance_valid(enemy) or bool(enemy.dead) or hits.has(enemy.get_instance_id()):
             continue
+        var contact: Dictionary = ContactPoint.melee(source,enemy)
         var before: int = int(enemy.health)
+        var previous_context: bool = _weapon_hit_context
+        _weapon_hit_context = true
         enemy.receive_hit(damage,source.global_position)
+        _weapon_hit_context = previous_context
         if int(enemy.health)<before:
+            if bool(contact.get("valid",false)):
+                emit_fx("weapon_hit_"+str(source.get("weapon")),contact["point"],contact["direction"],float(combo_index))
             hits[enemy.get_instance_id()] = true
             if source.has_method("confirm_attack_hit"):
                 source.confirm_attack_hit()
@@ -385,13 +393,17 @@ func spawn_sword_wave(source: Node2D, serial: int) -> Node2D:
     add_child(wave)
     return wave
 
-func sword_wave_hit(wave: Node2D, target: Node2D, origin: Vector2) -> bool:
+func sword_wave_hit(wave: Node2D, target: Node2D, origin: Vector2, contact: Vector2 = Vector2.INF) -> bool:
     if story_safe or _paused or get_tree().paused or room_flow.active or outcome != "" or not is_instance_valid(wave) or not wave.is_in_group("hero_waves") or not is_instance_valid(target) or target.get("dead") == true:
         return false
     var before: int = int(target.health)
+    var previous_context: bool = _weapon_hit_context
+    _weapon_hit_context = true
     target.receive_hit(int(wave.damage), origin)
+    _weapon_hit_context = previous_context
     if int(target.health) >= before:
         return false
+    if contact.is_finite(): emit_fx("weapon_hit_wave",contact,Vector2(float(wave.facing),0),1.0)
     if is_instance_valid(impact): impact.request(wave, target, true, false, "weapon_wave")
     if target != boss and not bool(target.dead) and target.has_method("react"):
         target.react("knockback", origin)
@@ -626,6 +638,9 @@ func _record_warning(kind: String, at: Vector2, duration: float) -> void:
         _warnings.append({"kind": kind, "at": at, "life": duration, "max": duration})
 
 func emit_fx(kind: String, at: Vector2, direction: Vector2 = Vector2.ZERO, power: float = 1.0) -> void:
+    # Receive-hit legacy callbacks are synchronous. Accepted hero contacts below
+    # replace their body-center flash with one actual-intersection weapon burst.
+    if kind=="hit" and _weapon_hit_context: return
     vfx_requested.emit(kind, at, direction, power)
     # Gradient visuals come from vfx/fx_layer.gd via vfx_requested above; camera shake and hit-stop
     # belong to the impact controller below.

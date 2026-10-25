@@ -98,7 +98,7 @@ func _physics_process(delta: float) -> void:
         if not space.intersect_ray(ray).is_empty(): continue
         _targets[target.get_instance_id()] = true
         if game.has_method("sword_wave_hit"):
-            game.sword_wave_hit(self, target, previous - Vector2(facing * size.x, 0))
+            game.sword_wave_hit(self, target, previous - Vector2(facing * size.x, 0), contact)
         if not _allowed():
             clear()
             return

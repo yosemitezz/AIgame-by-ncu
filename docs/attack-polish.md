@@ -18,3 +18,9 @@ Applied skill: game-feel (layered brief feedback, feedback separated from critic
 When MotionBlur declares the dedicated movement-trail owner, legacy hero movement-only afterimages/body ribbons/smear stand down. Attack, parry and Boss/other-actor afterimages remain. The ownership declaration remains true while F3 disables the new trail, so old movement trails cannot silently reappear.
 
 Comparison board: left BEFORE, right AFTER; top-to-bottom light/heavy/two-handed,2xNEAREST crops. The after frame also includes newly requested weapon silhouettes authored by the flight/rig owner. Contact cores have at most18pxray extent; their4–7chips may travel beyond that during their at-most200mslifetimes.
+
+## Real-contact integration milestone
+
+The main damage authority computes a visible intersection before invoking receive_hit. Only during that synchronous callback is the old generic body-centre hit suppressed. A health decrease emits exactly one weapon_hit_light/heavy/great/wave event at the actual intersected hurt boundary, with the real contact direction. Rejected Boss damage and empty swings emit neither a new contact burst nor an impact bundle; unrelated legacy hit routes remain available. The existing per-serial ledger, terrain occlusion and central actor-local impact service are retained. The sword wave forwards its already computed swept intersection. No range, damage, music clock or invulnerability tuning is changed.
+
+Actual-main hit_vfx_contract_test covers normal enemies, accepted/rejected Boss contacts, wave, whiff, duplicate serial calls and one-bundle counting:27/0. Related weapon/impact/Boss and short-start checks also pass. These are bounded fixtures, not a playthrough.
