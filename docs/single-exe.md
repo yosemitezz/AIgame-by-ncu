@@ -1,0 +1,11 @@
+# Standalone Windows single EXE
+
+Build tools/build_single_exe.ps1 after committing the checked source. It uses the official matching Godot4.7.2 Windows x64 release template and binary_format/embed_pck, not an editor executable plus a loose pack. The old portable builder/deliveries remain available. No installer or Release publication is introduced.
+
+Official template source: https://github.com/godotengine/godot-builds/releases/tag/4.7.2-stable . The default custom-template directory is the ignored .local/godot-templates-4.7.2. Only Windows debug/release members were extracted over bounded HTTPS ZIP ranges; zipfile verified member CRC. The full1281349702-byte archive was not downloaded or SHA-verified. Local provenance records the official archive SHA plus actual member hashes. Verified release member SHA256: d34d36f3be1a6c49c56525ae86469b92e4f417ddf0b43cf00dd80c385c4b0562. No system-wide installation occurs.
+
+The clean build snapshot copies only the already-versioned configured OGG and chart into data/runtime_payload. The OGG is raw .oggdata to prevent importer conversion; its bytes and SHA stay unchanged. The build snapshot changes only those resource paths. Audio loads through FileAccess bytes and load_from_buffer, retaining hash/duration checks,203BPM/+245ms and transport behavior. The source/editor path remains compatible.
+
+The exporter embeds the game resources, raw song and chart in one PE executable. Tests copy that EXE alone to D:/code/bellkeep-single-verify, outside any source project, and require no neighboring PCK or boss_attack directory, no editor/debug features, isolated resource root, embedded-only SHA-verified audio/chart, title/settings, actual dungeon/Boss, song transport and disposable save roundtrip. Saved progress/cache may be created when the game runs; they are not preinstalled runtime dependencies.
+
+All project license/font notices remain in the embedded resource pack. Template/runtime copyright is retained by the official binary; Godot license: https://godotengine.org/license/ . Selected music is not covered by the game's MIT grant. Known gameplay limitation remains the old climax pressure-blink not yet adapted to the aerial room; this build does not change gameplay.

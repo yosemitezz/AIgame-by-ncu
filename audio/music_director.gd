@@ -121,7 +121,11 @@ func _configure_full_song() -> void:
     if not expected_chart.is_empty() and FileAccess.get_sha256(_full_chart_path) != expected_chart:
         _fail_full_song("Source chart SHA256 does not match")
         return
-    var stream: AudioStreamOggVorbis = AudioStreamOggVorbis.load_from_file(ProjectSettings.globalize_path(audio_path))
+    # Read through Godot's virtual filesystem so the same validated recording
+    # works from an embedded PCK as well as a loose project file. Globalizing a
+    # res:// path would turn it into a host-only path and bypass packed data.
+    var encoded_audio: PackedByteArray = FileAccess.get_file_as_bytes(audio_path)
+    var stream: AudioStreamOggVorbis = AudioStreamOggVorbis.load_from_buffer(encoded_audio)
     if stream == null or stream.get_length() <= 0.0:
         _fail_full_song("OGG decoding failed")
         return
